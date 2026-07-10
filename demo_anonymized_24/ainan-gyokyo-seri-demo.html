@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>水産会社 せり業務DXシステム｜デモ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;700&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#12242E;
+    --bg:#F5F1E8;
+    --surface:#FFFFFF;
+    --primary:#163B47;
+    --primary-deep:#0D2830;
+    --gold:#C0932B;
+    --coral:#B85B3E;
+    --tank:#3A7D64;
+    --warn:#A63B32;
+    --line:#DCD3BE;
+    --muted:#6C6659;
+    --shadow: 0 10px 30px -12px rgba(15,30,35,0.25);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Noto Sans JP', sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.disp{
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    letter-spacing:.02em;
+  }
+  .mono{ font-family:'Roboto Mono', monospace; }
+
+  /* ===== layout ===== */
+  .app{
+    display:grid;
+    grid-template-columns: 232px 1fr;
+    min-height:100vh;
+  }
+  .sidebar{
+    background: linear-gradient(180deg, var(--primary) 0%, var(--primary-deep) 100%);
+    color:#EDEFE9;
+    padding:28px 18px;
+    position:sticky; top:0; height:100vh;
+    display:flex; flex-direction:column;
+  }
+  .brand{
+    display:flex; align-items:center; gap:10px;
+    margin-bottom: 6px;
+  }
+  .brand-mark{
+    width:34px;height:34px;border-radius:9px;
+    background: radial-gradient(circle at 30% 30%, #E7C25C, var(--gold));
+    display:flex;align-items:center;justify-content:center;
+    font-weight:900; color:var(--primary-deep); font-family:'Zen Kaku Gothic New';
+    font-size:16px;
+    flex:0 0 auto;
+  }
+  .brand-text{ line-height:1.25; }
+  .brand-text .t1{ font-family:'Zen Kaku Gothic New'; font-weight:900; font-size:15px; }
+  .brand-text .t2{ font-size:11px; color:#B9C6C4; letter-spacing:.08em; }
+  .sub-badge{
+    font-size:10.5px; color:#CFE0D9; background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.15); border-radius:20px;
+    padding:4px 10px; display:inline-block; margin:14px 0 22px;
+  }
+  nav.tabs{ display:flex; flex-direction:column; gap:4px; }
+  nav.tabs button{
+    all:unset; cursor:pointer;
+    display:flex; align-items:center; gap:10px;
+    padding:11px 12px; border-radius:10px;
+    color:#D8E3DF; font-size:13.5px; font-weight:500;
+    transition: background .15s ease, color .15s ease;
+  }
+  nav.tabs button .ico{
+    width:20px; text-align:center; font-size:15px; opacity:.9;
+  }
+  nav.tabs button:hover{ background:rgba(255,255,255,.08); }
+  nav.tabs button.active{
+    background: rgba(224,190,90,0.16);
+    color:#F6E7BF;
+    box-shadow: inset 3px 0 0 var(--gold);
+  }
+  .nav-group-label{
+    font-size:10px; letter-spacing:.14em; color:#7FA79C;
+    margin: 18px 4px 6px; text-transform:uppercase;
+  }
+  .sidebar-foot{
+    margin-top:auto; font-size:11px; color:#7FA79C; line-height:1.6;
+    border-top:1px solid rgba(255,255,255,.12); padding-top:14px;
+  }
+
+  main{ padding: 30px 40px 80px; max-width:1180px; }
+  .page{ display:none; animation: fade .25s ease; }
+  .page.active{ display:block; }
+  @keyframes fade{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;} }
+
+  .page-head{ margin-bottom:26px; }
+  .eyebrow{
+    font-size:11.5px; letter-spacing:.14em; color:var(--tank); font-weight:700;
+    text-transform:uppercase; margin-bottom:6px;
+  }
+  .page-head h1{ font-size:26px; margin:0 0 8px; font-weight:900; }
+  .page-head p{ margin:0; color:var(--muted); font-size:14px; max-width:640px; }
+
+  .grid{ display:grid; gap:16px; }
+  .g-4{ grid-template-columns: repeat(4,1fr); }
+  .g-3{ grid-template-columns: repeat(3,1fr); }
+  .g-2{ grid-template-columns: repeat(2,1fr); }
+
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:20px;
+    box-shadow: var(--shadow);
+  }
+  .card h3{ margin:0 0 4px; font-size:15px; }
+  .stat{
+    font-family:'Roboto Mono'; font-weight:700; font-size:28px; color:var(--primary);
+  }
+  .stat-label{ font-size:12px; color:var(--muted); margin-top:2px; }
+  .stat-sub{ font-size:11.5px; color:var(--tank); margin-top:6px; }
+
+  /* ticket-style card, used across the app as the visual motif */
+  .ticket{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:12px;
+    position:relative;
+    box-shadow: var(--shadow);
+    overflow:hidden;
+  }
+  .ticket::before{
+    content:"";
+    position:absolute; left:0; top:0; bottom:0; width:6px;
+    background: repeating-linear-gradient(180deg, var(--gold) 0 10px, transparent 10px 20px);
+  }
+  .ticket-inner{ padding:18px 18px 18px 24px; }
+
+  table{ width:100%; border-collapse:collapse; font-size:13px; }
+  th{
+    text-align:left; font-size:11px; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--muted); padding:8px 10px; border-bottom:1px solid var(--line);
+  }
+  td{ padding:10px 10px; border-bottom:1px solid #EFE9DB; }
+  tr:last-child td{ border-bottom:none; }
+  .num{ font-family:'Roboto Mono'; text-align:right; }
+
+  .pill{
+    display:inline-block; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:700;
+  }
+  .pill.ike{ background:#E2F0EA; color:var(--tank); }
+  .pill.shime{ background:#F4E4DE; color:var(--warn); }
+  .pill.gold{ background:#F6EBD0; color:var(--gold); }
+
+  button.btn{
+    all:unset; cursor:pointer;
+    font-family:'Zen Kaku Gothic New'; font-weight:700; font-size:13.5px;
+    padding:11px 18px; border-radius:9px;
+    background:var(--primary); color:#fff;
+    display:inline-flex; align-items:center; gap:8px;
+    transition: transform .1s ease, box-shadow .15s ease;
+  }
+  button.btn:hover{ transform:translateY(-1px); box-shadow:0 8px 18px -8px rgba(22,59,71,.5); }
+  button.btn.ghost{ background:transparent; color:var(--primary); border:1.5px solid var(--line); }
+  button.btn.gold{ background:var(--gold); color:#3A2C05; }
+  button.btn.warn{ background:var(--warn); }
+  button.btn:disabled{ opacity:.4; cursor:not-allowed; transform:none; }
+  button.btn.sm{ padding:8px 12px; font-size:12px; }
+
+  /* chip grid for fish/grade selection */
+  .chip-grid{ display:flex; flex-wrap:wrap; gap:8px; }
+  .chip{
+    all:unset; cursor:pointer;
+    padding:9px 15px; border-radius:9px; border:1.5px solid var(--line);
+    background:#FCFAF3; font-size:13px; font-weight:500; color:var(--ink);
+    transition: all .12s ease;
+  }
+  .chip:hover{ border-color:var(--tank); }
+  .chip.selected{
+    background:var(--primary); color:#fff; border-color:var(--primary);
+  }
+  .chip.grade.selected{ background:var(--tank); border-color:var(--tank); }
+
+  .field-label{ font-size:11.5px; color:var(--muted); font-weight:700; letter-spacing:.04em; margin: 18px 0 8px; text-transform:uppercase; }
+  .field-label:first-child{ margin-top:0; }
+
+  .weight-input-row{ display:flex; align-items:center; gap:12px; }
+  .weight-input{
+    font-family:'Roboto Mono'; font-size:30px; font-weight:700; color:var(--primary);
+    border:none; border-bottom:3px solid var(--line); background:transparent;
+    width:150px; padding:4px 2px; outline:none;
+  }
+  .weight-input:focus{ border-color:var(--gold); }
+  .keypad{ display:grid; grid-template-columns: repeat(3,52px); gap:8px; }
+  .keypad button{
+    all:unset; cursor:pointer; text-align:center;
+    background:#FCFAF3; border:1px solid var(--line); border-radius:9px;
+    padding:12px 0; font-family:'Roboto Mono'; font-weight:700; font-size:15px;
+  }
+  .keypad button:hover{ background:#F0EAD8; }
+
+  .toggle-row{ display:flex; gap:8px; }
+  .toggle{
+    all:unset; cursor:pointer; padding:9px 16px; border-radius:9px;
+    border:1.5px solid var(--line); font-weight:700; font-size:13px;
+  }
+  .toggle[data-v="ike"].selected{ background:var(--tank); color:#fff; border-color:var(--tank);}
+  .toggle[data-v="shime"].selected{ background:var(--warn); color:#fff; border-color:var(--warn);}
+
+  .log-entry{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:10px 0; border-bottom:1px dashed var(--line); font-size:13px;
+  }
+  .log-entry:last-child{ border-bottom:none; }
+  .log-entry .meta{ color:var(--muted); font-size:11.5px; }
+
+  /* auction / OCR panel */
+  .scan-box{
+    border:2px dashed var(--line); border-radius:14px; padding:34px;
+    text-align:center; background:#FCFAF3;
+  }
+  .scan-box.busy{ border-color: var(--gold); }
+  .spinner{
+    width:26px;height:26px;border-radius:50%;
+    border:3px solid #E5DCC4; border-top-color:var(--gold);
+    animation: spin .8s linear infinite; margin: 0 auto 12px;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg);} }
+
+  /* allocation viz — signature element */
+  .lotbar-wrap{ display:flex; flex-direction:column; gap:10px; }
+  .lotbar{
+    position:relative; height:54px; border-radius:10px; overflow:hidden;
+    display:flex; border:1px solid var(--line); background:#FCFAF3;
+  }
+  .lot-seg{
+    position:relative; border-right:1px solid rgba(255,255,255,.5);
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-size:11px; font-family:'Roboto Mono'; font-weight:700;
+    transition: all .5s cubic-bezier(.2,.8,.2,1);
+    overflow:hidden; white-space:nowrap;
+  }
+  .lot-seg.empty{ background:repeating-linear-gradient(45deg,#EFE9DB,#EFE9DB 6px,#F5F1E8 6px,#F5F1E8 12px); color:var(--muted); }
+  .lot-label{
+    display:flex; justify-content:space-between; font-size:11px; color:var(--muted); padding:0 2px;
+  }
+  .legend{ display:flex; flex-wrap:wrap; gap:10px; margin-top:14px; }
+  .legend-item{ display:flex; align-items:center; gap:6px; font-size:12px; }
+  .legend-dot{ width:11px; height:11px; border-radius:3px; }
+
+  .flow-note{
+    background:#EFF6F2; border:1px solid #CFE4DA; color:#2E5D4C;
+    border-radius:10px; padding:12px 14px; font-size:12.5px; line-height:1.6;
+  }
+  .flow-note b{ color:var(--tank); }
+
+  .doc-preview{
+    background:#fff; border:1px solid var(--line); border-radius:2px;
+    box-shadow: var(--shadow); padding:34px 30px; max-width:520px; margin:0 auto;
+    font-family:'Noto Sans JP';
+  }
+  .doc-preview h2{ font-size:18px; margin:0 0 2px; }
+  .doc-preview .sub{ font-size:11px; color:var(--muted); margin-bottom:18px; }
+  .doc-preview table{ font-size:12px; }
+  .doc-total{
+    display:flex; justify-content:space-between; margin-top:14px; padding-top:12px;
+    border-top:2px solid var(--ink); font-weight:700; font-size:15px;
+  }
+
+  .badge-demo{
+    position:fixed; bottom:18px; right:18px; z-index:50;
+    background:var(--primary-deep); color:#EFE7CB; font-size:11px;
+    padding:8px 14px; border-radius:30px; box-shadow:var(--shadow);
+    border:1px solid rgba(255,255,255,.15);
+  }
+
+  @media (max-width: 880px){
+    .app{ grid-template-columns: 1fr; }
+    .sidebar{ position:relative; height:auto; }
+    .g-4, .g-3, .g-2{ grid-template-columns: 1fr 1fr; }
+    main{ padding:20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">南</div>
+      <div class="brand-text">
+        <div class="t1">水産会社</div>
+        <div class="t2">SEIRI DX SYSTEM</div>
+      </div>
+    </div>
+    <span class="sub-badge">検討用デモ・GAS Webアプリ版</span>
+
+    <div class="nav-group-label">全体</div>
+    <nav class="tabs">
+      <button class="tab-btn active" data-tab="home"><span class="ico">◆</span>ホーム</button>
+    </nav>
+
+    <div class="nav-group-label">使う人 ｜ 水揚げ入力</div>
+    <nav class="tabs">
+      <button class="tab-btn" data-tab="log"><span class="ico">✎</span>水揚げ計量記録</button>
+      <button class="tab-btn" data-tab="tanks"><span class="ico">▦</span>タンク一覧</button>
+    </nav>
+
+    <div class="nav-group-label">使う人 ｜ セリ管理</div>
+    <nav class="tabs">
+      <button class="tab-btn" data-tab="auction"><span class="ico">✚</span>入札書 OCR取込</button>
+      <button class="tab-btn" data-tab="allocation"><span class="ico">⇄</span>切り計算</button>
+    </nav>
+
+    <div class="nav-group-label">管理する人 ｜ 帳票</div>
+    <nav class="tabs">
+      <button class="tab-btn" data-tab="invoice"><span class="ico">▤</span>仕切書</button>
+    </nav>
+
+    <div class="sidebar-foot">
+      Kz class合同会社様案（AppSheet）に対する<br>
+      GAS Webアプリ代替案の検討ドラフトです。<br>
+      ダミーデータで挙動を確認できます。
+    </div>
+  </aside>
+
+  <main>
+
+    <!-- ================= HOME ================= -->
+    <section class="page active" id="page-home">
+      <div class="page-head">
+        <div class="eyebrow">Dashboard</div>
+        <h1>本日のせり状況</h1>
+        <p>水揚げ・タンク・セリ・仕切書までの一連の流れを、役割ごとに1画面ずつ確認できます。左のメニューから各工程のデモをお試しください。</p>
+      </div>
+
+      <div class="grid g-4" style="margin-bottom:18px;">
+        <div class="card">
+          <h3>本日の入荷ロット</h3>
+          <div class="stat">4</div>
+          <div class="stat-label">吉田さん 2便／田中さん 1便／山田さん 1便</div>
+        </div>
+        <div class="card">
+          <h3>登録済み計量記録</h3>
+          <div class="stat" id="home-log-count">6</div>
+          <div class="stat-label">魚種延べ件数</div>
+          <div class="stat-sub">水揚げ計量記録タブと連動</div>
+        </div>
+        <div class="card">
+          <h3>稼働タンク</h3>
+          <div class="stat">5<span style="font-size:14px;color:var(--muted);"> / 9</span></div>
+          <div class="stat-label">活け 3 ／ 締め 2</div>
+        </div>
+        <div class="card">
+          <h3>セリ開始まで</h3>
+          <div class="stat mono" style="color:var(--coral);">15:30</div>
+          <div class="stat-label">本日 15:30 予定</div>
+        </div>
+      </div>
+
+      <div class="grid g-2">
+        <div class="card">
+          <h3 style="margin-bottom:12px;">業務フロー</h3>
+          <div class="flow-note">
+            <b>1. 水揚げ計量</b>（使う人）→ <b>2. タンク自動割当</b> → <b>3. 入札書OCR取込</b>（使う人・お立ち台）→ <b>4. 切り計算自動化</b>（仕組みで担保）→ <b>5. 仕切書発行</b>（管理する人）<br><br>
+            後工程は前工程のデータをそのまま再利用し、二重入力が発生しない設計です。
+          </div>
+        </div>
+        <div class="card">
+          <h3 style="margin-bottom:12px;">この案件で特に検証したいポイント</h3>
+          <table>
+            <tr><td>切り計算</td><td style="color:var(--muted);font-size:12px;">残量繰り越しロジックの自動化（要検証）</td></tr>
+            <tr><td>入力方式</td><td style="color:var(--muted);font-size:12px;">水揚げ記録：タップ or 音声（実機検証予定）</td></tr>
+            <tr><td>入札記録</td><td style="color:var(--muted);font-size:12px;">紙運用を維持しAI OCRでデータ化</td></tr>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 水揚げ計量記録 ================= -->
+    <section class="page" id="page-log">
+      <div class="page-head">
+        <div class="eyebrow">01 ／ 使う人：水揚げ担当職員</div>
+        <h1>水揚げ計量記録</h1>
+        <p>読み上げスピードに合わせて記録できることを最優先にしたUIです。魚種を選ぶと規格・割当タンクが自動で表示されます。</p>
+      </div>
+
+      <div class="grid" style="grid-template-columns: 1.1fr 1fr; align-items:start;">
+
+        <div class="ticket">
+          <div class="ticket-inner">
+            <div class="field-label">漁師 ／ 入荷ロット</div>
+            <div class="chip-grid" id="fisherman-chips"></div>
+
+            <div class="field-label">魚種</div>
+            <div class="chip-grid" id="fish-chips"></div>
+
+            <div class="field-label">規格</div>
+            <div class="chip-grid" id="grade-chips">
+              <span style="color:var(--muted); font-size:12.5px;">魚種を選ぶと表示されます</span>
+            </div>
+
+            <div class="field-label">重量 (kg)</div>
+            <div class="weight-input-row">
+              <input type="text" class="weight-input mono" id="weight-value" value="0.0" readonly>
+              <div class="keypad" id="keypad"></div>
+            </div>
+
+            <div class="field-label">締め ／ 活け</div>
+            <div class="toggle-row">
+              <button class="toggle selected" data-v="ike" id="toggle-ike">活け</button>
+              <button class="toggle" data-v="shime" id="toggle-shime">締め</button>
+            </div>
+
+            <div style="margin-top:22px; display:flex; gap:10px;">
+              <button class="btn gold" id="add-entry">＋ この内容で記録を追加</button>
+              <button class="btn warn" id="finish-fisherman">締め処理（この漁師分を確定）</button>
+            </div>
+            <div id="tank-hint" style="margin-top:14px; font-size:12.5px; color:var(--tank);"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-bottom:2px;">本日の記録一覧</h3>
+          <div style="font-size:11.5px; color:var(--muted); margin-bottom:10px;">同一漁師・同一魚種・同一規格は自動で合算表示されます（複数回計量対応）</div>
+          <div id="log-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= タンク一覧 ================= -->
+    <section class="page" id="page-tanks">
+      <div class="page-head">
+        <div class="eyebrow">02 ／ 現物突合</div>
+        <h1>タンク一覧（自動集計）</h1>
+        <p>水揚げ計量記録から、どのタンクに何がどれだけ入っているかを自動集計します。セリ前の現物突合のダブルチェックに使う想定です。</p>
+      </div>
+      <div class="grid g-3" id="tank-grid"></div>
+    </section>
+
+    <!-- ================= 入札書OCR ================= -->
+    <section class="page" id="page-auction">
+      <div class="page-head">
+        <div class="eyebrow">03 ／ 使う人：お立ち台担当者</div>
+        <h1>入札書 AI OCR 取込</h1>
+        <p>タブレット入力の代わりに、従来どおり紙の入札書に手書きし、記入完了後にスマホで撮影・アップロードします。読み取り結果は必ず人が確認できる一覧画面に出ます。</p>
+      </div>
+
+      <div class="grid" style="grid-template-columns: 1fr 1.3fr; align-items:start;">
+        <div class="card">
+          <h3 style="margin-bottom:12px;">Step 1｜入札書を撮影</h3>
+          <div class="scan-box" id="scan-box">
+            <div style="font-size:34px; margin-bottom:8px;">📷</div>
+            <div style="font-weight:700; margin-bottom:4px;">入札書（サンプル）をアップロード</div>
+            <div style="font-size:12px; color:var(--muted); margin-bottom:16px;">令和7年5月12日分・ヘイマ／ハゲ／ホゴ 他</div>
+            <button class="btn" id="run-ocr">この用紙をOCR読み取り</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-bottom:2px;">Step 2｜読み取り結果（要確認）</h3>
+          <div style="font-size:11.5px; color:var(--muted); margin-bottom:10px;">AIは提案役。誤読があればこの場で修正し、人が確定します。</div>
+          <div id="ocr-result">
+            <div style="font-size:12.5px; color:var(--muted); padding:30px 0; text-align:center;">まだ読み取りが実行されていません</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 切り計算（signature）================= -->
+    <section class="page" id="page-allocation">
+      <div class="page-head">
+        <div class="eyebrow">04 ／ 最重要ロジック</div>
+        <h1>切り計算 自動化</h1>
+        <p>水揚げ順に並んだロットに対し、入札価格の高い順に希望数量を割り当てます。残量が足りなければ差分を次のロットへ自動で繰り越します。位置指定（後ろの口が欲しい 等）にも対応します。</p>
+      </div>
+
+      <div class="card" style="margin-bottom:18px;">
+        <h3 style="margin-bottom:4px;">対象：ヘイマ・大　入荷ロット（水揚げ順）</h3>
+        <div style="font-size:12px; color:var(--muted); margin-bottom:16px;">水槽の物理的な位置ではなく、船が入荷した順序を基準に管理しています</div>
+        <div class="lotbar-wrap">
+          <div class="lotbar" id="lotbar"></div>
+          <div class="lot-label" id="lotbar-labels"></div>
+        </div>
+        <div class="legend" id="legend"></div>
+      </div>
+
+      <div class="grid" style="grid-template-columns: 1fr 1fr; align-items:start;">
+        <div class="card">
+          <h3 style="margin-bottom:10px;">入札一覧（高値順）</h3>
+          <table>
+            <thead><tr><th>仲買人</th><th>単価(円/kg)</th><th>希望数量</th><th>位置指定</th></tr></thead>
+            <tbody id="bid-table"></tbody>
+          </table>
+          <button class="btn gold" id="run-allocation" style="margin-top:16px;">この内容で切り計算を実行</button>
+        </div>
+        <div class="card">
+          <h3 style="margin-bottom:10px;">配分結果</h3>
+          <table>
+            <thead><tr><th>仲買人</th><th>取得ロット</th><th class="num">数量(kg)</th><th class="num">金額(円)</th></tr></thead>
+            <tbody id="allocation-result"><tr><td colspan="4" style="color:var(--muted); font-size:12.5px; text-align:center; padding:24px 0;">計算を実行してください</td></tr></tbody>
+          </table>
+          <div id="allocation-check" style="margin-top:12px; font-size:12.5px;"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 仕切書 ================= -->
+    <section class="page" id="page-invoice">
+      <div class="page-head">
+        <div class="eyebrow">05 ／ 管理する人：経理担当</div>
+        <h1>仕切書プレビュー</h1>
+        <p>切り計算の結果から、仲買人ごとの仕切書を自動生成します。まずはPDF出力・印刷を基本運用とし、メール送信はオプションとしています。</p>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-bottom:18px;">
+        <button class="chip selected" id="inv-buyer-1">こ崎商店</button>
+        <button class="chip" id="inv-buyer-2">松田水産</button>
+        <button class="btn ghost" style="margin-left:auto;">🖨 PDF出力（デモ）</button>
+      </div>
+
+      <div class="doc-preview">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <div>
+            <h2>仕切書</h2>
+            <div class="sub">令和7年5月12日　水産会社</div>
+          </div>
+          <div style="text-align:right; font-size:12px; color:var(--muted);">No. 20250512-004</div>
+        </div>
+        <div style="font-size:13px; margin-bottom:14px;">こ崎商店　様</div>
+        <table>
+          <thead>
+            <tr><th>魚種／規格</th><th>数量(kg)</th><th>単価(円/kg)</th><th class="num">金額(円)</th></tr>
+          </thead>
+          <tbody id="invoice-body">
+            <tr><td>ヘイマ・大</td><td>11.9</td><td class="num">367</td><td class="num">4,367</td></tr>
+            <tr><td>ヘイマ・大（繰越分）</td><td>25.5</td><td class="num">367</td><td class="num">9,359</td></tr>
+            <tr><td>ハゲ・大</td><td>2.1</td><td class="num">413</td><td class="num">867</td></tr>
+          </tbody>
+        </table>
+        <div class="doc-total">
+          <span>合計</span>
+          <span class="mono" id="invoice-total">¥14,593</span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div class="badge-demo">検討用デモ ／ ダミーデータで動作します</div>
+
+<script>
+/* ===================== data ===================== */
+const fishermen = [
+  { id:'yoshida', name:'吉田さん', lots:['1便','2便'] },
+  { id:'tanaka',  name:'田中さん', lots:['1便'] },
+  { id:'yamada',  name:'山田さん', lots:['1便'] },
+];
+
+const fishMaster = {
+  'ヘイマ':      { grades:['大','小','B','V'], tank:{'大':'1号水槽（活け）','小':'2号水槽（活け）','B':'3号水槽（活け）','V':'締めタンクA'} },
+  'ハゲ':        { grades:['大','中','小','B','2B'], tank:{'大':'4号水槽（活け）','中':'5号水槽（活け）','小':'6号水槽（活け）','B':'Bタンク','2B':'2Bタンク'} },
+  'ホゴ':        { grades:['特','大','中','小','B','2B'], tank:{'特':'特選水槽','大':'7号水槽（活け）','中':'7号水槽（活け）','小':'8号水槽（活け）','B':'Bタンク','2B':'2Bタンク'} },
+  'タイ':        { grades:['大','小','K・小'], tank:{'大':'生け簀A','小':'生け簀B','K・小':'生け簀B'} },
+  'ブリ・ハマチ': { grades:['活け'], tank:{'活け':'大型水槽（活け）'} },
+  'ワカナ':      { grades:['大','小'], tank:{'大':'9号水槽（活け）','小':'9号水槽（活け）'} },
+  'イサギ':      { grades:['大','小'], tank:{'大':'締めタンクB','小':'締めタンクB'} },
+};
+
+let catchLog = [
+  { fisherman:'吉田さん', lot:'1便', fish:'ヘイマ', grade:'大', weight:37.4, state:'ike' },
+  { fisherman:'吉田さん', lot:'1便', fish:'ヘイマ', grade:'大', weight:14.7, state:'ike' },
+  { fisherman:'田中さん', lot:'1便', fish:'ホゴ',   grade:'中', weight:9.6,  state:'ike' },
+  { fisherman:'山田さん', lot:'1便', fish:'ハゲ',   grade:'大', weight:24.1, state:'ike' },
+  { fisherman:'吉田さん', lot:'2便', fish:'タイ',   grade:'大', weight:5.5,  state:'shime' },
+  { fisherman:'田中さん', lot:'1便', fish:'イサギ', grade:'小', weight:0.8,  state:'shime' },
+];
+
+/* ===================== nav ===================== */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById('page-'+btn.dataset.tab).classList.add('active');
+    if(btn.dataset.tab==='tanks') renderTanks();
+  });
+});
+
+/* ===================== 水揚げ記録画面 ===================== */
+let currentFisherman = fishermen[0];
+let currentLot = fishermen[0].lots[0];
+let currentFish = null;
+let currentGrade = null;
+let currentState = 'ike';
+let weightStr = '0';
+
+function renderFishermanChips(){
+  const wrap = document.getElementById('fisherman-chips');
+  wrap.innerHTML = '';
+  fishermen.forEach(f=>{
+    f.lots.forEach(lot=>{
+      const chip = document.createElement('button');
+      chip.className = 'chip' + ((f===currentFisherman && lot===currentLot) ? ' selected':'');
+      chip.textContent = f.name + '｜' + lot;
+      chip.onclick = ()=>{ currentFisherman=f; currentLot=lot; renderFishermanChips(); updateTankHint(); };
+      wrap.appendChild(chip);
+    });
+  });
+}
+
+function renderFishChips(){
+  const wrap = document.getElementById('fish-chips');
+  wrap.innerHTML = '';
+  Object.keys(fishMaster).forEach(fish=>{
+    const chip = document.createElement('button');
+    chip.className = 'chip' + (fish===currentFish ? ' selected':'');
+    chip.textContent = fish;
+    chip.onclick = ()=>{
+      currentFish = fish;
+      currentGrade = fishMaster[fish].grades[0];
+      renderFishChips();
+      renderGradeChips();
+      updateTankHint();
+    };
+    wrap.appendChild(chip);
+  });
+}
+
+function renderGradeChips(){
+  const wrap = document.getElementById('grade-chips');
+  wrap.innerHTML = '';
+  if(!currentFish){
+    wrap.innerHTML = '<span style="color:var(--muted); font-size:12.5px;">魚種を選ぶと表示されます</span>';
+    return;
+  }
+  fishMaster[currentFish].grades.forEach(g=>{
+    const chip = document.createElement('button');
+    chip.className = 'chip grade' + (g===currentGrade ? ' selected':'');
+    chip.textContent = g;
+    chip.onclick = ()=>{ currentGrade = g; renderGradeChips(); updateTankHint(); };
+    wrap.appendChild(chip);
+  });
+}
+
+function updateTankHint(){
+  const hint = document.getElementById('tank-hint');
+  if(currentFish && currentGrade){
+    const tank = fishMaster[currentFish].tank[currentGrade];
+    hint.innerHTML = '割当タンク（自動）: <b>' + tank + '</b>　／　対象: ' + currentFisherman.name + '・' + currentLot;
+  } else {
+    hint.textContent = '';
+  }
+}
+
+const keypadKeys = ['1','2','3','4','5','6','7','8','9','.','0','⌫'];
+function renderKeypad(){
+  const wrap = document.getElementById('keypad');
+  wrap.innerHTML = '';
+  keypadKeys.forEach(k=>{
+    const b = document.createElement('button');
+    b.textContent = k;
+    b.onclick = ()=>{
+      if(k==='⌫'){ weightStr = weightStr.length>1 ? weightStr.slice(0,-1) : '0'; }
+      else if(k==='.'){ if(!weightStr.includes('.')) weightStr += '.'; }
+      else { weightStr = (weightStr==='0') ? k : weightStr + k; }
+      document.getElementById('weight-value').value = weightStr;
+    };
+    wrap.appendChild(b);
+  });
+}
+
+document.getElementById('toggle-ike').onclick = ()=>{
+  currentState='ike';
+  document.getElementById('toggle-ike').classList.add('selected');
+  document.getElementById('toggle-shime').classList.remove('selected');
+};
+document.getElementById('toggle-shime').onclick = ()=>{
+  currentState='shime';
+  document.getElementById('toggle-shime').classList.add('selected');
+  document.getElementById('toggle-ike').classList.remove('selected');
+};
+
+document.getElementById('add-entry').onclick = ()=>{
+  const w = parseFloat(weightStr);
+  if(!currentFish || !currentGrade || !w){
+    alert('魚種・規格・重量を入力してください');
+    return;
+  }
+  catchLog.push({ fisherman:currentFisherman.name, lot:currentLot, fish:currentFish, grade:currentGrade, weight:w, state:currentState });
+  weightStr = '0';
+  document.getElementById('weight-value').value = '0.0';
+  renderLog();
+};
+
+document.getElementById('finish-fisherman').onclick = ()=>{
+  const entries = catchLog.filter(e=>e.fisherman===currentFisherman.name && e.lot===currentLot);
+  if(entries.length===0){ alert('この漁師・便の記録がありません'); return; }
+  alert(currentFisherman.name + '・' + currentLot + ' の締め処理を実行しました。\n三受け伝票をモバイルプリンターへ送信します（デモ）。\n\n内訳:\n' +
+    entries.map(e=>'・'+e.fish+' '+e.grade+' '+e.weight.toFixed(1)+'kg（'+(e.state==='ike'?'活け':'締め')+'）').join('\n'));
+};
+
+function renderLog(){
+  const wrap = document.getElementById('log-list');
+  // aggregate by fisherman+lot+fish+grade+state
+  const agg = {};
+  catchLog.forEach(e=>{
+    const key = [e.fisherman,e.lot,e.fish,e.grade,e.state].join('|');
+    if(!agg[key]) agg[key] = {...e, weight:0, count:0};
+    agg[key].weight += e.weight;
+    agg[key].count += 1;
+  });
+  const rows = Object.values(agg).sort((a,b)=> (a.fisherman+a.lot).localeCompare(b.fisherman+b.lot));
+  wrap.innerHTML = rows.map(r=>`
+    <div class="log-entry">
+      <div>
+        <div><b>${r.fish} ${r.grade}</b> <span class="pill ${r.state==='ike'?'ike':'shime'}">${r.state==='ike'?'活け':'締め'}</span></div>
+        <div class="meta">${r.fisherman}｜${r.lot}${r.count>1 ? '｜'+r.count+'回計量を合算' : ''}</div>
+      </div>
+      <div class="mono" style="font-weight:700;">${r.weight.toFixed(1)}kg</div>
+    </div>
+  `).join('') || '<div style="color:var(--muted); font-size:12.5px;">まだ記録がありません</div>';
+  document.getElementById('home-log-count').textContent = catchLog.length;
+}
+
+/* ===================== タンク一覧 ===================== */
+function renderTanks(){
+  const grid = document.getElementById('tank-grid');
+  const agg = {};
+  catchLog.forEach(e=>{
+    const tankName = (fishMaster[e.fish] && fishMaster[e.fish].tank[e.grade]) || '未割当';
+    if(!agg[tankName]) agg[tankName] = { items:{}, total:0, ike: tankName.includes('活け') || tankName.includes('生け') };
+    const k = e.fish+' '+e.grade;
+    agg[tankName].items[k] = (agg[tankName].items[k]||0) + e.weight;
+    agg[tankName].total += e.weight;
+  });
+  const names = Object.keys(agg).sort();
+  grid.innerHTML = names.map(name=>{
+    const t = agg[name];
+    const itemsHtml = Object.entries(t.items).map(([k,v])=>`
+      <div style="display:flex; justify-content:space-between; font-size:12.5px; padding:4px 0; border-bottom:1px dashed var(--line);">
+        <span>${k}</span><span class="mono">${v.toFixed(1)}kg</span>
+      </div>`).join('');
+    return `
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <h3 style="margin:0;">${name}</h3>
+        <span class="pill ${t.ike?'ike':'shime'}">${t.ike?'活け':'締め'}</span>
+      </div>
+      <div class="stat" style="font-size:22px;">${t.total.toFixed(1)}<span style="font-size:13px;color:var(--muted);">kg</span></div>
+      <div style="margin-top:10px;">${itemsHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ===================== 入札書OCR ===================== */
+document.getElementById('run-ocr').onclick = ()=>{
+  const box = document.getElementById('scan-box');
+  const resultWrap = document.getElementById('ocr-result');
+  box.classList.add('busy');
+  box.querySelector('button').disabled = true;
+  resultWrap.innerHTML = `<div style="text-align:center; padding:20px 0;"><div class="spinner"></div><div style="font-size:12.5px; color:var(--muted);">AIが手書き入札書を読み取っています…</div></div>`;
+
+  setTimeout(()=>{
+    box.classList.remove('busy');
+    box.querySelector('button').disabled = false;
+    resultWrap.innerHTML = `
+      <table>
+        <thead><tr><th>魚種／規格</th><th>仲買人</th><th class="num">単価</th><th class="num">数量</th><th>位置指定</th><th></th></tr></thead>
+        <tbody>
+          <tr><td>ヘイマ・大</td><td>こ崎商店</td><td class="num mono">367</td><td class="num mono">37.4</td><td>-</td><td><span class="pill gold">確認済</span></td></tr>
+          <tr><td>ヘイマ・大</td><td>松田水産</td><td class="num mono">358</td><td class="num mono">39.6</td><td style="color:var(--warn);">後ろの口</td><td><button class="btn sm ghost">確認</button></td></tr>
+          <tr><td>ハゲ・大</td><td>こ崎商店</td><td class="num mono">413</td><td class="num mono">24.1</td><td>-</td><td><span class="pill gold">確認済</span></td></tr>
+        </tbody>
+      </table>
+      <div class="flow-note" style="margin-top:12px;">読み取り誤差が疑われる場合は、行をタップして手書き原本と照合・修正してから確定します。AIは提案役、確定は人が行います。</div>
+    `;
+  }, 1400);
+};
+
+/* ===================== 切り計算 ===================== */
+const lots = [
+  { id:'吉田1便', weight:37.4, order:1 },
+  { id:'田中1便', weight:14.7, order:2 },
+  { id:'山田1便', weight:24.1, order:3 },
+  { id:'吉田2便', weight:11.9, order:4 },
+];
+const bids = [
+  { buyer:'こ崎商店', price:367, want:37.4, pos:'front' },
+  { buyer:'松田水産', price:358, want:39.6, pos:'back' },
+  { buyer:'山下鮮魚', price:340, want:14.1, pos:'front' },
+];
+const buyerColor = { 'こ崎商店':'#3A7D64', '松田水産':'#C0932B', '山下鮮魚':'#B85B3E' };
+
+function renderBidTable(){
+  const tbody = document.getElementById('bid-table');
+  tbody.innerHTML = bids.slice().sort((a,b)=>b.price-a.price).map(b=>`
+    <tr>
+      <td><span class="legend-dot" style="display:inline-block;background:${buyerColor[b.buyer]}; margin-right:6px;"></span>${b.buyer}</td>
+      <td class="num mono">${b.price}</td>
+      <td class="num mono">${b.want.toFixed(1)}kg</td>
+      <td>${b.pos==='back' ? '後ろの口が欲しい' : '前から順に'}</td>
+    </tr>
+  `).join('');
+}
+
+function renderLotbarEmpty(){
+  const bar = document.getElementById('lotbar');
+  const labels = document.getElementById('lotbar-labels');
+  const total = lots.reduce((s,l)=>s+l.weight,0);
+  bar.innerHTML = lots.map(l=>`<div class="lot-seg empty" style="width:${(l.weight/total*100)}%;">${l.id}</div>`).join('');
+  labels.innerHTML = lots.map(l=>`<span>${l.id}｜${l.weight.toFixed(1)}kg</span>`).join('');
+  document.getElementById('legend').innerHTML = bids.map(b=>`
+    <div class="legend-item"><span class="legend-dot" style="background:${buyerColor[b.buyer]}"></span>${b.buyer}（希望 ${b.want.toFixed(1)}kg）</div>
+  `).join('');
+}
+
+function calcAllocation(){
+  const sorted = bids.slice().sort((a,b)=>b.price-a.price);
+  const remain = lots.map(l=>({...l, remaining:l.weight}));
+  const results = [];
+  sorted.forEach(bid=>{
+    let need = bid.want;
+    const order = bid.pos==='back' ? [...remain].reverse() : remain;
+    for(const lot of order){
+      if(need<=0) break;
+      if(lot.remaining<=0) continue;
+      const take = Math.min(need, lot.remaining);
+      results.push({ buyer:bid.buyer, lotId:lot.id, amount:take, price:bid.price });
+      lot.remaining -= take;
+      need -= take;
+    }
+  });
+  return { results, remain };
+}
+
+document.getElementById('run-allocation').onclick = ()=>{
+  const { results, remain } = calcAllocation();
+  const total = lots.reduce((s,l)=>s+l.weight,0);
+
+  // render bar with segments (may split a lot into multiple buyer chunks)
+  const bar = document.getElementById('lotbar');
+  const segHtml = lots.map(lot=>{
+    const parts = results.filter(r=>r.lotId===lot.id);
+    const lotWidthPct = (lot.weight/total*100);
+    if(parts.length===0){
+      return `<div class="lot-seg empty" style="width:${lotWidthPct}%;">${lot.id}</div>`;
+    }
+    const inner = parts.map(p=>{
+      const w = (p.amount/lot.weight*100);
+      return `<div class="lot-seg" style="width:${w}%; background:${buyerColor[p.buyer]};" title="${p.buyer} ${p.amount.toFixed(1)}kg">${p.amount>=3 ? p.amount.toFixed(1)+'kg' : ''}</div>`;
+    }).join('');
+    return `<div style="width:${lotWidthPct}%; display:flex;">${inner}</div>`;
+  }).join('');
+  bar.innerHTML = segHtml;
+
+  // result table
+  const tbody = document.getElementById('allocation-result');
+  tbody.innerHTML = results.map(r=>`
+    <tr>
+      <td><span class="legend-dot" style="display:inline-block;background:${buyerColor[r.buyer]}; margin-right:6px;"></span>${r.buyer}</td>
+      <td>${r.lotId}</td>
+      <td class="num mono">${r.amount.toFixed(1)}</td>
+      <td class="num mono">${Math.round(r.amount*r.price).toLocaleString()}</td>
+    </tr>
+  `).join('');
+
+  const remainTotal = remain.reduce((s,l)=>s+l.remaining,0);
+  const check = document.getElementById('allocation-check');
+  if(remainTotal < 0.05){
+    check.innerHTML = `<span style="color:var(--tank); font-weight:700;">✓ 投入量と落札量が一致しました（残 ${remainTotal.toFixed(1)}kg）。確定できます。</span>`;
+  } else {
+    check.innerHTML = `<span style="color:var(--warn); font-weight:700;">⚠ 未落札分が ${remainTotal.toFixed(1)}kg 残っています。確定せず確認してください（止め金）。</span>`;
+  }
+};
+
+/* ===================== 仕切書 ===================== */
+document.getElementById('inv-buyer-1').onclick = function(){
+  this.classList.add('selected');
+  document.getElementById('inv-buyer-2').classList.remove('selected');
+  document.getElementById('invoice-body').innerHTML = `
+    <tr><td>ヘイマ・大</td><td>11.9</td><td class="num">367</td><td class="num">4,367</td></tr>
+    <tr><td>ヘイマ・大（繰越分）</td><td>25.5</td><td class="num">367</td><td class="num">9,359</td></tr>
+    <tr><td>ハゲ・大</td><td>2.1</td><td class="num">413</td><td class="num">867</td></tr>`;
+  document.getElementById('invoice-total').textContent = '¥14,593';
+};
+document.getElementById('inv-buyer-2').onclick = function(){
+  this.classList.add('selected');
+  document.getElementById('inv-buyer-1').classList.remove('selected');
+  document.getElementById('invoice-body').innerHTML = `
+    <tr><td>ヘイマ・大（後ろの口）</td><td>39.6</td><td class="num">358</td><td class="num">14,177</td></tr>`;
+  document.getElementById('invoice-total').textContent = '¥14,177';
+};
+
+/* ===================== init ===================== */
+renderFishermanChips();
+renderFishChips();
+renderGradeChips();
+renderKeypad();
+renderLog();
+renderBidTable();
+renderLotbarEmpty();
+</script>
+</body>
+</html>
