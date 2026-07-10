@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>サロン管理システム｜デモ</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap');
+
+  :root {
+    --ink: #1a1a1a;
+    --gold: #b8965a;
+    --gold-light: #d4b07a;
+    --cream: #f9f6f0;
+    --white: #ffffff;
+    --gray-100: #f4f4f2;
+    --gray-200: #e8e6e1;
+    --gray-400: #9e9b94;
+    --gray-600: #6b6860;
+    --accent: #2c4a3e;
+    --accent-light: #3d6456;
+    --danger: #8b3a3a;
+    --success: #2c4a3e;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.14);
+    --radius: 8px;
+    --radius-lg: 14px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ===== HEADER ===== */
+  .app-header {
+    background: var(--ink);
+    color: var(--white);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow-md);
+  }
+  .app-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    color: var(--gold);
+  }
+  .app-logo span {
+    font-weight: 400;
+    font-style: italic;
+    color: var(--white);
+    font-size: 13px;
+    margin-left: 10px;
+    letter-spacing: 0.06em;
+    opacity: 0.7;
+  }
+  .header-staff {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--gray-400);
+  }
+  .staff-avatar {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: var(--gold);
+    color: var(--ink);
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+  }
+
+  /* ===== NAV TABS ===== */
+  .nav-tabs {
+    background: var(--white);
+    border-bottom: 1px solid var(--gray-200);
+    display: flex;
+    padding: 0 24px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    position: sticky;
+    top: 56px;
+    z-index: 99;
+    box-shadow: var(--shadow-sm);
+  }
+  .nav-tabs::-webkit-scrollbar { display: none; }
+  .nav-tab {
+    padding: 14px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gray-400);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: all 0.2s;
+    letter-spacing: 0.04em;
+  }
+  .nav-tab:hover { color: var(--ink); }
+  .nav-tab.active {
+    color: var(--gold);
+    border-bottom-color: var(--gold);
+  }
+
+  /* ===== MAIN ===== */
+  .main { max-width: 900px; margin: 0 auto; padding: 28px 20px; }
+
+  /* ===== SECTION HEADER ===== */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--ink);
+  }
+  .section-title small {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 12px;
+    color: var(--gray-400);
+    font-weight: 400;
+    margin-left: 8px;
+  }
+
+  /* ===== CARD ===== */
+  .card {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--gray-200);
+    overflow: hidden;
+  }
+
+  /* ===== SEARCH BAR ===== */
+  .search-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .search-bar input {
+    flex: 1;
+    padding: 10px 16px;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-family: inherit;
+    background: var(--white);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-bar input:focus { border-color: var(--gold); }
+  .btn {
+    padding: 10px 20px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    letter-spacing: 0.04em;
+  }
+  .btn-primary { background: var(--ink); color: var(--white); }
+  .btn-primary:hover { background: var(--accent); }
+  .btn-gold { background: var(--gold); color: var(--white); }
+  .btn-gold:hover { background: var(--gold-light); }
+  .btn-outline { background: transparent; color: var(--ink); border: 1px solid var(--gray-200); }
+  .btn-outline:hover { border-color: var(--ink); }
+  .btn-sm { padding: 6px 14px; font-size: 12px; }
+  .btn-danger { background: var(--danger); color: var(--white); }
+
+  /* ===== TABLE ===== */
+  .data-table { width: 100%; border-collapse: collapse; }
+  .data-table th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    color: var(--gray-400);
+    background: var(--gray-100);
+    border-bottom: 1px solid var(--gray-200);
+    text-transform: uppercase;
+  }
+  .data-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--gray-100);
+    font-size: 13px;
+    vertical-align: middle;
+  }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr { cursor: pointer; transition: background 0.15s; }
+  .data-table tr:hover td { background: var(--cream); }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .badge-green { background: #e8f4e8; color: #2c6a2c; }
+  .badge-gold { background: #faf0e0; color: #8b6914; }
+  .badge-gray { background: var(--gray-100); color: var(--gray-600); }
+  .badge-blue { background: #e8eef8; color: #2c4480; }
+
+  /* ===== DETAIL PANEL ===== */
+  .detail-panel {
+    display: none;
+    position: fixed;
+    right: 0; top: 0; bottom: 0;
+    width: min(480px, 100vw);
+    background: var(--white);
+    box-shadow: var(--shadow-lg);
+    z-index: 200;
+    overflow-y: auto;
+    animation: slideIn 0.25s ease;
+  }
+  .detail-panel.open { display: block; }
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  .panel-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.3);
+    z-index: 199;
+  }
+  .panel-overlay.open { display: block; }
+  .panel-header {
+    padding: 20px 24px;
+    background: var(--ink);
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+  }
+  .panel-title { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 600; color: var(--gold); }
+  .panel-close { background: none; border: none; color: var(--white); font-size: 22px; cursor: pointer; opacity: 0.7; }
+  .panel-close:hover { opacity: 1; }
+  .panel-body { padding: 24px; }
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .info-item label {
+    display: block;
+    font-size: 11px;
+    color: var(--gray-400);
+    letter-spacing: 0.06em;
+    margin-bottom: 3px;
+    text-transform: uppercase;
+  }
+  .info-item span { font-size: 14px; font-weight: 500; }
+  .info-item.full { grid-column: 1 / -1; }
+
+  .karte-list { margin-top: 8px; }
+  .karte-item {
+    padding: 14px;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    margin-bottom: 10px;
+    transition: box-shadow 0.2s;
+  }
+  .karte-item:hover { box-shadow: var(--shadow-sm); }
+  .karte-date { font-size: 12px; color: var(--gray-400); margin-bottom: 4px; }
+  .karte-menu { font-weight: 500; font-size: 14px; margin-bottom: 4px; }
+  .karte-staff { font-size: 12px; color: var(--gray-600); }
+  .karte-photo {
+    width: 60px; height: 60px;
+    border-radius: 6px;
+    object-fit: cover;
+    background: var(--gray-100);
+    float: right;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; color: var(--gray-400);
+    text-align: center;
+    line-height: 1.3;
+  }
+
+  /* ===== FORM ===== */
+  .form-group { margin-bottom: 16px; }
+  .form-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--gray-600);
+    margin-bottom: 6px;
+    letter-spacing: 0.04em;
+  }
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s;
+    background: var(--white);
+    color: var(--ink);
+  }
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus { border-color: var(--gold); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink);
+    border-bottom: 1px solid var(--gray-200);
+    padding-bottom: 8px;
+    margin-bottom: 14px;
+    margin-top: 20px;
+    letter-spacing: 0.04em;
+  }
+
+  /* ===== NIPPOU ===== */
+  .nippou-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .summary-card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    text-align: center;
+  }
+  .summary-label { font-size: 11px; color: var(--gray-400); letter-spacing: 0.06em; margin-bottom: 6px; text-transform: uppercase; }
+  .summary-value { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 600; color: var(--gold); }
+  .summary-unit { font-size: 12px; color: var(--gray-400); margin-left: 2px; }
+
+  .nippou-items { }
+  .nippou-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 80px 36px;
+    gap: 8px;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--gray-100);
+  }
+  .nippou-row:last-child { border-bottom: none; }
+  .nippou-row input, .nippou-row select {
+    padding: 8px 10px;
+    border: 1px solid var(--gray-200);
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    width: 100%;
+    transition: border-color 0.2s;
+  }
+  .nippou-row input:focus, .nippou-row select:focus { border-color: var(--gold); }
+  .nippou-amount { font-weight: 700; font-size: 14px; color: var(--accent); text-align: right; }
+  .remove-btn {
+    background: none; border: none; cursor: pointer;
+    color: var(--gray-400); font-size: 18px; line-height: 1;
+    transition: color 0.2s;
+  }
+  .remove-btn:hover { color: var(--danger); }
+
+  /* ===== COUNSELING ===== */
+  .counseling-card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: box-shadow 0.2s;
+    cursor: pointer;
+  }
+  .counseling-card:hover { box-shadow: var(--shadow-md); }
+  .counseling-icon {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: var(--cream);
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .counseling-info { flex: 1; }
+  .counseling-name { font-weight: 500; font-size: 15px; }
+  .counseling-meta { font-size: 12px; color: var(--gray-400); margin-top: 2px; }
+  .counseling-menu { margin-left: auto; }
+
+  /* ===== TOAST ===== */
+  .toast {
+    position: fixed;
+    bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--ink);
+    color: var(--white);
+    padding: 12px 24px;
+    border-radius: 24px;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 999;
+    transition: transform 0.3s ease;
+    box-shadow: var(--shadow-lg);
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ===== EMPTY STATE ===== */
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--gray-400);
+  }
+  .empty-state .icon { font-size: 36px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+
+  /* ===== PAGE ===== */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ===== STAFF SELECTOR ===== */
+  .staff-selector {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .staff-chip {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--gray-200);
+    background: var(--white);
+    color: var(--gray-600);
+    transition: all 0.2s;
+  }
+  .staff-chip.active {
+    background: var(--ink);
+    color: var(--white);
+    border-color: var(--ink);
+  }
+
+  @media (max-width: 600px) {
+    .form-row { grid-template-columns: 1fr; }
+    .info-grid { grid-template-columns: 1fr; }
+    .nippou-summary { grid-template-columns: 1fr 1fr; }
+    .nippou-row { grid-template-columns: 1fr 80px 36px; }
+    .nippou-row .col-menu { grid-column: 1; }
+    .nippou-row .col-type { display: none; }
+    .main { padding: 16px 12px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="app-header">
+  <div class="app-logo">Salon<span>管理システム</span></div>
+  <div class="header-staff">
+    <div class="staff-avatar" id="headerAvatar">田</div>
+    <span id="headerName">田中 梨緒</span>
+  </div>
+</header>
+
+<!-- NAV -->
+<nav class="nav-tabs">
+  <div class="nav-tab active" onclick="showPage('customers')">👤 顧客</div>
+  <div class="nav-tab" onclick="showPage('karte')">📋 カルテ</div>
+  <div class="nav-tab" onclick="showPage('counseling')">📝 カウンセリング</div>
+  <div class="nav-tab" onclick="showPage('nippou')">📊 日報</div>
+  <div class="nav-tab" onclick="showPage('staff')">⚙️ スタッフ</div>
+</nav>
+
+<main class="main">
+
+  <!-- ===== 顧客一覧 ===== -->
+  <div class="page active" id="page-customers">
+    <div class="section-header">
+      <div class="section-title">顧客一覧<small id="customerCount">12名</small></div>
+      <button class="btn btn-primary btn-sm" onclick="showToast('顧客登録フォームを開きます')">＋ 新規登録</button>
+    </div>
+    <div class="search-bar">
+      <input type="text" placeholder="名前・フリガナ・電話番号で検索…" id="customerSearch" oninput="filterCustomers()">
+    </div>
+    <div class="card">
+      <table class="data-table" id="customerTable">
+        <thead>
+          <tr>
+            <th>顧客No.</th>
+            <th>氏名</th>
+            <th>フリガナ</th>
+            <th>電話番号</th>
+            <th>最終来店</th>
+            <th>メニュー</th>
+          </tr>
+        </thead>
+        <tbody id="customerBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== カルテ ===== -->
+  <div class="page" id="page-karte">
+    <div class="section-header">
+      <div class="section-title">施術履歴<small>全記録</small></div>
+      <button class="btn btn-primary btn-sm" onclick="showToast('施術履歴を新規登録します')">＋ 施術登録</button>
+    </div>
+    <div class="search-bar">
+      <input type="text" placeholder="顧客名・メニューで検索…" id="karteSearch" oninput="filterKarte()">
+      <select class="btn btn-outline" style="padding:10px 14px;font-family:inherit;font-size:13px;" onchange="filterKarte()" id="karteMenuFilter">
+        <option value="">すべてのメニュー</option>
+        <option>マツエク</option>
+        <option>HBL</option>
+        <option>ラッシュリフト</option>
+        <option>まつ毛パーマ</option>
+      </select>
+    </div>
+    <div class="card">
+      <table class="data-table" id="karteTable">
+        <thead>
+          <tr>
+            <th>施術日</th>
+            <th>顧客名</th>
+            <th>メニュー</th>
+            <th>担当</th>
+            <th>写真</th>
+            <th>メモ</th>
+          </tr>
+        </thead>
+        <tbody id="karteBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== カウンセリング ===== -->
+  <div class="page" id="page-counseling">
+    <div class="section-header">
+      <div class="section-title">要転記<small id="counselingCount">3件</small></div>
+    </div>
+    <p style="font-size:13px;color:var(--gray-600);margin-bottom:16px;">お客様がQRコードから入力したカウンセリングシートを確認し、顧客番号を割り当てて転記してください。</p>
+    <div id="counselingList"></div>
+
+    <div style="margin-top:32px;">
+      <div class="section-title" style="font-size:16px;margin-bottom:12px;">転記済み（直近）</div>
+      <div id="counselingDoneList"></div>
+    </div>
+  </div>
+
+  <!-- ===== 日報 ===== -->
+  <div class="page" id="page-nippou">
+    <div class="section-header">
+      <div class="section-title">日報入力</div>
+      <div style="font-size:13px;color:var(--gray-400);" id="nippouDate"></div>
+    </div>
+
+    <div class="staff-selector" id="staffSelector"></div>
+
+    <div class="nippou-summary">
+      <div class="summary-card">
+        <div class="summary-label">売上合計</div>
+        <div class="summary-value" id="totalSales">0<span class="summary-unit">円</span></div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">インセンティブ</div>
+        <div class="summary-value" id="totalIncentive">0<span class="summary-unit">円</span></div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">事務時間</div>
+        <div class="summary-value" id="jimuValue">0<span class="summary-unit">分</span></div>
+      </div>
+    </div>
+
+    <div class="card" style="padding:20px;">
+      <div class="form-section-title">施術内容</div>
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr 80px 36px;gap:8px;margin-bottom:6px;">
+        <div style="font-size:11px;color:var(--gray-400);letter-spacing:.06em;text-transform:uppercase;">メニュー</div>
+        <div style="font-size:11px;color:var(--gray-400);letter-spacing:.06em;text-transform:uppercase;">金額</div>
+        <div style="font-size:11px;color:var(--gray-400);letter-spacing:.06em;text-transform:uppercase;">区分</div>
+        <div style="font-size:11px;color:var(--gray-400);letter-spacing:.06em;text-transform:uppercase;text-align:right;">報酬</div>
+        <div></div>
+      </div>
+      <div id="nippouRows"></div>
+      <button class="btn btn-outline btn-sm" style="margin-top:12px;" onclick="addNippouRow()">＋ 施術を追加</button>
+
+      <div class="form-section-title">時間・その他</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>事務時間（分）</label>
+          <input type="number" id="jimuTime" value="0" min="0" oninput="calcNippou()" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label>内休憩時間（分）</label>
+          <input type="number" id="breakTime" value="0" min="0" placeholder="0">
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;">
+        <button class="btn btn-outline" onclick="showToast('入力内容をリセットしました')">リセット</button>
+        <button class="btn btn-primary" onclick="saveNippou()">💾 保存する</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== スタッフ ===== -->
+  <div class="page" id="page-staff">
+    <div class="section-header">
+      <div class="section-title">スタッフ管理</div>
+      <button class="btn btn-primary btn-sm" onclick="showToast('スタッフを新規追加します')">＋ 追加</button>
+    </div>
+    <div class="card">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>名前</th>
+            <th>時給</th>
+            <th>フリー歩合</th>
+            <th>指名歩合</th>
+            <th>ハイスキル</th>
+            <th>ステータス</th>
+          </tr>
+        </thead>
+        <tbody id="staffBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<!-- DETAIL PANEL -->
+<div class="panel-overlay" id="overlay" onclick="closePanel()"></div>
+<div class="detail-panel" id="detailPanel">
+  <div class="panel-header">
+    <div class="panel-title" id="panelTitle">顧客詳細</div>
+    <button class="panel-close" onclick="closePanel()">✕</button>
+  </div>
+  <div class="panel-body" id="panelBody"></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== DATA =====
+const customers = [
+  { no:'A00001', name:'佐藤 美咲', kana:'サトウ ミサキ', tel:'090-1234-5678', lastVisit:'2025-06-28', allergy:'なし', occasion:'Instagram', menu:'マツエク', address:'大阪市中央区' },
+  { no:'A00002', name:'田中 優花', kana:'タナカ ユウカ', tel:'080-2345-6789', lastVisit:'2025-07-01', allergy:'花粉症', occasion:'友人紹介', menu:'HBL', address:'大阪市北区' },
+  { no:'A00003', name:'山本 里奈', kana:'ヤマモト リナ', tel:'070-3456-7890', lastVisit:'2025-06-15', allergy:'なし', occasion:'ホームページ', menu:'マツエク', address:'大阪市天王寺区' },
+  { no:'A00004', name:'鈴木 愛理', kana:'スズキ アイリ', tel:'090-4567-8901', lastVisit:'2025-06-30', allergy:'ラテックスアレルギー', occasion:'Instagram', menu:'ラッシュリフト', address:'東大阪市' },
+  { no:'A00005', name:'伊藤 彩花', kana:'イトウ アヤカ', tel:'080-5678-9012', lastVisit:'2025-05-20', allergy:'なし', occasion:'Googleマップ', menu:'マツエク', address:'大阪市浪速区' },
+  { no:'A00006', name:'渡辺 春奈', kana:'ワタナベ ハルナ', tel:'070-6789-0123', lastVisit:'2025-07-03', allergy:'なし', occasion:'Instagram', menu:'HBL', address:'堺市北区' },
+  { no:'A00007', name:'中村 葵', kana:'ナカムラ アオイ', tel:'090-7890-1234', lastVisit:'2025-06-22', allergy:'目が敏感', occasion:'友人紹介', menu:'まつ毛パーマ', address:'大阪市住吉区' },
+  { no:'A00008', name:'小林 莉子', kana:'コバヤシ リコ', tel:'080-8901-2345', lastVisit:'2025-07-05', allergy:'なし', occasion:'ホットペッパー', menu:'マツエク', address:'豊中市' },
+  { no:'A00009', name:'加藤 詩織', kana:'カトウ シオリ', tel:'070-9012-3456', lastVisit:'2025-06-10', allergy:'なし', occasion:'Instagram', menu:'ラッシュリフト', address:'吹田市' },
+  { no:'A00010', name:'吉田 遥', kana:'ヨシダ ハルカ', tel:'090-0123-4567', lastVisit:'2025-07-06', allergy:'なし', occasion:'リピート', menu:'HBL', address:'大阪市東成区' },
+  { no:'A00011', name:'松本 このみ', kana:'マツモト コノミ', tel:'080-1234-0000', lastVisit:'2025-05-30', allergy:'なし', occasion:'Instagram', menu:'マツエク', address:'茨木市' },
+  { no:'A00012', name:'橋本 さくら', kana:'ハシモト サクラ', tel:'070-2345-1111', lastVisit:'2025-07-07', allergy:'敏感肌', occasion:'友人紹介', menu:'マツエク', address:'大阪市西区' },
+];
+
+const karteData = [
+  { date:'2025-07-07', customer:'橋本 さくら', no:'A00012', menu:'マツエク', staff:'田中 梨緒', photo:true, memo:'Jカール 12mm × 10mm 仕上がりきれい' },
+  { date:'2025-07-06', customer:'吉田 遥', no:'A00010', menu:'HBL', staff:'佐々木 明日香', photo:true, memo:'明るいブラウン系。次回もリタッチ希望' },
+  { date:'2025-07-05', customer:'小林 莉子', no:'A00008', menu:'マツエク', staff:'田中 梨緒', photo:false, memo:'' },
+  { date:'2025-07-03', customer:'渡辺 春奈', no:'A00006', menu:'HBL', staff:'田中 梨緒', photo:true, memo:'初回。ダメージなし。次回明るめ希望' },
+  { date:'2025-07-01', customer:'田中 優花', no:'A00002', menu:'HBL', staff:'佐々木 明日香', photo:true, memo:'リタッチ。根元しっかり' },
+  { date:'2025-06-30', customer:'鈴木 愛理', no:'A00004', menu:'ラッシュリフト', staff:'田中 梨緒', photo:false, memo:'ロットS使用。持続3ヶ月予定' },
+  { date:'2025-06-28', customer:'佐藤 美咲', no:'A00001', menu:'マツエク', staff:'田中 梨緒', photo:true, memo:'Cカール 10mm 左目少し少なめ調整' },
+  { date:'2025-06-22', customer:'中村 葵', no:'A00007', menu:'まつ毛パーマ', staff:'佐々木 明日香', photo:false, memo:'全体的にきれいにカール' },
+];
+
+const counselingPending = [
+  { time:'2025-07-08 10:42', name:'木村 沙也加', kana:'キムラ サヤカ', menu:'マツエク', tel:'090-9999-1111', allergy:'なし', assigned:'' },
+  { time:'2025-07-08 11:15', name:'福田 えりか', kana:'フクダ エリカ', menu:'HBL', tel:'080-8888-2222', allergy:'敏感肌', assigned:'' },
+  { time:'2025-07-07 15:30', name:'高橋 ゆい', kana:'タカハシ ユイ', menu:'ラッシュリフト', tel:'070-7777-3333', allergy:'なし', assigned:'' },
+];
+
+const counselingDone = [
+  { time:'2025-07-05 13:20', name:'小林 莉子', kana:'コバヤシ リコ', menu:'マツエク', no:'A00008' },
+  { time:'2025-07-03 09:55', name:'渡辺 春奈', kana:'ワタナベ ハルナ', menu:'HBL', no:'A00006' },
+];
+
+const staffList = [
+  { name:'田中 梨緒', hourly:1200, free:35, named:40, high:60, active:true },
+  { name:'佐々木 明日香', hourly:1100, free:33, named:38, high:60, active:true },
+  { name:'山口 ひなの', hourly:1000, free:30, named:35, high:60, active:true },
+  { name:'PC（閲覧専用）', hourly:0, free:0, named:0, high:0, active:true },
+];
+
+const menuPrices = [
+  { menu:'マツエク（フル）', price:8000 },
+  { menu:'マツエク（リペア）', price:5000 },
+  { menu:'HBL', price:9000 },
+  { menu:'ラッシュリフト', price:7000 },
+  { menu:'まつ毛パーマ', price:6000 },
+  { menu:'カット', price:4000 },
+];
+
+let currentStaff = staffList[0];
+let nippouRows = [];
+
+// ===== PAGE NAV =====
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  event.currentTarget.classList.add('active');
+  closePanel();
+  if (id === 'nippou') initNippou();
+}
+
+// ===== CUSTOMERS =====
+function renderCustomers(data) {
+  const menuColors = { 'マツエク':'badge-green','HBL':'badge-gold','ラッシュリフト':'badge-blue','まつ毛パーマ':'badge-gray' };
+  const tbody = document.getElementById('customerBody');
+  tbody.innerHTML = data.map((c,i) => `
+    <tr onclick="openCustomerPanel(${i})" data-idx="${i}">
+      <td style="color:var(--gray-400);font-size:12px;">${c.no}</td>
+      <td style="font-weight:500;">${c.name}</td>
+      <td style="color:var(--gray-600);font-size:12px;">${c.kana}</td>
+      <td style="color:var(--gray-600);">${c.tel}</td>
+      <td style="color:var(--gray-600);font-size:12px;">${c.lastVisit}</td>
+      <td><span class="badge ${menuColors[c.menu]||'badge-gray'}">${c.menu}</span></td>
+    </tr>`).join('');
+  document.getElementById('customerCount').textContent = data.length + '名';
+}
+
+function filterCustomers() {
+  const q = document.getElementById('customerSearch').value.toLowerCase();
+  const filtered = customers.filter(c =>
+    c.name.includes(q) || c.kana.toLowerCase().includes(q) || c.tel.includes(q)
+  );
+  renderCustomers(filtered);
+}
+
+function openCustomerPanel(idx) {
+  const c = customers[idx];
+  const kartes = karteData.filter(k => k.no === c.no);
+  document.getElementById('panelTitle').textContent = c.name;
+  document.getElementById('panelBody').innerHTML = `
+    <div style="margin-bottom:6px;font-size:12px;color:var(--gray-400);">${c.no}</div>
+    <div class="info-grid">
+      <div class="info-item"><label>フリガナ</label><span>${c.kana}</span></div>
+      <div class="info-item"><label>最終来店</label><span>${c.lastVisit}</span></div>
+      <div class="info-item"><label>電話番号</label><span>${c.tel}</span></div>
+      <div class="info-item"><label>来店きっかけ</label><span>${c.occasion}</span></div>
+      <div class="info-item full"><label>住所</label><span>${c.address}</span></div>
+      <div class="info-item full"><label>アレルギー</label><span style="color:${c.allergy!=='なし'?'var(--danger)':'inherit'};font-weight:${c.allergy!=='なし'?'700':'400'}">${c.allergy}</span></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:20px;">
+      <button class="btn btn-primary btn-sm" onclick="showToast('施術登録フォームを開きます')">＋ 施術登録</button>
+      <button class="btn btn-outline btn-sm" onclick="showToast('顧客情報を編集します')">編集</button>
+    </div>
+    <div class="form-section-title">施術履歴（${kartes.length}件）</div>
+    <div class="karte-list">
+      ${kartes.length === 0 ? '<p style="color:var(--gray-400);font-size:13px;">記録なし</p>' :
+        kartes.map(k => `
+        <div class="karte-item">
+          ${k.photo ? `<div class="karte-photo" style="float:right;margin-left:10px;">📷<br>施術写真</div>` : ''}
+          <div class="karte-date">${k.date}</div>
+          <div class="karte-menu">${k.menu}</div>
+          <div class="karte-staff">担当：${k.staff}</div>
+          ${k.memo ? `<div style="font-size:12px;color:var(--gray-600);margin-top:6px;">${k.memo}</div>` : ''}
+        </div>`).join('')}
+    </div>`;
+  openPanel();
+}
+
+// ===== KARTE =====
+function renderKarte(data) {
+  const tbody = document.getElementById('karteBody');
+  tbody.innerHTML = data.map(k => `
+    <tr onclick="showToast('${k.customer}さんのカルテを開きます')">
+      <td style="font-size:12px;color:var(--gray-600);">${k.date}</td>
+      <td style="font-weight:500;">${k.customer}</td>
+      <td><span class="badge badge-green">${k.menu}</span></td>
+      <td style="font-size:13px;color:var(--gray-600);">${k.staff}</td>
+      <td style="text-align:center;">${k.photo ? '📷' : '—'}</td>
+      <td style="font-size:12px;color:var(--gray-600);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${k.memo || '—'}</td>
+    </tr>`).join('');
+}
+
+function filterKarte() {
+  const q = document.getElementById('karteSearch').value.toLowerCase();
+  const m = document.getElementById('karteMenuFilter').value;
+  const filtered = karteData.filter(k =>
+    (k.customer.includes(q) || k.menu.toLowerCase().includes(q)) &&
+    (!m || k.menu === m)
+  );
+  renderKarte(filtered);
+}
+
+// ===== COUNSELING =====
+function renderCounseling() {
+  document.getElementById('counselingCount').textContent = counselingPending.length + '件';
+  document.getElementById('counselingList').innerHTML = counselingPending.map((c,i) => `
+    <div class="counseling-card" onclick="openCounselingPanel(${i})">
+      <div class="counseling-icon">✉️</div>
+      <div class="counseling-info">
+        <div class="counseling-name">${c.name} <span style="font-size:12px;color:var(--gray-400);">${c.kana}</span></div>
+        <div class="counseling-meta">${c.time} ｜ ${c.tel} ｜ アレルギー：${c.allergy}</div>
+      </div>
+      <div class="counseling-menu"><span class="badge badge-gold">${c.menu}</span></div>
+    </div>`).join('');
+
+  document.getElementById('counselingDoneList').innerHTML = counselingDone.map(c => `
+    <div class="counseling-card" style="opacity:.65;cursor:default;">
+      <div class="counseling-icon" style="border-color:var(--gray-200);color:var(--gray-400);">✅</div>
+      <div class="counseling-info">
+        <div class="counseling-name">${c.name}</div>
+        <div class="counseling-meta">${c.time} ｜ ${c.menu} ｜ 顧客No. ${c.no}</div>
+      </div>
+      <div class="counseling-menu"><span class="badge badge-gray">転記済</span></div>
+    </div>`).join('');
+}
+
+function openCounselingPanel(idx) {
+  const c = counselingPending[idx];
+  document.getElementById('panelTitle').textContent = 'カウンセリング転記';
+  document.getElementById('panelBody').innerHTML = `
+    <div class="info-grid" style="margin-bottom:16px;">
+      <div class="info-item"><label>氏名</label><span>${c.name}</span></div>
+      <div class="info-item"><label>フリガナ</label><span>${c.kana}</span></div>
+      <div class="info-item"><label>メニュー</label><span>${c.menu}</span></div>
+      <div class="info-item"><label>電話番号</label><span>${c.tel}</span></div>
+      <div class="info-item full"><label>アレルギー</label><span>${c.allergy}</span></div>
+      <div class="info-item full"><label>受付日時</label><span>${c.time}</span></div>
+    </div>
+    <div class="form-section-title">顧客番号を割り当てる</div>
+    <div class="form-group">
+      <label>顧客No.（既存顧客の場合はその番号、新規は次の番号）</label>
+      <input type="text" id="assignNo" placeholder="例：A00013" value="${c.assigned}">
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn btn-gold" onclick="transferCounseling(${idx})">転記する</button>
+      <button class="btn btn-outline" onclick="closePanel()">キャンセル</button>
+    </div>`;
+  openPanel();
+}
+
+function transferCounseling(idx) {
+  const no = document.getElementById('assignNo').value.trim();
+  if (!no) { showToast('顧客No.を入力してください'); return; }
+  counselingDone.unshift({ ...counselingPending[idx], no });
+  counselingPending.splice(idx, 1);
+  closePanel();
+  renderCounseling();
+  showToast('✅ 転記が完了しました（' + no + '）');
+}
+
+// ===== NIPPOU =====
+function initNippou() {
+  const now = new Date();
+  document.getElementById('nippouDate').textContent =
+    now.getFullYear() + '年' + (now.getMonth()+1) + '月' + now.getDate() + '日（' + '日月火水木金土'[now.getDay()] + '）';
+
+  // Staff chips
+  const sel = document.getElementById('staffSelector');
+  sel.innerHTML = staffList.filter(s=>s.name!=='PC（閲覧専用）').map((s,i) => `
+    <div class="staff-chip ${i===0?'active':''}" onclick="selectStaff(${i},this)">${s.name}</div>`).join('');
+
+  if (nippouRows.length === 0) { nippouRows = []; addNippouRow(); addNippouRow(); }
+  renderNippouRows();
+}
+
+function selectStaff(idx, el) {
+  currentStaff = staffList[idx];
+  document.querySelectorAll('.staff-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  const av = document.getElementById('headerAvatar');
+  const nm = document.getElementById('headerName');
+  av.textContent = currentStaff.name[0];
+  nm.textContent = currentStaff.name;
+  calcNippou();
+}
+
+function addNippouRow() {
+  nippouRows.push({ menu:'', price:0, type:'free' });
+  renderNippouRows();
+}
+
+function renderNippouRows() {
+  const container = document.getElementById('nippouRows');
+  container.innerHTML = nippouRows.map((r,i) => `
+    <div class="nippou-row">
+      <select class="col-menu" onchange="onMenuChange(${i},this)">
+        <option value="">メニューを選択</option>
+        ${menuPrices.map(m=>`<option value="${m.price}" ${r.menu===m.menu?'selected':''}>${m.menu}</option>`).join('')}
+        <option value="custom" ${r.menu==='カスタム'?'selected':''}>カスタム入力…</option>
+      </select>
+      <input class="col-price" type="number" value="${r.price||''}" placeholder="金額" min="0" step="100" oninput="onPriceChange(${i},this)">
+      <select class="col-type" onchange="onTypeChange(${i},this)">
+        <option value="free" ${r.type==='free'?'selected':''}>フリー</option>
+        <option value="named" ${r.type==='named'?'selected':''}>指名</option>
+        <option value="high" ${r.type==='high'?'selected':''}>指名(HS)</option>
+      </select>
+      <div class="nippou-amount" id="amount-${i}">¥${calcRowIncentive(r).toLocaleString()}</div>
+      <button class="remove-btn" onclick="removeNippouRow(${i})">×</button>
+    </div>`).join('');
+}
+
+function onMenuChange(idx, el) {
+  const opt = el.options[el.selectedIndex];
+  nippouRows[idx].menu = opt.text;
+  if (el.value !== 'custom' && el.value !== '') {
+    nippouRows[idx].price = parseInt(el.value);
+    el.closest('.nippou-row').querySelector('.col-price').value = el.value;
+  }
+  calcNippou();
+}
+
+function onPriceChange(idx, el) {
+  nippouRows[idx].price = parseInt(el.value)||0;
+  calcNippou();
+}
+
+function onTypeChange(idx, el) {
+  nippouRows[idx].type = el.value;
+  calcNippou();
+}
+
+function removeNippouRow(idx) {
+  nippouRows.splice(idx, 1);
+  renderNippouRows();
+  calcNippou();
+}
+
+function calcRowIncentive(r) {
+  const rate = r.type === 'free' ? currentStaff.free :
+               r.type === 'named' ? currentStaff.named : currentStaff.high;
+  return Math.floor((r.price || 0) * rate / 100);
+}
+
+function calcNippou() {
+  let totalSales = 0, totalInc = 0;
+  nippouRows.forEach((r,i) => {
+    totalSales += r.price || 0;
+    const inc = calcRowIncentive(r);
+    totalInc += inc;
+    const el = document.getElementById('amount-' + i);
+    if (el) el.textContent = '¥' + inc.toLocaleString();
+  });
+  const jimu = parseInt(document.getElementById('jimuTime')?.value)||0;
+  const jimuPay = Math.floor(jimu / 60 * currentStaff.hourly);
+  totalInc += jimuPay;
+  document.getElementById('totalSales').innerHTML = totalSales.toLocaleString() + '<span class="summary-unit">円</span>';
+  document.getElementById('totalIncentive').innerHTML = totalInc.toLocaleString() + '<span class="summary-unit">円</span>';
+  document.getElementById('jimuValue').innerHTML = jimu + '<span class="summary-unit">分</span>';
+}
+
+function saveNippou() {
+  const filled = nippouRows.filter(r => r.price > 0);
+  if (filled.length === 0) { showToast('施術内容を入力してください'); return; }
+  showToast('✅ 日報を保存しました（' + currentStaff.name + '）');
+}
+
+// ===== STAFF TABLE =====
+function renderStaff() {
+  document.getElementById('staffBody').innerHTML = staffList.map(s => `
+    <tr onclick="showToast('${s.name}の設定を編集します')">
+      <td style="font-weight:500;">${s.name}</td>
+      <td>${s.hourly ? '¥'+s.hourly.toLocaleString() : '—'}</td>
+      <td>${s.free ? s.free+'%' : '—'}</td>
+      <td>${s.named ? s.named+'%' : '—'}</td>
+      <td>${s.high ? s.high+'%' : '—'}</td>
+      <td><span class="badge ${s.active?'badge-green':'badge-gray'}">${s.active?'在籍中':'退職'}</span></td>
+    </tr>`).join('');
+}
+
+// ===== PANEL =====
+function openPanel() {
+  document.getElementById('detailPanel').classList.add('open');
+  document.getElementById('overlay').classList.add('open');
+}
+function closePanel() {
+  document.getElementById('detailPanel').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+}
+
+// ===== TOAST =====
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ===== INIT =====
+renderCustomers(customers);
+renderKarte(karteData);
+renderCounseling();
+renderStaff();
+</script>
+</body>
+</html>

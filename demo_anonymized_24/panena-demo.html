@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>パネーナ谷６店 整理券 – デモ</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --surface-0: #f4f3ef;
+  --surface-1: #f0efe9;
+  --surface-2: #ffffff;
+  --text-primary: #1a1a18;
+  --text-secondary: #5f5e5a;
+  --text-muted: #888780;
+  --border: rgba(0,0,0,0.12);
+  --border-strong: rgba(0,0,0,0.22);
+  --radius: 8px;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface-0: #1c1c1a;
+    --surface-1: #252522;
+    --surface-2: #2e2e2b;
+    --text-primary: #f0efe9;
+    --text-secondary: #a8a7a0;
+    --text-muted: #6a6965;
+    --border: rgba(255,255,255,0.1);
+    --border-strong: rgba(255,255,255,0.18);
+  }
+}
+body {
+  font-family: var(--font-sans);
+  background: var(--surface-0);
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  color: var(--text-primary);
+}
+.demo-wrap { max-width: 480px; margin: 0 auto; }
+.store-header {
+  background: #5B4FCF;
+  color: #fff;
+  padding: 1.25rem 1.5rem;
+  border-radius: 12px 12px 0 0;
+}
+.store-header h1 { font-size: 18px; font-weight: 500; }
+.store-header p { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+.form-body {
+  background: var(--surface-2);
+  border: 0.5px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  padding: 1.5rem;
+}
+.field { margin-bottom: 1.25rem; }
+.field label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; }
+.field label span.req { color: #E24B4A; margin-left: 2px; }
+.field input, .field select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 0.5px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  color: var(--text-primary);
+  font-size: 15px;
+  font-family: var(--font-sans);
+  outline: none;
+  height: 36px;
+  transition: border-color 0.15s;
+}
+.field input:focus, .field select:focus { border-color: #5B4FCF; box-shadow: 0 0 0 3px rgba(91,79,207,0.15); }
+.slots { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+.slot-btn {
+  padding: 10px 8px;
+  border: 0.5px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-primary);
+  text-align: center;
+  transition: all 0.15s;
+  font-family: var(--font-sans);
+}
+.slot-btn:hover:not(.full) { border-color: #5B4FCF; color: #5B4FCF; }
+.slot-btn.selected { background: #EEEDFE; border-color: #5B4FCF; color: #3C3489; font-weight: 500; }
+.slot-btn.full { background: var(--surface-1); color: var(--text-muted); cursor: not-allowed; text-decoration: line-through; }
+.slot-remaining { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+.slot-remaining.low { color: #D85A30; }
+.submit-btn {
+  width: 100%;
+  padding: 12px;
+  background: #5B4FCF;
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  transition: background 0.15s;
+  font-family: var(--font-sans);
+}
+.submit-btn:hover { background: #4A3EB8; }
+.confirm-card {
+  background: var(--surface-2);
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+.confirm-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #E1F5EE;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+}
+.confirm-icon i { font-size: 28px; color: #0F6E56; }
+.confirm-title { text-align: center; font-size: 17px; font-weight: 500; color: var(--text-primary); margin-bottom: 4px; }
+.confirm-sub { text-align: center; font-size: 13px; color: var(--text-secondary); margin-bottom: 1.5rem; }
+.confirm-details { background: var(--surface-1); border-radius: var(--radius); padding: 1rem 1.25rem; }
+.confirm-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 0.5px solid var(--border);
+  font-size: 14px;
+}
+.confirm-row:last-child { border-bottom: none; }
+.confirm-row .label { color: var(--text-secondary); }
+.confirm-row .value { font-weight: 500; color: var(--text-primary); }
+.confirm-row .value.highlight { color: #5B4FCF; font-size: 16px; }
+.notice {
+  margin-top: 1rem;
+  background: #E6F1FB;
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #185FA5;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.notice i { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.back-btn {
+  width: 100%;
+  padding: 10px;
+  background: transparent;
+  border: 0.5px solid var(--border-strong);
+  border-radius: var(--radius);
+  font-size: 14px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  margin-top: 1rem;
+  font-family: var(--font-sans);
+  transition: background 0.15s;
+}
+.back-btn:hover { background: var(--surface-1); }
+.badge {
+  display: inline-block;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: #FAEEDA;
+  color: #633806;
+  margin-left: 6px;
+}
+.error-msg { font-size: 12px; color: #A32D2D; margin-top: 6px; display: none; }
+.step-indicator { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 1.25rem; }
+.step-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border-strong); transition: background 0.2s; }
+.step-dot.active { background: #5B4FCF; }
+.step-dot.done { background: #1D9E75; }
+.demo-label {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 1.5rem;
+  padding: 8px;
+  border: 0.5px dashed var(--border-strong);
+  border-radius: var(--radius);
+}
+</style>
+</head>
+<body>
+<div class="demo-wrap">
+  <div id="form-view">
+    <div class="store-header">
+      <h1>パネーナ谷６店 整理券</h1>
+      <p>ご予約はおひとり様1枠まで</p>
+    </div>
+    <div class="form-body">
+      <div class="step-indicator">
+        <div class="step-dot active" id="dot1"></div>
+        <div class="step-dot" id="dot2"></div>
+        <div class="step-dot" id="dot3"></div>
+      </div>
+      <div class="field">
+        <label>お名前 <span class="req">*</span></label>
+        <input type="text" id="name" placeholder="田中 花子">
+      </div>
+      <div class="field">
+        <label>電話番号 <span class="req">*</span></label>
+        <input type="tel" id="phone" placeholder="090-0000-0000">
+      </div>
+      <div class="field">
+        <label>メールアドレス <span class="req">*</span></label>
+        <input type="email" id="email" placeholder="example@email.com">
+      </div>
+      <div class="field">
+        <label>希望時間帯 <span class="req">*</span> <span class="badge">残枠あり</span></label>
+        <div class="slots" id="slots">
+          <div onclick="selectSlot(this,'09:30-09:45')" class="slot-btn">09:30-09:45<div class="slot-remaining low">残5組</div></div>
+          <div onclick="selectSlot(this,'09:45-10:00')" class="slot-btn">09:45-10:00<div class="slot-remaining">残9組</div></div>
+          <div onclick="selectSlot(this,'10:00-10:15')" class="slot-btn">10:00-10:15<div class="slot-remaining">残8組</div></div>
+          <div onclick="selectSlot(this,'10:15-10:30')" class="slot-btn">10:15-10:30<div class="slot-remaining">残10組</div></div>
+          <div onclick="selectSlot(this,'10:30-10:45')" class="slot-btn">10:30-10:45<div class="slot-remaining">残10組</div></div>
+          <div class="slot-btn full">11:45-12:00<div class="slot-remaining">満枠</div></div>
+        </div>
+        <div class="error-msg" id="slot-error">時間帯を選択してください</div>
+      </div>
+      <div class="field">
+        <label>人数 <span class="req">*</span></label>
+        <select id="count">
+          <option value="">選択してください</option>
+          <option value="1名">1名</option>
+          <option value="2名">2名</option>
+          <option value="3名">3名</option>
+          <option value="4名">4名</option>
+        </select>
+      </div>
+      <button class="submit-btn" onclick="handleSubmit()">予約する</button>
+    </div>
+  </div>
+
+  <div id="confirm-view" style="display:none;">
+    <div class="confirm-card">
+      <div class="confirm-icon"><i class="ti ti-check"></i></div>
+      <div class="confirm-title">ご予約が確定しました</div>
+      <div class="confirm-sub">当日は時間帯の5分前までにお越しください</div>
+      <div class="confirm-details">
+        <div class="confirm-row"><span class="label">お名前</span><span class="value" id="r-name">—</span></div>
+        <div class="confirm-row"><span class="label">希望時間帯</span><span class="value highlight" id="r-slot">—</span></div>
+        <div class="confirm-row"><span class="label">人数</span><span class="value" id="r-count">—</span></div>
+        <div class="confirm-row"><span class="label">受付番号</span><span class="value" id="r-num">—</span></div>
+      </div>
+      <div class="notice"><i class="ti ti-mail"></i><span>ご登録のメールアドレスに確認メールをお送りしました</span></div>
+      <button class="back-btn" onclick="resetForm()">別の方の予約をする</button>
+    </div>
+  </div>
+
+  <div class="demo-label">※ これはデモです。実際の予約は記録されません。</div>
+</div>
+
+<script>
+let selectedSlot = '';
+function selectSlot(el, slot) {
+  if (el.classList.contains('full')) return;
+  document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedSlot = slot;
+  document.getElementById('dot2').classList.add('active');
+  document.getElementById('slot-error').style.display = 'none';
+}
+function handleSubmit() {
+  const name = document.getElementById('name').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const count = document.getElementById('count').value;
+  if (!name || !phone || !email || !selectedSlot || !count) {
+    if (!selectedSlot) document.getElementById('slot-error').style.display = 'block';
+    return;
+  }
+  const num = 'P' + String(Math.floor(Math.random() * 900) + 100);
+  document.getElementById('r-name').textContent = name;
+  document.getElementById('r-slot').textContent = selectedSlot;
+  document.getElementById('r-count').textContent = count;
+  document.getElementById('r-num').textContent = num;
+  document.getElementById('dot3').classList.add('active');
+  document.getElementById('dot2').classList.add('done');
+  document.getElementById('form-view').style.display = 'none';
+  document.getElementById('confirm-view').style.display = 'block';
+}
+function resetForm() {
+  document.getElementById('name').value = '';
+  document.getElementById('phone').value = '';
+  document.getElementById('email').value = '';
+  document.getElementById('count').value = '';
+  selectedSlot = '';
+  document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+  ['dot1','dot2','dot3'].forEach(id => {
+    const el = document.getElementById(id);
+    el.classList.remove('active','done');
+  });
+  document.getElementById('dot1').classList.add('active');
+  document.getElementById('form-view').style.display = 'block';
+  document.getElementById('confirm-view').style.display = 'none';
+}
+</script>
+</body>
+</html>
