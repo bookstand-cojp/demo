@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>メール無害化 自動処理システム｜愛南町役場</title>
+<title>メール無害化 自動処理システム｜〇〇町役場</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -75,7 +75,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="header">
     <div class="title-block">
       <h1>メール無害化 自動処理システム</h1>
-      <p>愛南町役場 学校教育課｜専用PC稼働中</p>
+      <p>〇〇町役場 学校教育課｜専用PC稼働中</p>
     </div>
     <span class="badge running" id="status-badge">
       <span class="dot"></span>
@@ -121,7 +121,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     </div>
     <div class="current-item">
       <div class="spinner" id="spinner"></div>
-      <span>現在処理中：<strong id="current-name">山田 花子</strong>（<span id="current-email">h.yamada@ainan-edu.jp</span>）</span>
+      <span>現在処理中：<strong id="current-name">山田 花子</strong>（<span id="current-email">h.yamada@example-edu.jp</span>）</span>
     </div>
   </div>
 
@@ -211,7 +211,7 @@ function tick(){
   if(!running) return;
   nameIdx = (nameIdx + 1) % names.length;
   const name = names[nameIdx];
-  const email = emails[nameIdx] + '@ainan-edu.jp';
+  const email = emails[nameIdx] + '@example-edu.jp';
   document.getElementById('current-name').textContent = name;
   document.getElementById('current-email').textContent = email;
 
