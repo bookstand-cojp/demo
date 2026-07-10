@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>注文入力</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f5f5;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 20px 16px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+      padding: 28px 24px;
+      width: 100%;
+      max-width: 520px;
+    }
+    h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #222;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+    .field { margin-bottom: 20px; }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 6px;
+    }
+    input[type="text"], input[type="number"] {
+      width: 100%;
+      padding: 12px 14px;
+      font-size: 16px;
+      border: 1.5px solid #ddd;
+      border-radius: 8px;
+      outline: none;
+      transition: border-color 0.2s;
+      background: #fff;
+    }
+    input:focus { border-color: #e85d04; }
+    .section-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 10px;
+    }
+    .order-rows { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+    .order-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .order-row select {
+      flex: 1;
+      padding: 10px;
+      font-size: 15px;
+      border: 1.5px solid #ddd;
+      border-radius: 8px;
+      outline: none;
+      background: #fff;
+      min-width: 0;
+    }
+    .order-row select:focus { border-color: #e85d04; }
+    .order-row input[type="number"] {
+      width: 80px;
+      flex-shrink: 0;
+      padding: 10px;
+      font-size: 15px;
+    }
+    .order-row .del-btn {
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: #eee;
+      color: #888;
+      border-radius: 6px;
+      font-size: 18px;
+      cursor: pointer;
+    }
+    .order-row .del-btn:hover { background: #ffd6d6; color: #c00; }
+    .add-btn {
+      width: 100%;
+      padding: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #e85d04;
+      background: #fff;
+      border: 1.5px dashed #e85d04;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+    .add-btn:hover { background: #fff5f0; }
+    .btn {
+      width: 100%;
+      padding: 14px;
+      font-size: 17px;
+      font-weight: 700;
+      color: #fff;
+      background: #e85d04;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .msg {
+      margin-top: 20px;
+      padding: 14px;
+      border-radius: 8px;
+      font-size: 15px;
+      text-align: center;
+      display: none;
+    }
+    .msg.success { background: #e8f5e9; color: #2e7d32; display: block; }
+    .msg.error   { background: #ffebee; color: #c62828; display: block; }
+  </style>
+<script>
+/* ====== デモ用モック（google.script.run 代替）======
+   これは本番のGAS/スプレッドシートには接続していません。
+   ボタン操作・画面遷移の確認用に、ダミーデータをその場で返しています。 */
+(function(){
+  function delay(fn, ms){ setTimeout(fn, ms || 350); }
+  function pad(n){ return (n<10?'0':'')+n; }
+  var _s=null,_f=null;
+  var api = {
+    withSuccessHandler:function(cb){_s=cb;return api;},
+    withFailureHandler:function(cb){_f=cb;return api;},
+
+    webappGetProducts: function(){
+      delay(function(){
+        _s && _s({ success:true, products: ['冷凍餃子(国産野菜使用)60個入','冷凍餃子(にんにく増量)60個入','冷凍餃子(小粒)80個入'] });
+      });
+    },
+    webappSubmitOrders: function(){
+      delay(function(){ _s && _s({ success:true }); });
+    }
+
+  };
+  window.google = window.google || {};
+  window.google.script = window.google.script || {};
+  window.google.script.run = api;
+})();
+</script>
+</head>
+<body>
+  <div class="card">
+    <h1>注文入力</h1>
+
+    <input type="hidden" id="__customer__" value="デモ商店">
+
+    <div class="field">
+      <label>お客様名</label>
+      <input type="text" id="customerName" readonly>
+    </div>
+
+    <div class="field">
+      <div class="section-label">注文商品</div>
+      <div class="order-rows" id="orderRows"></div>
+      <button class="add-btn" onclick="addRow()">+ 商品を追加</button>
+    </div>
+
+    <button class="btn" id="submitBtn" onclick="submitOrders()" disabled>注文する</button>
+
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <script>
+    var productOptions = [];
+    var rowCount = 0;
+
+    document.getElementById('customerName').value =
+      document.getElementById('__customer__').value;
+
+    google.script.run
+      .withSuccessHandler(function(result) {
+        if (result.success && result.products) {
+          productOptions = result.products;
+        }
+        addRow(); addRow(); addRow();
+        document.getElementById('submitBtn').disabled = false;
+      })
+      .withFailureHandler(function() {
+        addRow(); addRow(); addRow();
+        document.getElementById('submitBtn').disabled = false;
+      })
+      .webappGetProducts();
+
+    function buildSelectHtml(selId) {
+      var html = '<select id="' + selId + '">';
+      html += '<option value="">-- 選択 --</option>';
+      for (var i = 0; i < productOptions.length; i++) {
+        var p = escAttr(productOptions[i]);
+        html += '<option value="' + p + '">' + escHtml(productOptions[i]) + '</option>';
+      }
+      html += '</select>';
+      return html;
+    }
+
+    function addRow() {
+      rowCount++;
+      var rowId  = 'row_' + rowCount;
+      var selId  = 'sel_' + rowCount;
+      var qtyId  = 'qty_' + rowCount;
+
+      var div = document.createElement('div');
+      div.className = 'order-row';
+      div.id = rowId;
+
+      var html = buildSelectHtml(selId);
+      html += '<input type="number" id="' + qtyId + '" placeholder="数量" min="1" max="9999">';
+      html += '<button class="del-btn" data-target="' + rowId + '" onclick="removeRow(this)">x</button>';
+      div.innerHTML = html;
+
+      document.getElementById('orderRows').appendChild(div);
+    }
+
+    function removeRow(btn) {
+      var target = document.getElementById(btn.getAttribute('data-target'));
+      if (target) target.remove();
+    }
+
+    function collectOrders() {
+      var rows = document.getElementById('orderRows').querySelectorAll('.order-row');
+      var orders = [];
+      for (var i = 0; i < rows.length; i++) {
+        var sel = rows[i].querySelector('select');
+        var qty = rows[i].querySelector('input[type="number"]');
+        if (!sel || !qty) continue;
+        var q = parseInt(qty.value, 10);
+        if (!sel.value || !q || q < 1) continue;
+        orders.push({ productName: sel.value, qty: q });
+      }
+      return orders;
+    }
+
+    function submitOrders() {
+      var customerName = document.getElementById('customerName').value.trim();
+      var orders = collectOrders();
+      var btn = document.getElementById('submitBtn');
+
+      if (!customerName) {
+        showMsg('error', 'お客様名が設定されていません。');
+        return;
+      }
+      if (orders.length === 0) {
+        showMsg('error', '商品と数量を少なくとも1行入力してください。');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = '送信中...';
+      showMsg('', '');
+
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result.success) {
+            showMsg('success', '注文を受け付けました。3秒後にリセットします。');
+            btn.textContent = '送信完了';
+            setTimeout(function() {
+              resetForm();
+              btn.disabled = false;
+              btn.textContent = '注文する';
+              showMsg('', '');
+            }, 3000);
+          } else {
+            showMsg('error', 'エラー: ' + result.error);
+            btn.disabled = false;
+            btn.textContent = '注文する';
+          }
+        })
+        .withFailureHandler(function(err) {
+          showMsg('error', 'エラーが発生しました: ' + err.message);
+          btn.disabled = false;
+          btn.textContent = '注文する';
+        })
+        .webappSubmitOrders({ customerName: customerName, orders: orders });
+    }
+
+    function resetForm() {
+      document.getElementById('orderRows').innerHTML = '';
+      rowCount = 0;
+      addRow(); addRow(); addRow();
+    }
+
+    function showMsg(type, text) {
+      var el = document.getElementById('msg');
+      el.className = type ? 'msg ' + type : 'msg';
+      el.textContent = text;
+      el.style.display = type ? 'block' : 'none';
+    }
+
+    function escHtml(s) {
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function escAttr(s) {
+      return String(s).replace(/"/g, '&quot;');
+    }
+  </script>
+</body>
+</html>
