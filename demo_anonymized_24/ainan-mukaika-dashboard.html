@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メール無害化 自動処理システム｜愛南町役場</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f0;color:#0b0b0b;min-height:100vh;padding:2rem}
+.wrap{max-width:900px;margin:0 auto}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem}
+.title-block h1{font-size:18px;font-weight:500;color:#0b0b0b}
+.title-block p{font-size:13px;color:#898781;margin-top:3px}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:5px 14px;border-radius:99px;font-weight:500}
+.badge.running{background:#eaf3de;color:#3b6d11}
+.badge.stopped{background:#fcebeb;color:#a32d2d}
+.badge .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.kpi-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:1.5rem}
+.kpi{background:#fff;border-radius:8px;padding:1rem;border:0.5px solid rgba(11,11,11,0.10)}
+.kpi .label{font-size:12px;color:#898781;margin-bottom:6px}
+.kpi .value{font-size:28px;font-weight:500;color:#0b0b0b;line-height:1}
+.kpi .sub{font-size:12px;color:#898781;margin-top:4px}
+.kpi.success .value{color:#3b6d11}
+.kpi.danger .value{color:#a32d2d}
+.progress-card{background:#fff;border-radius:12px;border:0.5px solid rgba(11,11,11,0.10);padding:1.25rem;margin-bottom:1.5rem}
+.progress-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+.progress-header span{font-size:13px;color:#52514e}
+.progress-header strong{font-size:13px;color:#0b0b0b}
+.progress-bar-outer{height:10px;background:#f1efe8;border-radius:99px;overflow:hidden;margin-bottom:8px}
+.progress-bar-inner{height:100%;border-radius:99px;background:#2a78d6;transition:width 0.8s ease}
+.progress-meta{display:flex;justify-content:space-between;font-size:12px;color:#898781}
+.current-item{display:flex;align-items:center;gap:10px;margin-top:12px;padding-top:12px;border-top:0.5px solid rgba(11,11,11,0.10)}
+.spinner{width:16px;height:16px;border:2px solid #d3d1c7;border-top-color:#2a78d6;border-radius:50%;animation:spin 0.8s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.current-item span{font-size:13px;color:#52514e}
+.current-item strong{color:#0b0b0b}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.5rem}
+.card{background:#fff;border-radius:12px;border:0.5px solid rgba(11,11,11,0.10);padding:1.25rem}
+.card h3{font-size:13px;font-weight:500;color:#52514e;margin-bottom:1rem;display:flex;align-items:center;gap:6px}
+.log-list{display:flex;flex-direction:column;gap:8px;max-height:220px;overflow:hidden}
+.log-item{display:flex;align-items:flex-start;gap:10px;font-size:12px}
+.log-time{color:#898781;flex-shrink:0;width:44px}
+.log-msg{color:#52514e;line-height:1.5}
+.log-msg .name{color:#0b0b0b;font-weight:500}
+.log-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.log-dot.ok{background:#1baf7a}
+.log-dot.err{background:#e34948}
+.error-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:#fcebeb;border-radius:8px;border:0.5px solid #f09595;margin-bottom:8px}
+.error-item i{color:#a32d2d;font-size:16px;flex-shrink:0;margin-top:1px}
+.err-name{color:#a32d2d;font-weight:500;font-size:12px}
+.err-msg{color:#52514e;font-size:12px;margin-top:2px}
+.schedule-card{background:#f5f4f0;border-radius:8px;padding:0.75rem 1rem;margin-top:1rem}
+.schedule-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid rgba(11,11,11,0.08);font-size:13px}
+.schedule-row:last-child{border-bottom:none}
+.schedule-row .s-label{color:#52514e}
+.schedule-row .s-value{color:#0b0b0b;font-weight:500}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap}
+.btn{padding:9px 20px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:0.5px solid #888780;background:transparent;color:#0b0b0b;transition:background 0.15s;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:#f1efe8}
+.btn.danger{background:#fcebeb;color:#a32d2d;border-color:#f09595}
+.btn.danger:hover{background:#f7c1c1}
+.btn.primary{background:#2a78d6;color:#fff;border-color:#2a78d6}
+.btn.primary:hover{background:#185fa5}
+.section-title{font-size:11px;font-weight:500;color:#898781;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px}
+@media(max-width:600px){
+  .kpi-row{grid-template-columns:repeat(2,1fr)}
+  .two-col{grid-template-columns:1fr}
+  .btn-row{flex-direction:column}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="title-block">
+      <h1>メール無害化 自動処理システム</h1>
+      <p>愛南町役場 学校教育課｜専用PC稼働中</p>
+    </div>
+    <span class="badge running" id="status-badge">
+      <span class="dot"></span>
+      <span id="status-text">稼働中</span>
+    </span>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi success">
+      <div class="label">本日 完了件数</div>
+      <div class="value" id="kpi-done">47</div>
+      <div class="sub">通 処理済み</div>
+    </div>
+    <div class="kpi">
+      <div class="label">処理中</div>
+      <div class="value" id="kpi-proc">1</div>
+      <div class="sub">通 処理中</div>
+    </div>
+    <div class="kpi">
+      <div class="label">待機中</div>
+      <div class="value" id="kpi-wait">5</div>
+      <div class="sub">通 未処理</div>
+    </div>
+    <div class="kpi danger">
+      <div class="label">エラー</div>
+      <div class="value" id="kpi-err">1</div>
+      <div class="sub">件 要確認</div>
+    </div>
+  </div>
+
+  <div class="progress-card">
+    <div class="progress-header">
+      <span>本日の巡回進捗</span>
+      <strong id="prog-text">8 / 10 名 完了</strong>
+    </div>
+    <div class="progress-bar-outer">
+      <div class="progress-bar-inner" id="prog-bar" style="width:80%"></div>
+    </div>
+    <div class="progress-meta">
+      <span>0名</span>
+      <span id="prog-pct">80%</span>
+      <span>10名</span>
+    </div>
+    <div class="current-item">
+      <div class="spinner" id="spinner"></div>
+      <span>現在処理中：<strong id="current-name">山田 花子</strong>（<span id="current-email">h.yamada@ainan-edu.jp</span>）</span>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <h3><i class="ti ti-list"></i> 処理ログ</h3>
+      <div class="log-list" id="log-list">
+        <div class="log-item"><span class="log-dot ok"></span><span class="log-time">13:42</span><div class="log-msg"><span class="name">田中 一郎</span>｜3通 完了</div></div>
+        <div class="log-item"><span class="log-dot ok"></span><span class="log-time">13:39</span><div class="log-msg"><span class="name">佐藤 美咲</span>｜1通 完了</div></div>
+        <div class="log-item"><span class="log-dot err"></span><span class="log-time">13:35</span><div class="log-msg"><span class="name">鈴木 健二</span>｜ログイン失敗 → リトライ中</div></div>
+        <div class="log-item"><span class="log-dot ok"></span><span class="log-time">13:31</span><div class="log-msg"><span class="name">伊藤 純子</span>｜2通 完了</div></div>
+        <div class="log-item"><span class="log-dot ok"></span><span class="log-time">13:28</span><div class="log-msg"><span class="name">渡辺 隆</span>｜新着なし スキップ</div></div>
+        <div class="log-item"><span class="log-dot ok"></span><span class="log-time">13:24</span><div class="log-msg"><span class="name">中村 由美</span>｜5通 完了</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3><i class="ti ti-alert-triangle"></i> エラー通知</h3>
+      <div id="err-list">
+        <div class="error-item">
+          <i class="ti ti-alert-circle"></i>
+          <div>
+            <div class="err-name">鈴木 健二｜ログイン失敗</div>
+            <div class="err-msg">Prosafe gateway 3回連続タイムアウト。リトライ待機中。</div>
+          </div>
+        </div>
+      </div>
+      <div class="schedule-card">
+        <div class="schedule-row"><span class="s-label">稼働時間</span><span class="s-value">08:00 〜 18:00</span></div>
+        <div class="schedule-row"><span class="s-label">1周の所要時間</span><span class="s-value">約 3〜5 分</span></div>
+        <div class="schedule-row"><span class="s-label">最終巡回完了</span><span class="s-value" id="last-run">13:41</span></div>
+        <div class="schedule-row"><span class="s-label">次回巡回開始</span><span class="s-value" id="next-run">13:46</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn danger" id="stop-btn" onclick="toggleRobot()">
+      <i class="ti ti-player-stop"></i> 処理を停止する
+    </button>
+    <button class="btn" onclick="alert('全ログ画面（実装時に表示）')">
+      <i class="ti ti-file-text"></i> ログを全件見る
+    </button>
+  </div>
+</div>
+
+<script>
+let running = true;
+let done = 47, errCnt = 1, wait = 5;
+const names = ['山田 花子','田中 一郎','佐藤 美咲','伊藤 純子','渡辺 隆','中村 由美','小林 誠','加藤 幸子','吉田 博','松本 恵'];
+const emails = ['h.yamada','i.tanaka','m.sato','j.ito','t.watanabe','y.nakamura','m.kobayashi','s.kato','h.yoshida','m.matsumoto'];
+let nameIdx = 0;
+
+function pad(n){return String(n).padStart(2,'0')}
+function nowStr(){const d=new Date();return pad(d.getHours())+':'+pad(d.getMinutes())}
+
+function toggleRobot(){
+  running = !running;
+  const badge = document.getElementById('status-badge');
+  const txt = document.getElementById('status-text');
+  const btn = document.getElementById('stop-btn');
+  const spinner = document.getElementById('spinner');
+  if(running){
+    badge.className='badge running';
+    txt.textContent='稼働中';
+    btn.innerHTML='<i class="ti ti-player-stop"></i> 処理を停止する';
+    btn.className='btn danger';
+    spinner.style.display='';
+  } else {
+    badge.className='badge stopped';
+    txt.textContent='停止中';
+    btn.innerHTML='<i class="ti ti-player-play"></i> 処理を再開する';
+    btn.className='btn primary';
+    spinner.style.display='none';
+  }
+}
+
+function addLog(name, msg, type){
+  const list = document.getElementById('log-list');
+  const item = document.createElement('div');
+  item.className = 'log-item';
+  item.innerHTML = '<span class="log-dot '+type+'"></span><span class="log-time">'+nowStr()+'</span><div class="log-msg"><span class="name">'+name+'</span>｜'+msg+'</div>';
+  list.insertBefore(item, list.firstChild);
+  if(list.children.length > 8) list.removeChild(list.lastChild);
+}
+
+function tick(){
+  if(!running) return;
+  nameIdx = (nameIdx + 1) % names.length;
+  const name = names[nameIdx];
+  const email = emails[nameIdx] + '@ainan-edu.jp';
+  document.getElementById('current-name').textContent = name;
+  document.getElementById('current-email').textContent = email;
+
+  const r = Math.random();
+  if(r < 0.75){
+    const n = Math.floor(Math.random()*4)+1;
+    done += n;
+    if(wait > 0) wait--;
+    addLog(name, n+'通 完了', 'ok');
+  } else if(r < 0.87){
+    addLog(name, '新着なし スキップ', 'ok');
+    if(wait > 0) wait--;
+  } else {
+    errCnt++;
+    addLog(name, 'ログイン失敗 → リトライ中', 'err');
+  }
+
+  document.getElementById('kpi-done').textContent = done;
+  document.getElementById('kpi-wait').textContent = Math.max(0, wait);
+  document.getElementById('kpi-err').textContent = errCnt;
+
+  const pct = Math.min(100, Math.round((nameIdx+1)/names.length*100));
+  document.getElementById('prog-bar').style.width = pct+'%';
+  document.getElementById('prog-pct').textContent = pct+'%';
+  document.getElementById('prog-text').textContent = (nameIdx+1)+' / '+names.length+' 名 完了';
+  document.getElementById('last-run').textContent = nowStr();
+  const d = new Date(); d.setMinutes(d.getMinutes()+5);
+  document.getElementById('next-run').textContent = pad(d.getHours())+':'+pad(d.getMinutes());
+}
+
+setInterval(tick, 3000);
+</script>
+</body>
+</html>
