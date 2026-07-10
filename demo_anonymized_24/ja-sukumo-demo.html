@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>計量・選別パッキング管理システム（デモ）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paddy:#2B4A3E; --paddy-deep:#193029; --grain:#C99A3E; --grain-deep:#9C7328;
+  --husk:#F4EEDD; --paper:#FFFDF7; --line:#E2D8BC; --ink:#2B2620; --ink-soft:#6E6656;
+  --ok:#3F7A47; --warn:#B9862F; --ng:#B0503A;
+  --shadow:0 1px 2px rgba(43,74,62,.06), 0 8px 22px -10px rgba(43,74,62,.22);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Zen Kaku Gothic New',-apple-system,'Hiragino Kaku Gothic ProN',sans-serif;
+  background:var(--husk); color:var(--ink); font-size:14px; line-height:1.6; min-height:100vh;
+}
+.serif{font-family:'Shippori Mincho',serif}
+
+header.top{background:var(--paddy); color:#F4EEDD; padding:22px 24px 24px; position:relative; overflow:hidden}
+header.top::after{content:"";position:absolute;inset:auto 0 0 0;height:5px;
+  background:repeating-linear-gradient(90deg, var(--grain) 0 18px, transparent 18px 22px);}
+.top-inner{max-width:1080px;margin:0 auto;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px}
+.eyebrow{font-size:11px;letter-spacing:.18em;color:#B9C9BE;margin-bottom:6px}
+.brand{font-family:'Shippori Mincho',serif;font-size:25px;font-weight:700}
+.brand-sub{font-size:12px;color:#C4D2C4;margin-top:4px}
+.date-badge{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.22);border-radius:10px;padding:9px 14px;font-size:12px}
+.date-badge b{display:block;font-size:15px;margin-top:2px}
+
+.tabbar{max-width:1080px;margin:0 auto;padding:16px 24px 0;display:flex;gap:8px}
+.tab-btn{
+  padding:11px 20px; border:1.5px solid var(--line); background:var(--paper); border-radius:10px 10px 0 0;
+  font-family:inherit; font-weight:700; font-size:13.5px; color:var(--ink-soft); cursor:pointer; border-bottom:none;
+  position:relative; top:1px;
+}
+.tab-btn.active{background:var(--paper); color:var(--paddy-deep); border-bottom:1px solid var(--paper); box-shadow:0 -2px 0 var(--grain) inset}
+.tab-btn:not(.active){background:#EFE7CE}
+
+.layout{max-width:1080px;margin:0 auto;padding:0 24px 70px}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:0 12px 12px 12px;box-shadow:var(--shadow);padding:24px}
+.two-col{display:grid;grid-template-columns:1fr 1.3fr;gap:22px;align-items:start}
+@media(max-width:860px){.two-col{grid-template-columns:1fr}}
+
+.section-title{font-size:12.5px;font-weight:800;color:var(--paddy);letter-spacing:.03em;margin-bottom:14px;display:flex;align-items:center;gap:7px}
+
+label.f{display:block;font-size:11px;color:var(--ink-soft);margin-bottom:4px;font-weight:600}
+input.f,select.f{width:100%;padding:10px 11px;border:1.5px solid var(--line);border-radius:9px;background:#fff;font-family:inherit;font-size:14.5px;color:var(--ink)}
+input.f:focus,select.f:focus{outline:none;border-color:var(--grain-deep);box-shadow:0 0 0 3px rgba(201,154,62,.18)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.right{text-align:right;font-variant-numeric:tabular-nums}
+
+.btn{border:none;border-radius:10px;padding:12px 18px;font-family:inherit;font-weight:800;font-size:14px;cursor:pointer}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--paddy-deep);color:#fff}
+.btn-primary:hover{background:var(--paddy)}
+.btn-primary:disabled{background:#B7BEB6;cursor:not-allowed}
+.btn-full{width:100%}
+
+.grade-badge{display:inline-flex;align-items:center;gap:5px;font-weight:800;font-size:12px;padding:4px 11px;border-radius:999px}
+.grade-1{background:#E4EFDA;color:#2E5B21}
+.grade-2{background:#FBF0D8;color:#8A6512}
+.grade-off{background:#F7DED7;color:#8A2E1D}
+
+.stop-gate{
+  border-left:3px solid var(--ng); background:#FBEEEA; color:#7A3320; border-radius:0 10px 10px 0;
+  padding:11px 13px; font-size:12.5px; margin-top:10px; display:none;
+}
+.stop-gate.show{display:block}
+
+table.ledger{width:100%; border-collapse:collapse; font-size:12.5px}
+table.ledger th{text-align:left; font-size:10.5px; color:var(--ink-soft); font-weight:700; padding:7px 8px; border-bottom:1.5px solid var(--line)}
+table.ledger td{padding:8px 8px; border-bottom:1px solid var(--line); vertical-align:middle}
+table.ledger tr:last-child td{border-bottom:none}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+
+.summary-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+.sum-box{background:#EFE7CE;border-radius:10px;padding:12px 14px}
+.sum-box .lbl{font-size:10.5px;color:var(--ink-soft)}
+.sum-box .val{font-family:'Shippori Mincho',serif;font-size:20px;font-weight:700;color:var(--paddy-deep);margin-top:3px;font-variant-numeric:tabular-nums}
+
+/* オクラタブ */
+.size-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px}
+.size-cell{background:var(--paper);border:1.5px solid var(--line);border-radius:10px;padding:10px 8px;text-align:center}
+.size-cell .sz{font-weight:800;font-size:13px;color:var(--paddy-deep)}
+.size-cell input{width:100%;margin-top:6px;text-align:center;padding:7px;border:1.5px solid var(--line);border-radius:7px;font-family:inherit}
+.pack-result{background:var(--paddy-deep);color:#fff;border-radius:11px;padding:16px 18px;margin-top:16px}
+.pack-result .lbl{font-size:11px;color:#BFD0C2}
+.pack-result .val{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;margin-top:4px}
+.pack-result .sub{font-size:11.5px;color:#BFD0C2;margin-top:6px}
+
+.hint-box{font-size:11.5px;color:var(--ink-soft);background:#EFE7CE;border-radius:10px;padding:11px 13px;border-left:3px solid var(--grain-deep);line-height:1.7;margin-top:16px}
+footer.page-foot{max-width:1080px;margin:0 auto;padding:20px 24px 40px;color:var(--ink-soft);font-size:11px;text-align:center}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <div>
+      <div class="eyebrow">農業法人 向け ｜ 計量・選別パッキング管理</div>
+      <div class="brand">米計量・オクラ選別パッキング管理帳</div>
+      <div class="brand-sub">紙の計量記録・目視選別を、その場で自動集計するシステム（デモ）</div>
+    </div>
+    <div class="date-badge">本日<b id="todayLabel">—</b></div>
+  </div>
+</header>
+
+<div class="tabbar">
+  <button class="tab-btn active" data-tab="rice">米計量登録</button>
+  <button class="tab-btn" data-tab="okra">オクラ選別・パッキング</button>
+</div>
+
+<div class="layout">
+
+  <!-- ============ 米計量タブ ============ -->
+  <div class="panel" id="tab-rice">
+    <div class="two-col">
+      <div>
+        <div class="section-title">① 計量入力</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div>
+            <label class="f">生産者</label>
+            <select class="f" id="riceProducer">
+              <option>田村ファーム</option>
+              <option>やまざき農園</option>
+              <option>四国みのり生産組合</option>
+              <option>おおた農産</option>
+            </select>
+          </div>
+          <div class="grid2">
+            <div>
+              <label class="f">品種</label>
+              <select class="f" id="riceVariety">
+                <option>コシヒカリ</option>
+                <option>ヒノヒカリ</option>
+                <option>にこまる</option>
+              </select>
+            </div>
+            <div>
+              <label class="f">袋数</label>
+              <input class="f right" id="riceBags" type="number" min="1" value="1">
+            </div>
+          </div>
+          <div class="grid2">
+            <div>
+              <label class="f">計量値（kg）</label>
+              <input class="f right" id="riceWeight" type="number" step="0.1" placeholder="例：30.0">
+            </div>
+            <div>
+              <label class="f">水分値（%）</label>
+              <input class="f right" id="riceMoisture" type="number" step="0.1" placeholder="例：14.5">
+            </div>
+          </div>
+          <div id="riceGatePreview"></div>
+          <button class="btn btn-primary btn-full" id="riceAddBtn">この計量を登録</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-title">② 計量記録（本日ぶん）</div>
+        <table class="ledger" id="riceTable">
+          <thead>
+            <tr><th>生産者</th><th>品種</th><th class="num">袋数</th><th class="num">重量</th><th class="num">水分</th><th>等級</th></tr>
+          </thead>
+          <tbody id="riceTbody"></tbody>
+        </table>
+        <div class="summary-strip">
+          <div class="sum-box"><div class="lbl">合計重量</div><div class="val" id="riceSumWeight">0.0 kg</div></div>
+          <div class="sum-box"><div class="lbl">1等の割合</div><div class="val" id="riceRate1">0%</div></div>
+          <div class="sum-box"><div class="lbl">登録件数</div><div class="val" id="riceCount">0 件</div></div>
+        </div>
+        <div class="hint-box">
+          等級は水分値と重量から自動判定します（水分14.0〜15.0%かつ規定重量内＝1等、それ以外は2等または規格外）。人が見て判定していた作業を、入力するだけで揃える設計です。生産者ごとの集計は登録するたびに自動で積み上がります。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ オクラタブ ============ -->
+  <div class="panel" id="tab-okra" style="display:none">
+    <div class="section-title">① サイズ別 本数を入力</div>
+    <div class="size-grid" id="sizeGrid"></div>
+
+    <div class="grid2" style="max-width:340px">
+      <div>
+        <label class="f">1パックの本数</label>
+        <input class="f right" id="packSize" type="number" min="1" value="8">
+      </div>
+      <div>
+        <label class="f">対象サイズ</label>
+        <select class="f" id="packTargetSize"></select>
+      </div>
+    </div>
+
+    <div class="pack-result">
+      <div class="lbl">できるパック数（選択サイズのみ）</div>
+      <div class="val" id="packCountVal">0 パック</div>
+      <div class="sub" id="packRemainVal">端数：0本（次ロットへ繰り越し）</div>
+    </div>
+
+    <div class="hint-box">
+      本数を入力するだけで「何パック作れて何本余るか」がその場で出ます。目視で数えてから電卓を叩いていた工程を、入力の瞬間に済ませる設計です。サイズごとの内訳はそのまま出荷ラベルの元データにも使えます。
+    </div>
+  </div>
+
+</div>
+
+<footer class="page-foot">農業法人向け 計量・選別パッキング管理システム — デモ版（架空のデータを使用しています）</footer>
+
+<script>
+/* ── 共通 ── */
+(function(){
+  const d = new Date();
+  document.getElementById("todayLabel").textContent =
+    d.getFullYear()+"年"+(d.getMonth()+1)+"月"+d.getDate()+"日";
+})();
+
+document.querySelectorAll(".tab-btn").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("tab-rice").style.display = btn.dataset.tab==="rice" ? "block":"none";
+    document.getElementById("tab-okra").style.display = btn.dataset.tab==="okra" ? "block":"none";
+  });
+});
+
+/* =========================================================
+   ① 米計量タブ
+   ========================================================= */
+const riceRecords = [];
+
+function judgeGrade(weight, moisture){
+  if(!weight || !moisture) return null;
+  if(moisture>=14.0 && moisture<=15.0 && weight>=29.0 && weight<=30.5) return {g:"1等", cls:"grade-1"};
+  if(moisture>=13.0 && moisture<=16.0) return {g:"2等", cls:"grade-2"};
+  return {g:"規格外", cls:"grade-off"};
+}
+
+function updateRiceGatePreview(){
+  const w = Number(document.getElementById("riceWeight").value);
+  const m = Number(document.getElementById("riceMoisture").value);
+  const el = document.getElementById("riceGatePreview");
+  if(!w || !m){ el.innerHTML=""; return; }
+  if(m>17){
+    el.innerHTML = `<div class="stop-gate show">⚠ 水分値が17%を超えています。乾燥不足の可能性があるため、登録前に再計測してください。</div>`;
+    return;
+  }
+  const j = judgeGrade(w,m);
+  el.innerHTML = `<div style="font-size:12.5px;color:var(--ink-soft)">判定結果：<span class="grade-badge ${j.cls}">${j.g}</span></div>`;
+}
+["riceWeight","riceMoisture"].forEach(id=>{
+  document.getElementById(id).addEventListener("input", updateRiceGatePreview);
+});
+
+document.getElementById("riceAddBtn").addEventListener("click", ()=>{
+  const producer = document.getElementById("riceProducer").value;
+  const variety = document.getElementById("riceVariety").value;
+  const bags = Number(document.getElementById("riceBags").value)||0;
+  const weight = Number(document.getElementById("riceWeight").value);
+  const moisture = Number(document.getElementById("riceMoisture").value);
+  if(!weight || !moisture || bags<=0){
+    alert("袋数・計量値・水分値をすべて入力してください。");
+    return;
+  }
+  if(moisture>17){
+    alert("水分値が17%を超えています。再計測してから登録してください。");
+    return;
+  }
+  const j = judgeGrade(weight, moisture);
+  riceRecords.push({producer, variety, bags, weight, moisture, grade:j});
+  document.getElementById("riceWeight").value="";
+  document.getElementById("riceMoisture").value="";
+  document.getElementById("riceGatePreview").innerHTML="";
+  renderRiceTable();
+});
+
+function renderRiceTable(){
+  const tbody = document.getElementById("riceTbody");
+  tbody.innerHTML = riceRecords.map(r=>`
+    <tr>
+      <td>${r.producer}</td>
+      <td>${r.variety}</td>
+      <td class="num">${r.bags}</td>
+      <td class="num">${r.weight.toFixed(1)}kg</td>
+      <td class="num">${r.moisture.toFixed(1)}%</td>
+      <td><span class="grade-badge ${r.grade.cls}">${r.grade.g}</span></td>
+    </tr>
+  `).join("");
+
+  const sumWeight = riceRecords.reduce((s,r)=>s+r.weight,0);
+  const count = riceRecords.length;
+  const grade1 = riceRecords.filter(r=>r.grade.g==="1等").length;
+  const rate1 = count>0 ? Math.round(grade1/count*100) : 0;
+
+  document.getElementById("riceSumWeight").textContent = sumWeight.toFixed(1) + " kg";
+  document.getElementById("riceRate1").textContent = rate1 + "%";
+  document.getElementById("riceCount").textContent = count + " 件";
+}
+renderRiceTable();
+
+/* =========================================================
+   ② オクラタブ
+   ========================================================= */
+const OKRA_SIZES = ["S","M","L","2L","規格外"];
+const sizeState = {};
+OKRA_SIZES.forEach(s=>sizeState[s]=0);
+
+function renderSizeGrid(){
+  const grid = document.getElementById("sizeGrid");
+  grid.innerHTML = OKRA_SIZES.map(s=>`
+    <div class="size-cell">
+      <div class="sz">${s}</div>
+      <input type="number" min="0" data-size="${s}" value="${sizeState[s]||""}" placeholder="0">
+    </div>
+  `).join("");
+  grid.querySelectorAll("input").forEach(inp=>{
+    inp.addEventListener("input", ()=>{
+      sizeState[inp.dataset.size] = Number(inp.value)||0;
+      updatePackResult();
+    });
+  });
+
+  const sel = document.getElementById("packTargetSize");
+  sel.innerHTML = OKRA_SIZES.filter(s=>s!=="規格外").map(s=>`<option value="${s}">${s}</option>`).join("");
+}
+renderSizeGrid();
+
+function updatePackResult(){
+  const target = document.getElementById("packTargetSize").value;
+  const packSize = Number(document.getElementById("packSize").value)||1;
+  const total = sizeState[target]||0;
+  const packs = Math.floor(total/packSize);
+  const remain = total - packs*packSize;
+  document.getElementById("packCountVal").textContent = packs.toLocaleString() + " パック";
+  document.getElementById("packRemainVal").textContent = `端数：${remain}本（次ロットへ繰り越し）　対象：${target}サイズ ${total}本 ÷ ${packSize}本入り`;
+}
+document.getElementById("packSize").addEventListener("input", updatePackResult);
+document.getElementById("packTargetSize").addEventListener("change", updatePackResult);
+updatePackResult();
+</script>
+</body>
+</html>
