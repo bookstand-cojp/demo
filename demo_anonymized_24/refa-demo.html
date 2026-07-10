@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>家具張替会社 案件管理システム（動くデモ）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF1F4; --paper:#FFFFFF; --ledger-line:#DCE2E8; --ink:#1F2A37; --ink-soft:#5B6774;
+    --accent:#145C6B; --accent-deep:#0E4753; --accent-soft:#E4EFF1;
+    --amber:#B8791F; --amber-soft:#FBF1DF; --green:#2F7D5B; --green-soft:#E4F3EC;
+    --red:#B23A3A; --red-soft:#FBE9E9; --stamp:#8E3B3B;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;background:var(--bg);
+    background-image:linear-gradient(var(--ledger-line) 1px, transparent 1px);
+    background-size:100% 34px;color:var(--ink);
+    font-family:"Noto Sans JP","Zen Kaku Gothic New",sans-serif;-webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:"JetBrains Mono",monospace;}
+  header.topbar{
+    background:var(--accent-deep);color:#fff;padding:16px 28px;display:flex;align-items:center;justify-content:space-between;
+    box-shadow:0 2px 10px rgba(0,0,0,.15);position:sticky;top:0;z-index:30;
+  }
+  header.topbar .brand{display:flex;align-items:center;gap:12px;}
+  header.topbar .brand .mark{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#1E7F92);
+    display:flex;align-items:center;justify-content:center;font-family:"Zen Kaku Gothic New";font-weight:900;font-size:15px;}
+  header.topbar h1{font-family:"Zen Kaku Gothic New";font-size:16px;font-weight:700;margin:0;letter-spacing:.02em;}
+  header.topbar .sub{font-size:11.5px;color:#BFD8DD;margin-top:2px;}
+  .proto-badge{font-size:11px;font-weight:700;letter-spacing:.06em;background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.35);color:#fff;padding:5px 10px;border-radius:999px;}
+  nav.tabs{display:flex;gap:4px;padding:0 28px;background:var(--paper);border-bottom:1px solid var(--ledger-line);
+    position:sticky;top:66px;z-index:29;}
+  nav.tabs button{border:none;background:transparent;padding:14px 18px 12px;font-family:"Zen Kaku Gothic New";
+    font-size:14px;font-weight:700;color:var(--ink-soft);cursor:pointer;border-bottom:3px solid transparent;}
+  nav.tabs button.active{color:var(--accent-deep);border-bottom-color:var(--accent);}
+  main{max-width:1220px;margin:0 auto;padding:26px 24px 80px;}
+  .view{display:none;} .view.active{display:block;animation:fade .2s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+  .panel{background:var(--paper);border:1px solid var(--ledger-line);border-radius:10px;padding:18px 20px;margin-bottom:18px;
+    box-shadow:0 1px 2px rgba(20,40,50,.04);}
+  .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;}
+  .search{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--ledger-line);
+    border-radius:8px;padding:8px 12px;flex:1;min-width:220px;max-width:320px;}
+  .search input{border:none;background:transparent;outline:none;font-size:13.5px;width:100%;font-family:inherit;color:var(--ink);}
+  .search svg{flex:none;opacity:.5;}
+  .chipgroup{display:flex;gap:6px;flex-wrap:wrap;}
+  .chip{font-size:12.5px;padding:6px 12px;border-radius:999px;border:1px solid var(--ledger-line);background:var(--paper);
+    color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .chip.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-deep);font-weight:700;}
+
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px;}
+  .kpi{background:var(--paper);border:1px solid var(--ledger-line);border-radius:10px;padding:16px 18px;position:relative;overflow:hidden;}
+  .kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--accent);}
+  .kpi .label{font-size:11.5px;color:var(--ink-soft);font-weight:500;}
+  .kpi .value{font-family:"JetBrains Mono";font-size:23px;font-weight:700;margin-top:4px;color:var(--accent-deep);}
+  .kpi .sub{font-size:11px;color:var(--ink-soft);margin-top:3px;}
+  .kpi.warn::before{background:var(--amber);} .kpi.warn .value{color:var(--amber);}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead th{text-align:left;font-size:11px;color:var(--ink-soft);font-weight:700;padding:9px 10px;
+    border-bottom:2px solid var(--ledger-line);white-space:nowrap;letter-spacing:.02em;}
+  tbody td{padding:11px 10px;border-bottom:1px solid var(--ledger-line);white-space:nowrap;vertical-align:middle;}
+  tbody tr:hover{background:var(--accent-soft);}
+  .no{font-family:"JetBrains Mono";color:var(--ink-soft);font-size:12px;}
+  .amt{font-family:"JetBrains Mono";text-align:right;display:block;}
+  .profit-cell{display:flex;flex-direction:column;line-height:1.3;}
+  .profit-cell .amt{color:var(--green);font-weight:700;} .profit-cell .rate{font-size:11px;color:var(--ink-soft);}
+  .profit-cell.low .amt{color:var(--red);}
+  .badge{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:999px;
+    font-size:11px;font-weight:700;border:1.5px dashed var(--ink-soft);color:var(--ink-soft);cursor:pointer;
+    transition:transform .1s;}
+  .badge:hover{transform:scale(1.12);}
+  .badge.done{border-style:solid;border-color:var(--green);color:var(--green);background:var(--green-soft);}
+  .pill{font-size:11px;padding:3px 9px;border-radius:6px;background:var(--accent-soft);color:var(--accent-deep);font-weight:700;}
+
+  .fix-note{margin-top:16px;background:var(--green-soft);border:1px dashed var(--green);border-radius:10px;
+    padding:14px 16px;font-size:12.5px;color:#215c41;}
+  .fix-note b{color:var(--accent-deep);font-family:"Zen Kaku Gothic New";}
+  .fix-note ul{margin:8px 0 0;padding-left:18px;} .fix-note li{margin-bottom:4px;}
+
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:11.5px;color:var(--ink-soft);font-weight:700;margin-bottom:5px;}
+  .field .rowline{display:flex;gap:10px;}
+  .field select,.field input[type=text],.field input[type=number],.field input[type=date]{
+    width:100%;padding:9px 10px;border:1px solid var(--ledger-line);border-radius:7px;font-size:13.5px;
+    font-family:inherit;background:var(--bg);color:var(--ink);}
+  .locked{background:#fff;border:1.5px solid var(--accent);border-radius:7px;padding:9px 10px;display:flex;
+    align-items:center;justify-content:space-between;font-size:13.5px;font-weight:700;color:var(--accent-deep);}
+  .locked .tag{font-size:10.5px;background:var(--accent);color:#fff;padding:2px 7px;border-radius:5px;font-weight:700;}
+  .readonly-field{background:#F4F5F3;border:1px dashed var(--ledger-line);border-radius:7px;padding:9px 10px;
+    font-size:13.5px;color:var(--ink-soft);display:flex;justify-content:space-between;align-items:center;}
+  .readonly-field .tag{font-size:10.5px;background:var(--ink-soft);color:#fff;padding:2px 7px;border-radius:5px;}
+
+  .lines{border:1px solid var(--ledger-line);border-radius:8px;overflow:hidden;}
+  .lines table{font-size:12.5px;} .lines thead th{background:var(--bg);}
+  .lines select,.lines input{border:none;background:transparent;font-family:inherit;font-size:12.5px;width:100%;padding:4px;color:var(--ink);}
+  .lines .del{color:var(--red);cursor:pointer;font-weight:700;background:none;border:none;font-size:13px;}
+  .addrow-btn{margin-top:8px;font-size:12.5px;padding:8px 14px;border:1px dashed var(--accent);background:var(--accent-soft);
+    color:var(--accent-deep);border-radius:7px;cursor:pointer;font-weight:700;}
+
+  .btn{font-family:"Zen Kaku Gothic New";font-size:13.5px;font-weight:700;padding:10px 18px;border-radius:8px;
+    border:none;cursor:pointer;letter-spacing:.02em;}
+  .btn.primary{background:var(--accent-deep);color:#fff;} .btn.primary:hover{background:var(--accent);}
+  .btn.ghost{background:transparent;color:var(--ink-soft);border:1px solid var(--ledger-line);}
+  .btn.small{padding:6px 12px;font-size:12px;}
+  .btn:disabled{opacity:.4;cursor:not-allowed;}
+
+  .rev-row{display:flex;align-items:center;gap:10px;}
+  .rev-badge{font-family:"JetBrains Mono";font-size:12px;font-weight:700;background:var(--stamp);color:#fff;
+    padding:4px 10px;border-radius:6px;transform:rotate(-2deg);display:inline-block;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+
+  .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--accent-deep);
+    color:#fff;padding:13px 22px;border-radius:9px;font-size:13.5px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.25);
+    opacity:0;pointer-events:none;transition:all .25s ease;z-index:50;max-width:520px;text-align:center;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  .section-title{font-family:"Zen Kaku Gothic New";font-size:14px;font-weight:700;margin:0 0 12px;color:var(--accent-deep);}
+  .helptext{font-size:11.5px;color:var(--ink-soft);margin-top:4px;}
+
+  .collapse{max-height:0;overflow:hidden;transition:max-height .25s ease;}
+  .collapse.open{max-height:900px;}
+  .formgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding-top:14px;}
+
+  .warn-box{background:var(--amber-soft);border:1px solid var(--amber);border-radius:8px;padding:12px 14px;
+    font-size:12.5px;color:#6B4A12;margin-top:10px;display:none;}
+  .warn-box.show{display:block;}
+  .warn-box button{margin-top:8px;}
+
+  .masterwrap{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  .minitable{border:1px solid var(--ledger-line);border-radius:8px;overflow:hidden;margin-top:10px;}
+  .minitable table{font-size:12.5px;} .minitable thead th{background:var(--bg);}
+  .typebadge{font-size:10.5px;padding:2px 8px;border-radius:5px;font-weight:700;}
+  .typebadge.tokui{background:var(--accent-soft);color:var(--accent-deep);}
+  .typebadge.shiire{background:#F1E9E0;color:#7A5A2E;}
+
+  .loglist{margin-top:10px;} .logrow{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-soft);
+    padding:8px 0;border-bottom:1px dashed var(--ledger-line);}
+  .logrow:last-child{border-bottom:none;} .logrow b{color:var(--ink);}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="mark">Rf</div>
+    <div><h1>家具張替会社 案件管理システム</h1><div class="sub">動くデモ（GAS + Google Sheets想定）</div></div>
+  </div>
+  <div class="proto-badge">DEMO ／ その場で操作できます</div>
+</header>
+
+<nav class="tabs">
+  <button class="active" data-view="ledger">① 案件台帳</button>
+  <button data-view="request">② 工場依頼書</button>
+  <button data-view="master">③ 顧客・商品マスタ</button>
+</nav>
+
+<main>
+
+  <!-- ============ ① 案件台帳 ============ -->
+  <section id="ledger" class="view active">
+
+    <div class="panel toolbar">
+      <div class="search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input id="searchbox" type="text" placeholder="現場名・見積番号・顧客名で検索">
+      </div>
+      <div class="chipgroup" id="tantoChips">
+        <span class="chip on" data-tanto="all">全担当</span>
+        <span class="chip" data-tanto="担当A">担当A</span>
+        <span class="chip" data-tanto="担当B">担当B</span>
+        <span class="chip" data-tanto="担当C">担当C</span>
+      </div>
+      <div class="chipgroup" id="ikisakiChips">
+        <span class="chip on" data-iki="all">依頼先すべて</span>
+        <span class="chip" data-iki="自社">自社</span>
+        <span class="chip" data-iki="業者A">業者A</span>
+        <span class="chip" data-iki="業者B">業者B</span>
+      </div>
+      <button class="btn primary small" onclick="toggleNewCase()">＋ 新規案件を登録</button>
+    </div>
+
+    <div class="panel collapse" id="newCasePanel">
+      <h3 class="section-title">新規案件の登録</h3>
+      <div class="formgrid">
+        <div class="field"><label>見積番号（自動採番）</label><div class="readonly-field"><span class="mono" id="nextNo">-</span><span class="tag">自動</span></div></div>
+        <div class="field"><label>現場名</label><input type="text" id="ncSite" placeholder="例：〇〇様邸 応接室"></div>
+        <div class="field"><label>顧客名（マスタ選択）</label><select id="ncClient"></select></div>
+        <div class="field"><label>担当</label><select id="ncTanto"><option>担当A</option><option>担当B</option><option>担当C</option></select></div>
+        <div class="field"><label>依頼先</label><select id="ncIki"><option>自社</option><option>業者A</option><option>業者B</option><option>なし</option></select></div>
+        <div class="field"><label>納期</label><input type="text" id="ncDue" placeholder="例：08/15"></div>
+        <div class="field"><label>売上（税抜）</label><input type="number" id="ncSales" placeholder="0"></div>
+        <div class="field"><label>製造原価</label><input type="number" id="ncCost" placeholder="0"></div>
+        <div class="field"><label>手間代</label><input type="number" id="ncLabor" placeholder="0"></div>
+      </div>
+      <button class="btn primary" onclick="submitNewCase()">この内容で登録する</button>
+      <button class="btn ghost" onclick="toggleNewCase()">キャンセル</button>
+      <div class="helptext" style="margin-top:8px;">登録すると即座に下の一覧・検索に反映されます。顧客名は自由入力ではなくマスタから選ぶため、表記ゆれによる重複が起きません。</div>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi"><div class="label">表示中の件数</div><div class="value" id="kpiCount">0</div><div class="sub">フィルタ条件に連動</div></div>
+      <div class="kpi"><div class="label">売上合計（税抜）</div><div class="value" id="kpiSales">¥0</div><div class="sub">フィルタ条件に連動</div></div>
+      <div class="kpi"><div class="label">粗利合計</div><div class="value" id="kpiProfit">¥0</div><div class="sub">売上－（製造原価＋手間代）</div></div>
+      <div class="kpi warn"><div class="label">請求書 未発行</div><div class="value" id="kpiUnbilled">0件</div><div class="sub">依頼書済みのみカウント</div></div>
+    </div>
+
+    <div class="panel">
+      <h3 class="section-title">案件一覧（ステータスの印はクリックで切替できます）</h3>
+      <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>見積NO</th><th>現場名</th><th>顧客名</th><th>担当</th><th>依頼先</th><th>納期</th>
+            <th style="text-align:right">売上</th><th style="text-align:right">原価</th>
+            <th style="text-align:right">粗利（額／率）</th>
+            <th>依頼書</th><th>納品書</th><th>請求書</th><th>入金</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="ledgerBody"></tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="fix-note">
+      <b>🔧 AppSheet版からの改善ポイント</b>
+      <ul>
+        <li>新規登録した案件は、リンクを踏み直したりせず即座に検索・一覧に反映されます（右上「＋新規案件を登録」で試せます）</li>
+        <li>ステータスの印はクリックで切替。誤って外れることのない確定的な動きです</li>
+        <li>粗利は「額」と「率」を常に両方表示し、赤字案件は自動で色分けします</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ ② 工場依頼書 ============ -->
+  <section id="request" class="view">
+    <div class="panel">
+      <div style="display:grid;grid-template-columns:1.1fr .9fr;gap:18px;align-items:start;">
+        <div>
+          <h3 class="section-title">工場依頼書 入力</h3>
+
+          <div class="field">
+            <label>対象の案件（① 案件台帳から選択）</label>
+            <select id="reqCaseSelect" onchange="onCaseSelect()"></select>
+          </div>
+
+          <div class="field">
+            <div class="rowline">
+              <div style="flex:1;">
+                <label>見積番号</label>
+                <div class="readonly-field"><span class="mono" id="reqNo">-</span><span class="tag">自動反映</span></div>
+              </div>
+              <div style="flex:1;">
+                <label>現場名</label>
+                <div class="readonly-field"><span id="reqSite">-</span><span class="tag">自動反映</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="field">
+            <div class="rowline">
+              <div style="flex:1;">
+                <label>依頼先</label>
+                <select id="reqIki"><option>自社（自社工場）</option><option>業者A</option><option>業者B</option><option>なし</option></select>
+              </div>
+              <div style="flex:1;">
+                <label>帳票タイプ（一度確定後は誤操作で解除されません）</label>
+                <div class="locked"><span>汎用フォーマット</span><span class="tag">固定 🔒</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="field">
+            <div class="rowline">
+              <div style="flex:1;">
+                <label>中間チェック担当</label>
+                <div class="readonly-field"><span id="reqTanto">-</span><span class="tag">案件情報の担当を自動反映</span></div>
+              </div>
+              <div style="flex:1;">
+                <label>完成チェック担当</label>
+                <select id="reqFinal"><option>担当B</option><option>担当A</option><option>担当C</option></select>
+              </div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>商品明細（マスタから選択）</label>
+            <div class="lines">
+              <table>
+                <thead><tr><th style="width:44%">商品名</th><th style="width:16%">数量</th><th style="width:30%">備考</th><th style="width:10%"></th></tr></thead>
+                <tbody id="linesBody"></tbody>
+              </table>
+            </div>
+            <button class="addrow-btn" onclick="addLine()">＋ 明細行を追加</button>
+          </div>
+
+          <div class="field rev-row">
+            <span class="rev-badge" id="revBadge">Rev. 1</span>
+            <button class="btn ghost" onclick="bumpRev()">版上げ（複製・自動採番）</button>
+          </div>
+
+          <button class="btn primary" id="issueBtn" onclick="issuePdf()">工場依頼書PDFを発行</button>
+        </div>
+
+        <div>
+          <h3 class="section-title">出力プレビュー</h3>
+          <div style="background:#fff;border:1px solid var(--ledger-line);border-radius:10px;padding:20px;
+              display:flex;flex-direction:column;gap:10px;box-shadow:0 2px 12px rgba(20,40,50,.06);position:relative;min-height:340px;">
+            <div style="position:absolute;top:14px;right:14px;width:52px;height:52px;border-radius:999px;border:3px solid var(--stamp);
+                color:var(--stamp);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;
+                transform:rotate(-12deg);opacity:.85;text-align:center;line-height:1.1;">工場<br>依頼書</div>
+            <h4 style="margin:0 0 4px;font-family:'Zen Kaku Gothic New';font-size:14px;">工場依頼書</h4>
+            <div class="mono" style="font-size:11px;color:var(--ink-soft);" id="previewMeta">見積番号：-　現場名：-</div>
+            <div style="height:10px;background:var(--ledger-line);border-radius:3px;width:60%;"></div>
+            <div style="height:10px;background:var(--ledger-line);border-radius:3px;width:40%;"></div>
+            <div style="margin-top:6px;border:1px solid var(--ledger-line);border-radius:4px;flex:1;display:flex;flex-direction:column;" id="previewLines"></div>
+          </div>
+
+          <div class="panel" style="margin-top:14px;">
+            <h3 class="section-title" style="margin-bottom:8px;">発行履歴（このセッション内）</h3>
+            <div class="loglist" id="issueLog"><div class="logrow" style="color:var(--ink-soft);">まだ発行履歴はありません</div></div>
+          </div>
+
+          <div class="fix-note" style="margin-top:14px;">
+            <b>🔧 発行まわりの改善ポイント</b>
+            <ul>
+              <li>発行すると①案件台帳の「依頼書」が自動で「済」になります（タブを切り替えて確認できます）</li>
+              <li>発行したPDFはその案件専用の格納先に確実に紐づきます（別案件のPDFが出る事象を解消）</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ③ 顧客・商品マスタ ============ -->
+  <section id="master" class="view">
+    <div class="panel">
+      <h3 class="section-title">取引先・商品をマスタで一元管理</h3>
+      <p class="helptext" style="font-size:12.5px;margin-top:-4px;">自由入力ではなく登録済みのマスタから選ぶ運用にすることで、表記ゆれ・重複登録を防ぎます。試しに似た名前を登録してみてください。</p>
+
+      <div class="masterwrap">
+        <div>
+          <h4 class="section-title">取引先マスタ</h4>
+          <div class="rowline">
+            <input type="text" id="custName" placeholder="会社名（例：○○工作所）" style="flex:2;padding:9px 10px;border:1px solid var(--ledger-line);border-radius:7px;font-family:inherit;font-size:13px;">
+            <select id="custType" style="flex:1;padding:9px 10px;border:1px solid var(--ledger-line);border-radius:7px;font-family:inherit;font-size:13px;">
+              <option value="得意先">得意先</option><option value="仕入先">仕入先</option>
+            </select>
+            <button class="btn primary small" onclick="submitCustomer()">登録</button>
+          </div>
+          <div class="warn-box" id="custWarn"></div>
+          <div class="minitable"><table><thead><tr><th>会社名</th><th>区分</th></tr></thead><tbody id="custBody"></tbody></table></div>
+        </div>
+
+        <div>
+          <h4 class="section-title">商品マスタ</h4>
+          <div class="rowline">
+            <input type="text" id="prodName" placeholder="商品名（例：ソファ張替（2P））" style="flex:2;padding:9px 10px;border:1px solid var(--ledger-line);border-radius:7px;font-family:inherit;font-size:13px;">
+            <button class="btn primary small" onclick="submitProduct()">登録</button>
+          </div>
+          <div class="warn-box" id="prodWarn"></div>
+          <div class="minitable"><table><thead><tr><th>商品名</th></tr></thead><tbody id="prodBody"></tbody></table></div>
+        </div>
+      </div>
+
+      <div class="fix-note">
+        <b>🔧 マスタ管理の改善ポイント</b>
+        <ul>
+          <li>似た名前（全角・半角・「株式会社」の有無など）を入力すると、登録前に既存候補を案内します</li>
+          <li>案件台帳・工場依頼書の入力欄はすべてこのマスタから選ぶ形式になり、自由入力欄をなくします</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ------------- マスタデータ -------------
+let CUSTOMERS = [
+  {name:"○○不動産", type:"得意先"}, {name:"○○チェーン店", type:"得意先"}, {name:"○○工作所", type:"得意先"},
+  {name:"○○木工", type:"得意先"}, {name:"○○商事", type:"得意先"}, {name:"カバーリング様", type:"得意先"},
+  {name:"業者A", type:"仕入先"}, {name:"業者B", type:"仕入先"},
+];
+let PRODUCTS = [
+  "ソファ張替（2P）", "ソファ張替（3P）", "カウンターチェア張替", "ヒップバー新規", "応接椅子張替", "座面クッション交換",
+];
+
+// ------------- 案件データ -------------
+let CASES = [
+  {no:19541, site:"淀屋橋シェアオフィス", client:"○○不動産", tanto:"担当A", iki:"自社", due:"06/28",
+   sales:820000, cost:410000, labor:120000, req:true, delivery:true, invoice:false, pay:false},
+  {no:19538, site:"○○チェーン店 高石店", client:"○○チェーン店", tanto:"担当B", iki:"業者B", due:"06/22",
+   sales:410000, cost:260000, labor:80000, req:true, delivery:true, invoice:true, pay:true},
+  {no:19540, site:"○○工作所 事務所", client:"○○工作所", tanto:"担当C", iki:"業者A", due:"06/30",
+   sales:1250000, cost:1180000, labor:90000, req:true, delivery:false, invoice:false, pay:false},
+  {no:19542, site:"○○木工 応接室", client:"○○木工", tanto:"担当A", iki:"自社", due:"07/03",
+   sales:560000, cost:290000, labor:70000, req:false, delivery:false, invoice:false, pay:false},
+  {no:19533, site:"北津守4丁目テナント", client:"○○商事", tanto:"担当B", iki:"なし", due:"06/15",
+   sales:330000, cost:150000, labor:40000, req:true, delivery:true, invoice:true, pay:false},
+  {no:19529, site:"カバーリング案件A", client:"カバーリング様", tanto:"担当C", iki:"業者B", due:"06/10",
+   sales:275000, cost:120000, labor:35000, req:true, delivery:true, invoice:true, pay:true},
+];
+let ISSUE_LOG = [];
+let rev = 1;
+
+let activeTanto = "all";
+let activeIki = "all";
+
+function yen(n){ return "¥" + Number(n||0).toLocaleString(); }
+function nextCaseNo(){ return Math.max(...CASES.map(c=>c.no)) + 1; }
+
+// ------------- タブ切り替え -------------
+document.querySelectorAll('nav.tabs button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    document.getElementById(btn.dataset.view).classList.add('active');
+    if(btn.dataset.view === 'request') refreshCaseSelect();
+  });
+});
+
+// ------------- ① 案件台帳 -------------
+function badge(state, key, no){
+  return `<span class="badge ${state?'done':''}" onclick="toggleStatus(${no}, '${key}')">${state?'済':'未'}</span>`;
+}
+
+function renderLedger(){
+  const q = document.getElementById('searchbox').value.trim();
+  const rows = CASES.filter(d=>{
+    if(activeTanto!=="all" && d.tanto!==activeTanto) return false;
+    if(activeIki!=="all" && d.iki!==activeIki) return false;
+    if(q && !((d.site+d.client+String(d.no)).includes(q))) return false;
+    return true;
+  });
+
+  let sales=0, profit=0, unbilled=0;
+  const body = document.getElementById('ledgerBody');
+  body.innerHTML = rows.map(d=>{
+    const gp = d.sales - d.cost - d.labor;
+    const rate = d.sales? (gp/d.sales*100).toFixed(1) : "0.0";
+    sales += d.sales; profit += gp;
+    if(d.req && !d.invoice) unbilled++;
+    const low = d.sales? (gp/d.sales < 0.25) : false;
+    return `<tr>
+      <td class="no">${d.no}</td><td>${d.site}</td><td>${d.client}</td><td>${d.tanto}</td>
+      <td><span class="pill">${d.iki}</span></td><td class="mono">${d.due}</td>
+      <td><span class="amt">${yen(d.sales)}</span></td><td><span class="amt">${yen(d.cost+d.labor)}</span></td>
+      <td><div class="profit-cell ${low?'low':''}"><span class="amt">${yen(gp)}</span><span class="rate">粗利率 ${rate}%</span></div></td>
+      <td>${badge(d.req,'req',d.no)}</td><td>${badge(d.delivery,'delivery',d.no)}</td>
+      <td>${badge(d.invoice,'invoice',d.no)}</td><td>${badge(d.pay,'pay',d.no)}</td>
+      <td><button class="btn ghost small" onclick="goToRequest(${d.no})">依頼書作成</button></td>
+    </tr>`;
+  }).join("") || `<tr><td colspan="14" style="text-align:center;color:var(--ink-soft);padding:24px;">該当する案件がありません</td></tr>`;
+
+  document.getElementById('kpiCount').textContent = rows.length;
+  document.getElementById('kpiSales').textContent = yen(sales);
+  document.getElementById('kpiProfit').textContent = yen(profit);
+  document.getElementById('kpiUnbilled').textContent = unbilled + "件";
+  document.getElementById('nextNo').textContent = nextCaseNo();
+}
+
+function toggleStatus(no, key){
+  const c = CASES.find(x=>x.no===no);
+  if(!c) return;
+  c[key] = !c[key];
+  renderLedger();
+}
+
+document.getElementById('searchbox').addEventListener('input', renderLedger);
+document.getElementById('tantoChips').addEventListener('click', e=>{
+  if(!e.target.dataset.tanto) return;
+  [...e.currentTarget.children].forEach(c=>c.classList.remove('on')); e.target.classList.add('on');
+  activeTanto = e.target.dataset.tanto; renderLedger();
+});
+document.getElementById('ikisakiChips').addEventListener('click', e=>{
+  if(!e.target.dataset.iki) return;
+  [...e.currentTarget.children].forEach(c=>c.classList.remove('on')); e.target.classList.add('on');
+  activeIki = e.target.dataset.iki; renderLedger();
+});
+
+function toggleNewCase(){
+  const p = document.getElementById('newCasePanel');
+  p.classList.toggle('open');
+  if(p.classList.contains('open')){
+    document.getElementById('nextNo').textContent = nextCaseNo();
+    populateCustomerSelect();
+  }
+}
+function populateCustomerSelect(){
+  const sel = document.getElementById('ncClient');
+  sel.innerHTML = CUSTOMERS.filter(c=>c.type==="得意先").map(c=>`<option>${c.name}</option>`).join("");
+}
+function submitNewCase(){
+  const site = document.getElementById('ncSite').value.trim();
+  if(!site){ showToast("現場名を入力してください"); return; }
+  const c = {
+    no: nextCaseNo(),
+    site, client: document.getElementById('ncClient').value,
+    tanto: document.getElementById('ncTanto').value, iki: document.getElementById('ncIki').value,
+    due: document.getElementById('ncDue').value || "-",
+    sales: Number(document.getElementById('ncSales').value)||0,
+    cost: Number(document.getElementById('ncCost').value)||0,
+    labor: Number(document.getElementById('ncLabor').value)||0,
+    req:false, delivery:false, invoice:false, pay:false,
+  };
+  CASES.push(c);
+  document.getElementById('ncSite').value=""; document.getElementById('ncDue').value="";
+  document.getElementById('ncSales').value=""; document.getElementById('ncCost').value=""; document.getElementById('ncLabor').value="";
+  toggleNewCase();
+  renderLedger();
+  showToast(`案件 No.${c.no}「${c.site}」を登録しました。検索欄に現場名を入れると即座に見つかります。`);
+}
+
+// ------------- ② 工場依頼書 -------------
+let currentLines = [];
+
+function refreshCaseSelect(){
+  const sel = document.getElementById('reqCaseSelect');
+  const prev = sel.value;
+  sel.innerHTML = CASES.map(c=>`<option value="${c.no}">No.${c.no}　${c.site}</option>`).join("");
+  if(prev && CASES.some(c=>String(c.no)===prev)) sel.value = prev;
+  onCaseSelect();
+}
+function onCaseSelect(){
+  const no = Number(document.getElementById('reqCaseSelect').value);
+  const c = CASES.find(x=>x.no===no);
+  if(!c) return;
+  document.getElementById('reqNo').textContent = c.no;
+  document.getElementById('reqSite').textContent = c.site;
+  document.getElementById('reqTanto').textContent = c.tanto;
+  document.getElementById('previewMeta').textContent = `見積番号：${c.no}　現場名：${c.site}`;
+  renderPreviewLines();
+}
+function productOptions(selected){
+  return PRODUCTS.map(p=>`<option ${p===selected?'selected':''}>${p}</option>`).join("");
+}
+function renderLines(){
+  const body = document.getElementById('linesBody');
+  body.innerHTML = currentLines.map((l,i)=>`
+    <tr>
+      <td><select onchange="currentLines[${i}].name=this.value; renderPreviewLines();">${productOptions(l.name)}</select></td>
+      <td><input value="${l.qty}" onchange="currentLines[${i}].qty=this.value;"></td>
+      <td><input value="${l.note}" onchange="currentLines[${i}].note=this.value;"></td>
+      <td><button class="del" onclick="removeLine(${i})">✕</button></td>
+    </tr>`).join("");
+  renderPreviewLines();
+}
+function addLine(){
+  currentLines.push({name: PRODUCTS[0], qty:"1", note:""});
+  renderLines();
+}
+function removeLine(i){ currentLines.splice(i,1); renderLines(); }
+function renderPreviewLines(){
+  const el = document.getElementById('previewLines');
+  el.innerHTML = currentLines.map(l=>`<div style="flex:1;border-bottom:1px solid var(--ledger-line);padding:4px 6px;font-size:10.5px;color:var(--ink-soft);">${l.name} × ${l.qty||0}</div>`).join("")
+    || `<div style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--ledger-line);font-size:11px;">明細を追加してください</div>`;
+}
+
+function bumpRev(){
+  rev++;
+  document.getElementById('revBadge').textContent = "Rev. " + rev;
+  showToast("版を複製しました（Rev." + rev + "）。旧版はそのまま履歴に残ります。");
+}
+
+function issuePdf(){
+  const no = Number(document.getElementById('reqCaseSelect').value);
+  const c = CASES.find(x=>x.no===no);
+  if(!c){ showToast("対象の案件を選択してください"); return; }
+  if(currentLines.length===0){ showToast("商品明細を1行以上追加してください"); return; }
+  c.req = true;
+  const now = new Date();
+  const stamp = `${now.getMonth()+1}/${now.getDate()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  ISSUE_LOG.unshift({no:c.no, site:c.site, rev, time:stamp});
+  renderIssueLog();
+  renderLedger();
+  showToast(`工場依頼書（No.${c.no}）を発行しました。①案件台帳の「依頼書」が自動で「済」になっています。`);
+}
+function renderIssueLog(){
+  const el = document.getElementById('issueLog');
+  if(ISSUE_LOG.length===0){ el.innerHTML = `<div class="logrow" style="color:var(--ink-soft);">まだ発行履歴はありません</div>`; return; }
+  el.innerHTML = ISSUE_LOG.map(l=>`<div class="logrow"><span><b>No.${l.no}</b> ${l.site}（Rev.${l.rev}）</span><span>${l.time}</span></div>`).join("");
+}
+function goToRequest(no){
+  document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+  document.querySelector('nav.tabs button[data-view="request"]').classList.add('active');
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('request').classList.add('active');
+  refreshCaseSelect();
+  document.getElementById('reqCaseSelect').value = no;
+  onCaseSelect();
+}
+
+// ------------- ③ マスタ -------------
+function normalize(s){
+  return s.trim().toLowerCase()
+    .replace(/[　\s]/g,"")
+    .replace(/株式会社|（株）|\(株\)|㈱/g,"");
+}
+function findSimilar(list, name, key){
+  const n = normalize(name);
+  return list.filter(item=>{
+    const existing = normalize(key? item[key] : item);
+    return existing === n || existing.includes(n) || n.includes(existing);
+  });
+}
+function renderCustomers(){
+  document.getElementById('custBody').innerHTML = CUSTOMERS.map(c=>
+    `<tr><td>${c.name}</td><td><span class="typebadge ${c.type==='得意先'?'tokui':'shiire'}">${c.type}</span></td></tr>`
+  ).join("");
+}
+function renderProducts(){
+  document.getElementById('prodBody').innerHTML = PRODUCTS.map(p=>`<tr><td>${p}</td></tr>`).join("");
+}
+function submitCustomer(force){
+  const nameInput = document.getElementById('custName');
+  const name = nameInput.value.trim();
+  const type = document.getElementById('custType').value;
+  const warn = document.getElementById('custWarn');
+  if(!name){ showToast("会社名を入力してください"); return; }
+  if(!force){
+    const similar = findSimilar(CUSTOMERS, name, 'name');
+    if(similar.length){
+      warn.innerHTML = `似た名前の取引先が既に登録されています：<b>${similar.map(s=>s.name).join('、')}</b><br>
+        <button class="btn ghost small" onclick="document.getElementById('custWarn').classList.remove('show')">キャンセルして選び直す</button>
+        <button class="btn primary small" onclick="submitCustomer(true)">それでも新規登録する</button>`;
+      warn.classList.add('show');
+      return;
+    }
+  }
+  CUSTOMERS.push({name, type});
+  nameInput.value=""; warn.classList.remove('show');
+  renderCustomers(); populateCustomerSelect();
+  showToast(`「${name}」（${type}）をマスタに登録しました。`);
+}
+function submitProduct(force){
+  const nameInput = document.getElementById('prodName');
+  const name = nameInput.value.trim();
+  const warn = document.getElementById('prodWarn');
+  if(!name){ showToast("商品名を入力してください"); return; }
+  if(!force){
+    const similar = findSimilar(PRODUCTS, name);
+    if(similar.length){
+      warn.innerHTML = `似た名前の商品が既に登録されています：<b>${similar.join('、')}</b><br>
+        <button class="btn ghost small" onclick="document.getElementById('prodWarn').classList.remove('show')">キャンセルして選び直す</button>
+        <button class="btn primary small" onclick="submitProduct(true)">それでも新規登録する</button>`;
+      warn.classList.add('show');
+      return;
+    }
+  }
+  PRODUCTS.push(name);
+  nameInput.value=""; warn.classList.remove('show');
+  renderProducts();
+  showToast(`「${name}」を商品マスタに登録しました。`);
+}
+
+// ------------- トースト -------------
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(()=>t.classList.remove('show'), 3200);
+}
+
+// ------------- 初期化 -------------
+renderLedger();
+refreshCaseSelect();
+addLine(); addLine();
+renderCustomers();
+renderProducts();
+renderIssueLog();
+</script>
+
+</body>
+</html>
