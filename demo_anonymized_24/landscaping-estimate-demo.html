@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>造園見積帳 — 案件・見積・粗利管理システム（デモ）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --moss:#24402C; --moss-deep:#152A1B; --soil:#7A5233; --linen:#F1ECDE;
+  --paper:#FBF8F1; --line:#DDD2B8; --ink:#2A2419; --ink-soft:#6B6252;
+  --leaf:#5C8A46; --leaf-deep:#3F6631; --clay:#B1543A; --gold:#B7893C;
+  --shadow: 0 1px 2px rgba(36,64,44,.06), 0 6px 20px -8px rgba(36,64,44,.18);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Zen Kaku Gothic New',-apple-system,'Hiragino Kaku Gothic ProN',sans-serif;
+  background:var(--linen);
+  color:var(--ink);
+  font-size:14px;
+  line-height:1.6;
+  min-height:100vh;
+  background-image:
+    radial-gradient(circle at 100% 0%, rgba(36,64,44,.05), transparent 40%),
+    radial-gradient(circle at 0% 100%, rgba(122,82,51,.06), transparent 45%);
+}
+.font-display{font-family:'Klee One',sans-serif}
+::selection{background:var(--leaf);color:#fff}
+
+/* ── ヘッダー ── */
+header.top{
+  background:var(--moss);
+  color:#F1ECDE;
+  padding:22px 24px 26px;
+  position:relative;
+  overflow:hidden;
+}
+header.top::after{
+  content:"";
+  position:absolute; inset:auto 0 0 0; height:6px;
+  background:repeating-linear-gradient(90deg, var(--leaf) 0 14px, var(--gold) 14px 22px, var(--leaf) 22px 36px);
+  opacity:.85;
+}
+.top-inner{max-width:1180px;margin:0 auto;display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap}
+.brand-eyebrow{font-size:11px;letter-spacing:.18em;color:#B9CDAE;font-weight:500;margin-bottom:6px}
+.brand-title{font-family:'Klee One',sans-serif;font-size:26px;font-weight:600;letter-spacing:.02em}
+.brand-sub{font-size:12px;color:#C7D6B8;margin-top:4px}
+.prop-fields{display:flex;gap:10px;flex-wrap:wrap}
+.prop-fields .fld{display:flex;flex-direction:column;gap:3px}
+.prop-fields label{font-size:10px;color:#B9CDAE;letter-spacing:.06em}
+.prop-fields input{
+  background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.25); border-radius:8px;
+  color:#fff; padding:8px 10px; font-size:13px; width:190px; font-family:inherit;
+}
+.prop-fields input::placeholder{color:#9DB48A}
+.prop-fields input:focus{outline:2px solid var(--gold); outline-offset:1px; background:rgba(255,255,255,.14)}
+
+/* ── レイアウト ── */
+.layout{max-width:1180px;margin:0 auto;padding:28px 24px 80px;display:grid;grid-template-columns:1.55fr 1fr;gap:22px;align-items:start}
+@media(max-width:920px){.layout{grid-template-columns:1fr}}
+
+.card{
+  background:var(--paper); border:1px solid var(--line); border-radius:14px;
+  box-shadow:var(--shadow);
+}
+.card-pad{padding:20px}
+.section-label{
+  font-size:12px; font-weight:700; color:var(--moss); letter-spacing:.04em;
+  display:flex; align-items:center; gap:8px; margin-bottom:14px;
+}
+.section-label .leafmark{width:14px;height:14px;flex-shrink:0}
+
+/* ── フォーム部品 ── */
+label.f{display:block; font-size:11px; color:var(--ink-soft); margin-bottom:4px; font-weight:500}
+input.f, select.f{
+  width:100%; padding:10px 11px; border:1.5px solid var(--line); border-radius:9px;
+  background:#fff; font-family:inherit; font-size:15px; color:var(--ink);
+}
+input.f:focus, select.f:focus{outline:none; border-color:var(--leaf); box-shadow:0 0 0 3px rgba(92,138,70,.15)}
+.right-align{text-align:right; font-variant-numeric:tabular-nums}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+
+.btn{
+  border:none; border-radius:10px; padding:12px 18px; font-family:inherit; font-weight:700;
+  font-size:14px; cursor:pointer; transition:transform .08s ease, box-shadow .15s ease, opacity .15s;
+}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--leaf-deep); color:#fff}
+.btn-primary:hover{background:var(--leaf)}
+.btn-primary:disabled{background:#B9C4AE; cursor:not-allowed}
+.btn-outline{background:transparent; border:1.5px dashed var(--soil); color:var(--soil)}
+.btn-outline:hover{background:rgba(122,82,51,.06)}
+.btn-ghost{background:none;border:none;color:var(--ink-soft);font-size:12px;cursor:pointer;font-family:inherit}
+.btn-ghost:hover{color:var(--clay)}
+.btn-full{width:100%}
+
+/* ── 費目編集カード ── */
+.editing-shell{border:1.5px solid var(--leaf); border-radius:12px; padding:16px; background:#fff}
+.editing-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+.editing-head h3{font-family:'Klee One',sans-serif;font-size:17px;color:var(--moss-deep)}
+.editing-head p{font-size:11px;color:var(--ink-soft);margin-top:2px}
+
+.row-item{border:1px solid var(--line); border-radius:10px; padding:12px; margin-bottom:9px; background:var(--paper)}
+.row-item-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.row-item-head .nm{font-weight:700;font-size:13.5px}
+.trash{cursor:pointer;color:var(--ink-soft);border:none;background:none;font-size:15px;padding:2px 4px;border-radius:6px}
+.trash:hover{color:var(--clay);background:rgba(177,84,58,.1)}
+
+.row-foot{
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:11px; color:var(--ink-soft); border-top:1px dashed var(--line); padding-top:7px; margin-top:8px;
+}
+.profit-tag{font-weight:800; font-variant-numeric:tabular-nums; padding:2px 8px; border-radius:999px; font-size:11.5px}
+.profit-good{color:#2E5B21;background:#E4EFDA}
+.profit-mid{color:#8A6512;background:#FBF0D8}
+.profit-bad{color:#8A2E1D;background:#F7DED7}
+
+.fee-picker{border:1px solid var(--line); border-radius:10px; padding:12px; background:var(--paper); margin-top:8px}
+.fee-picker-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
+.fee-picker-head span{font-size:12px;font-weight:700;color:var(--moss)}
+.fee-cat{margin-bottom:8px}
+.fee-cat p{font-size:10px;color:var(--ink-soft);margin-bottom:5px;letter-spacing:.03em}
+.chip-row{display:flex;flex-wrap:wrap;gap:6px}
+.chip{
+  font-size:12px; padding:6px 11px; border:1px solid var(--line); border-radius:999px;
+  background:#fff; cursor:pointer; font-family:inherit; color:var(--ink);
+}
+.chip:hover{border-color:var(--leaf); color:var(--leaf-deep); background:#F2F7EE}
+
+.unit-summary{
+  background:#EEF3E6; border:1px solid #D6E3C6; border-radius:10px; padding:10px 12px; margin-top:10px;
+  font-size:13px;
+}
+.unit-summary .line{display:flex;justify-content:space-between}
+.unit-summary .line + .line{margin-top:4px}
+.unit-summary .u-total{font-weight:800; color:var(--leaf-deep); font-size:14px}
+
+/* ── 確定済み一覧 ── */
+.confirmed-group{border:1px solid var(--line); border-radius:11px; padding:13px; margin-bottom:10px; background:#F7F3E6}
+.cg-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+.cg-head .gname{font-weight:700;font-size:13.5px}
+.cg-head .gprice{font-weight:800;font-size:14px;font-variant-numeric:tabular-nums}
+.cg-unitline{font-size:11px;color:var(--leaf-deep);font-weight:600;margin-top:2px}
+.cg-line{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-soft);padding:2px 0}
+.cg-line .r{display:flex;align-items:center;gap:6px;font-variant-numeric:tabular-nums}
+
+.empty-hint{
+  text-align:center; padding:34px 20px; color:var(--ink-soft); font-size:12.5px; border:1.5px dashed var(--line);
+  border-radius:12px; background:rgba(255,255,255,.4);
+}
+
+/* ── サイドバー ── */
+.side-sticky{position:sticky; top:20px; display:flex; flex-direction:column; gap:16px}
+
+.gauge-wrap{display:flex;align-items:center;gap:16px}
+.gauge-num{flex:1}
+.gauge-num .amt{font-family:'Klee One',sans-serif; font-size:26px; font-weight:600; color:var(--moss-deep); font-variant-numeric:tabular-nums}
+.gauge-num .rate{font-size:13px; font-weight:700; margin-top:2px}
+.gauge-num .cap{font-size:10.5px;color:var(--ink-soft);letter-spacing:.05em;margin-bottom:2px}
+
+.totals-list .t-row{display:flex;justify-content:space-between;font-size:12.5px;padding:6px 0;color:var(--ink-soft)}
+.totals-list .t-row.strong{color:var(--ink);font-weight:700}
+.totals-list .t-row.div{border-top:1px dashed var(--line);margin-top:4px;padding-top:9px}
+.totals-list .t-row .v{font-variant-numeric:tabular-nums}
+.adjust-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0}
+.adjust-row label{font-size:12.5px;color:var(--ink-soft)}
+.adjust-input{display:flex;align-items:center;gap:5px}
+.adjust-input span{font-size:12px;color:var(--clay);font-weight:700}
+.adjust-input input{width:110px;padding:7px 9px;border:1.5px solid var(--line);border-radius:8px;text-align:right;font-family:inherit;font-size:13px}
+
+.final-block{
+  background:var(--moss); color:#fff; border-radius:11px; padding:14px 16px; margin-top:4px;
+}
+.final-block .lbl{font-size:11px;color:#B9CDAE;letter-spacing:.05em}
+.final-block .val{font-family:'Klee One',sans-serif;font-size:24px;font-weight:600;margin-top:2px;font-variant-numeric:tabular-nums}
+
+.hint-box{
+  font-size:11.5px; color:var(--ink-soft); background:#F7F3E6; border-radius:10px; padding:11px 13px;
+  border-left:3px solid var(--soil); line-height:1.7;
+}
+
+footer.page-foot{
+  max-width:1180px;margin:0 auto;padding:0 24px 40px;color:var(--ink-soft);font-size:11px;text-align:center;
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <div>
+      <div class="brand-eyebrow">造園工事業 向け ｜ 案件・見積・粗利管理</div>
+      <div class="brand-title">造園見積帳</div>
+      <div class="brand-sub">現場で作業を積み上げると、粗利がその場で見える見積システム（デモ）</div>
+    </div>
+    <div class="prop-fields">
+      <div class="fld">
+        <label for="propertyName">物件名</label>
+        <input class="f" id="propertyName" placeholder="サンプル物件（デモ）">
+      </div>
+      <div class="fld">
+        <label for="customerName">お客様名</label>
+        <input class="f" id="customerName" placeholder="株式会社サンプル">
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- ============ メイン列 ============ -->
+  <div class="main-col" style="display:flex;flex-direction:column;gap:18px">
+
+    <!-- 作業追加 / 費目編集 -->
+    <div class="card card-pad" id="builderCard"></div>
+
+    <!-- 確定済み一覧 -->
+    <div id="confirmedWrap"></div>
+
+  </div>
+
+  <!-- ============ サイドバー ============ -->
+  <div class="side-sticky">
+
+    <div class="card card-pad">
+      <div class="section-label">
+        <svg class="leafmark" viewBox="0 0 24 24" fill="none"><path d="M4 20C4 10 12 4 20 4C20 12 14 20 4 20Z" fill="#5C8A46"/><path d="M4 20C8 14 12 10 20 4" stroke="#2A2419" stroke-width=".6" stroke-opacity=".3"/></svg>
+        この見積の粗利
+      </div>
+      <div class="gauge-wrap">
+        <svg id="ringGauge" width="88" height="88" viewBox="0 0 88 88"></svg>
+        <div class="gauge-num">
+          <div class="cap">粗利額（税抜合計 − 下代直工計）</div>
+          <div class="amt" id="grossAmt">¥0</div>
+          <div class="rate" id="grossRate">粗利率 0.0%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card card-pad">
+      <div class="section-label">
+        <svg class="leafmark" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" fill="none" stroke="#5C8A46" stroke-width="1.6"/><path d="M7 12h10M7 8h10M7 16h6" stroke="#5C8A46" stroke-width="1.6" stroke-linecap="round"/></svg>
+        見積合計の内訳
+      </div>
+      <div class="totals-list" id="totalsList"></div>
+      <div class="final-block">
+        <div class="lbl">税込合計</div>
+        <div class="val" id="totalWithTax">¥0</div>
+      </div>
+    </div>
+
+    <div class="hint-box">
+      値引きを求められたら「調整値引き」に金額を入れてください。税込合計と粗利が同時に動きます。原価を割り込むと粗利表示が赤に変わり、その場で「これ以上は難しい」と伝える判断材料になります。
+    </div>
+
+  </div>
+
+</div>
+
+<footer class="page-foot">造園工事業向け 案件・見積・粗利管理システム — デモ版（架空のデータを使用しています）</footer>
+
+<script>
+/* =========================================================
+   定数・マスタ（実アプリの price-calc.ts / demo/estimate と同じ計算式）
+   ========================================================= */
+const TAX_RATE = 0.10;
+const WELFARE_RATE = 0.04;
+const MANAGEMENT_RATE = 0.04;
+
+const UNIT_LABEL = { set:"式", sqm:"㎡", piece:"本", time:"回", m:"m", day:"日", person:"人" };
+const UNIT_OPTIONS = ["sqm","piece","set","time","m","day","person"];
+
+const BASE_TEMPLATE = [
+  { name:"人工",   costPrice:15000, markupRate:1.5, qty:1, unit:"person" },
+  { name:"処分費", costPrice:15000, markupRate:1.3, qty:1, unit:"set" },
+  { name:"車両費", costPrice:5000,  markupRate:1.3, qty:1, unit:"day" },
+  { name:"交通費", costPrice:3000,  markupRate:1.0, qty:1, unit:"set" },
+];
+
+const FEE_ITEMS = [
+  { id:"F001", category:"薬剤・資材", name:"薬剤費",     costPrice:3000,  markupRate:1.3, unit:"set" },
+  { id:"F002", category:"薬剤・資材", name:"資材費",     costPrice:5000,  markupRate:1.3, unit:"set" },
+  { id:"F003", category:"薬剤・資材", name:"肥料費",     costPrice:2000,  markupRate:1.3, unit:"set" },
+  { id:"F004", category:"薬剤・資材", name:"消耗品費",   costPrice:1000,  markupRate:1.3, unit:"set" },
+  { id:"F005", category:"廃材・処理", name:"廃材処分費", costPrice:15000, markupRate:1.3, unit:"set" },
+  { id:"F006", category:"廃材・処理", name:"残土処分費", costPrice:10000, markupRate:1.3, unit:"set" },
+  { id:"F007", category:"機械・車両", name:"機械損料",   costPrice:8000,  markupRate:1.3, unit:"day" },
+  { id:"F008", category:"機械・車両", name:"車両費",     costPrice:5000,  markupRate:1.3, unit:"day" },
+  { id:"F009", category:"機械・車両", name:"交通費",     costPrice:3000,  markupRate:1.0, unit:"set" },
+  { id:"F010", category:"その他経費", name:"養生費",     costPrice:5000,  markupRate:1.3, unit:"set" },
+  { id:"F011", category:"その他経費", name:"安全費",     costPrice:3000,  markupRate:1.3, unit:"set" },
+  { id:"F012", category:"その他経費", name:"諸経費",     costPrice:5000,  markupRate:1.3, unit:"set" },
+];
+
+function roundTo(v, d){ const f = Math.pow(10,d); return Math.round(v*f)/f; }
+function yen(n){ return "¥" + Math.round(n||0).toLocaleString(); }
+function genId(){ return "line_" + Date.now() + "_" + Math.random().toString(36).slice(2,8); }
+
+/* ── 価格計算（実アプリと同一式） ── */
+function recalcPrice(line, field, value){
+  if(field==="selling"){
+    const sellingPrice = value;
+    const markupRate = line.costPrice===0 ? 0 : roundTo(sellingPrice/line.costPrice,2);
+    return {...line, sellingPrice, markupRate};
+  }
+  if(field==="cost"){
+    const costPrice = value;
+    const markupRate = costPrice===0 ? 0 : roundTo(line.sellingPrice/costPrice,2);
+    return {...line, costPrice, markupRate};
+  }
+  if(field==="markup"){
+    const markupRate = value;
+    const sellingPrice = roundTo(line.costPrice*markupRate,0);
+    return {...line, sellingPrice, markupRate};
+  }
+  return line;
+}
+function calcAmount(l){ return l.sellingPrice * l.quantity; }
+function calcGrossProfit(l){ return (l.sellingPrice - l.costPrice) * l.quantity; }
+function calcGrossProfitRate(l){ if(l.sellingPrice===0) return 0; return roundTo(((l.sellingPrice-l.costPrice)/l.sellingPrice)*100,1); }
+
+function calcEstimateTotals(lines, adjustment){
+  adjustment = adjustment || 0;
+  const directCostTotal = lines.reduce((s,l)=>s+calcAmount(l),0);
+  const legalWelfareFee = roundTo(directCostTotal*WELFARE_RATE,0);
+  const siteMgmtFee = roundTo(directCostTotal*MANAGEMENT_RATE,0);
+  const subtotal = directCostTotal + legalWelfareFee + siteMgmtFee;
+  const afterDiscount = subtotal - adjustment;
+  const tax = roundTo(afterDiscount*TAX_RATE,0);
+  const totalWithTax = afterDiscount + tax;
+  return {directCostTotal, legalWelfareFee, siteMgmtFee, subtotal, adjustment, total:afterDiscount, tax, totalWithTax};
+}
+function calcCostTotal(lines){ return lines.reduce((s,l)=>s+l.costPrice*l.quantity,0); }
+
+/* =========================================================
+   状態
+   ========================================================= */
+const state = {
+  taskName:"", taskUnit:"sqm", taskQty:1,
+  editingRows:[], isEditing:false, showFeeList:false, customFeeName:"",
+  confirmedLines:[], taskMeta:{},
+  adjustment:0,
+};
+
+/* =========================================================
+   描画
+   ========================================================= */
+function render(){
+  renderBuilder();
+  renderConfirmed();
+  renderSidebar();
+}
+
+function profitClass(rate){ return rate>=30 ? "profit-good" : rate>=0 ? "profit-mid" : "profit-bad"; }
+
+function renderBuilder(){
+  const el = document.getElementById("builderCard");
+
+  if(!state.isEditing){
+    el.innerHTML = `
+      <div class="section-label">
+        <svg class="leafmark" viewBox="0 0 24 24" fill="none"><path d="M12 3v18M6 8c0 4 3 6 6 6s6-2 6-6" stroke="#5C8A46" stroke-width="1.7" stroke-linecap="round"/></svg>
+        作業を追加
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div>
+          <label class="f" for="taskName">作業名</label>
+          <input class="f" id="taskName" placeholder="例：庭木の剪定" value="${escAttr(state.taskName)}">
+        </div>
+        <div class="grid2">
+          <div>
+            <label class="f">作業単位（単価割り戻し用）</label>
+            <select class="f" id="taskUnit">${UNIT_OPTIONS.map(u=>`<option value="${u}" ${u===state.taskUnit?"selected":""}>${UNIT_LABEL[u]}</option>`).join("")}</select>
+          </div>
+          <div>
+            <label class="f">数量（例：100）</label>
+            <input class="f right-align" id="taskQty" type="number" inputmode="decimal" value="${state.taskQty||""}" placeholder="1">
+          </div>
+        </div>
+        <button class="btn btn-primary btn-full" id="startBtn" ${(!state.taskName.trim()||state.taskQty<=0)?"disabled":""}>開始</button>
+      </div>
+    `;
+    document.getElementById("taskName").oninput = e=>{ state.taskName=e.target.value; renderBuilder(); };
+    document.getElementById("taskName").onkeydown = e=>{ if(e.key==="Enter") startTask(); };
+    document.getElementById("taskUnit").onchange = e=>{ state.taskUnit=e.target.value; };
+    document.getElementById("taskQty").oninput = e=>{ state.taskQty=Number(e.target.value); renderBuilder(); };
+    const sb = document.getElementById("startBtn");
+    if(sb) sb.onclick = startTask;
+    return;
+  }
+
+  // ── 編集中 ──
+  const feeTotal = state.editingRows.reduce((s,r)=>s+calcAmount(r),0);
+  const unitPrice = state.taskQty>0 ? Math.round(feeTotal/state.taskQty) : 0;
+
+  const rowsHtml = state.editingRows.map(row=>{
+    const amount = calcAmount(row);
+    const rate = calcGrossProfitRate(row);
+    return `
+    <div class="row-item" data-id="${row.id}">
+      <div class="row-item-head">
+        <span class="nm">${escHtml(row.itemName)}</span>
+        <button class="trash" data-act="removeRow" data-id="${row.id}" title="削除">✕</button>
+      </div>
+      <div class="grid2" style="margin-bottom:8px">
+        <div><label class="f">数量</label><input class="f right-align" data-act="qty" data-id="${row.id}" type="number" inputmode="decimal" value="${row.quantity||""}"></div>
+        <div><label class="f">単位</label><select class="f" data-act="unit" data-id="${row.id}">${UNIT_OPTIONS.map(u=>`<option value="${u}" ${u===row.unit?"selected":""}>${UNIT_LABEL[u]}</option>`).join("")}</select></div>
+      </div>
+      <div class="grid3">
+        <div><label class="f">上代 / ${UNIT_LABEL[row.unit]}</label><input class="f right-align" data-act="selling" data-id="${row.id}" type="number" value="${row.sellingPrice||""}"></div>
+        <div><label class="f">下代 / ${UNIT_LABEL[row.unit]}</label><input class="f right-align" data-act="cost" data-id="${row.id}" type="number" value="${row.costPrice||""}"></div>
+        <div><label class="f">掛率</label><input class="f right-align" data-act="markup" data-id="${row.id}" type="number" step="0.01" value="${row.markupRate||""}"></div>
+      </div>
+      <div class="row-foot">
+        <span>${row.quantity}${UNIT_LABEL[row.unit]} × ${yen(row.sellingPrice)} = ${yen(amount)}</span>
+        <span class="profit-tag ${profitClass(rate)}">粗利 ${yen(calcGrossProfit(row))}（${rate.toFixed(1)}%）</span>
+      </div>
+    </div>`;
+  }).join("");
+
+  const feePickerHtml = !state.showFeeList ? `
+    <button class="btn btn-outline btn-full" id="showFeeBtn">＋ 費目を追加</button>
+  ` : `
+    <div class="fee-picker">
+      <div class="fee-picker-head">
+        <span>費目を選択</span>
+        <button class="btn-ghost" id="closeFeeBtn">閉じる</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <input class="f" id="customFeeName" placeholder="費目名を入力（自由記入）" value="${escAttr(state.customFeeName)}" style="flex:1">
+        <button class="btn btn-primary" id="addCustomFeeBtn" style="padding:9px 14px" ${!state.customFeeName.trim()?"disabled":""}>追加</button>
+      </div>
+      ${Object.entries(groupBy(FEE_ITEMS,"category")).map(([cat,items])=>`
+        <div class="fee-cat">
+          <p>${cat}</p>
+          <div class="chip-row">${items.map(f=>`<button class="chip" data-act="addFee" data-fid="${f.id}">${f.name}</button>`).join("")}</div>
+        </div>
+      `).join("")}
+    </div>
+  `;
+
+  el.innerHTML = `
+    <div class="editing-shell">
+      <div class="editing-head">
+        <div>
+          <h3>${escHtml(state.taskName)}</h3>
+          <p>作業数量：${state.taskQty} ${UNIT_LABEL[state.taskUnit]}</p>
+        </div>
+        <button class="btn-ghost" id="cancelBtn">キャンセル</button>
+      </div>
+      ${rowsHtml}
+      ${feePickerHtml}
+      <div class="unit-summary">
+        <div class="line"><span>費目合計</span><span>${yen(feeTotal)}</span></div>
+        <div class="line u-total"><span>÷ ${state.taskQty}${UNIT_LABEL[state.taskUnit]} = 単価</span><span>${yen(unitPrice)} / ${UNIT_LABEL[state.taskUnit]}</span></div>
+      </div>
+      <button class="btn btn-primary btn-full" id="confirmBtn" style="margin-top:12px" ${state.editingRows.length===0?"disabled":""}>この作業を確定</button>
+    </div>
+  `;
+
+  document.getElementById("cancelBtn").onclick = cancelTask;
+  document.getElementById("confirmBtn").onclick = confirmTask;
+  const sfb = document.getElementById("showFeeBtn"); if(sfb) sfb.onclick = ()=>{ state.showFeeList=true; renderBuilder(); };
+  const cfb = document.getElementById("closeFeeBtn"); if(cfb) cfb.onclick = ()=>{ state.showFeeList=false; renderBuilder(); };
+  const cfn = document.getElementById("customFeeName");
+  if(cfn){
+    cfn.oninput = e=>{ state.customFeeName=e.target.value; renderBuilder(); };
+    cfn.onkeydown = e=>{ if(e.key==="Enter") addCustomFee(); };
+  }
+  const acfb = document.getElementById("addCustomFeeBtn"); if(acfb) acfb.onclick = addCustomFee;
+
+  el.querySelectorAll('[data-act="removeRow"]').forEach(b=>b.onclick=()=>{
+    state.editingRows = state.editingRows.filter(r=>r.id!==b.dataset.id); renderBuilder();
+  });
+  el.querySelectorAll('[data-act="qty"]').forEach(i=>i.oninput=()=>{
+    updateRow(i.dataset.id,"quantity",Number(i.value)); renderBuilder();
+  });
+  el.querySelectorAll('[data-act="unit"]').forEach(s=>s.onchange=()=>{
+    updateRow(s.dataset.id,"unit",s.value); renderBuilder();
+  });
+  ["selling","cost","markup"].forEach(field=>{
+    el.querySelectorAll(`[data-act="${field}"]`).forEach(i=>i.oninput=()=>{
+      updateRowPrice(i.dataset.id, field, Number(i.value)); renderBuilder();
+    });
+  });
+  el.querySelectorAll('[data-act="addFee"]').forEach(b=>b.onclick=()=>{
+    addFeeItem(FEE_ITEMS.find(f=>f.id===b.dataset.fid)); renderBuilder();
+  });
+}
+
+function renderConfirmed(){
+  const wrap = document.getElementById("confirmedWrap");
+  const groups = groupBy(state.confirmedLines, l=>l.category || "その他");
+  const keys = Object.keys(groups);
+  if(keys.length===0){
+    wrap.innerHTML = `<div class="empty-hint">まだ作業が確定していません。上のフォームから作業を追加すると、ここに積み上がっていきます。</div>`;
+    return;
+  }
+  wrap.innerHTML = `
+    <div class="card card-pad">
+      <div class="section-label">
+        <svg class="leafmark" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#5C8A46" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        確定済みの作業
+      </div>
+      ${keys.map(gname=>{
+        const lines = groups[gname];
+        const groupTotal = lines.reduce((s,l)=>s+calcAmount(l),0);
+        const meta = state.taskMeta[gname];
+        const unitDisp = meta && meta.qty>0 ? Math.round(groupTotal/meta.qty) : null;
+        return `
+        <div class="confirmed-group">
+          <div class="cg-head">
+            <div>
+              <div class="gname">${escHtml(gname)}</div>
+              ${unitDisp!==null?`<div class="cg-unitline">${yen(groupTotal)} ÷ ${meta.qty}${UNIT_LABEL[meta.unit]} = ${yen(unitDisp)}/${UNIT_LABEL[meta.unit]}</div>`:""}
+            </div>
+            <div class="gprice">${yen(groupTotal)}</div>
+          </div>
+          ${lines.map(l=>{
+            const rate = calcGrossProfitRate(l);
+            return `<div class="cg-line">
+              <span>${escHtml(l.itemName)} ${l.quantity}${UNIT_LABEL[l.unit]} × ${yen(l.sellingPrice)}</span>
+              <span class="r"><span class="${profitClass(rate)}" style="padding:1px 6px;border-radius:999px;font-weight:700">${rate.toFixed(1)}%</span>${yen(calcAmount(l))}<button class="trash" data-remove="${l.id}">✕</button></span>
+            </div>`;
+          }).join("")}
+        </div>`;
+      }).join("")}
+    </div>
+  `;
+  wrap.querySelectorAll("[data-remove]").forEach(b=>b.onclick=()=>{
+    state.confirmedLines = state.confirmedLines.filter(l=>l.id!==b.dataset.remove);
+    render();
+  });
+}
+
+function renderSidebar(){
+  const totals = calcEstimateTotals(state.confirmedLines, state.adjustment);
+  const costTotal = calcCostTotal(state.confirmedLines);
+  const gross = totals.total>0 ? {amount: totals.total-costTotal, rate:((totals.total-costTotal)/totals.total)*100} : {amount:0, rate:0};
+
+  document.getElementById("grossAmt").textContent = yen(gross.amount);
+  const rateEl = document.getElementById("grossRate");
+  rateEl.textContent = "粗利率 " + gross.rate.toFixed(1) + "%";
+  rateEl.style.color = gross.rate>=30 ? "#2E5B21" : gross.rate>=0 ? "#8A6512" : "#8A2E1D";
+
+  drawRing(Math.max(0,Math.min(100,gross.rate)));
+
+  document.getElementById("totalsList").innerHTML = `
+    <div class="t-row"><span>直工計</span><span class="v">${yen(totals.directCostTotal)}</span></div>
+    <div class="t-row"><span>現場管理費（4%）</span><span class="v">${yen(totals.siteMgmtFee)}</span></div>
+    <div class="t-row"><span>法定福利費（4%）</span><span class="v">${yen(totals.legalWelfareFee)}</span></div>
+    <div class="t-row strong div"><span>小計</span><span class="v">${yen(totals.subtotal)}</span></div>
+    <div class="adjust-row">
+      <label>調整値引き</label>
+      <div class="adjust-input"><span>▲¥</span><input type="number" id="adjustmentInput" value="${state.adjustment||""}" placeholder="0"></div>
+    </div>
+    <div class="t-row strong div"><span>税抜合計</span><span class="v">${yen(totals.total)}</span></div>
+    <div class="t-row"><span>消費税（10%）</span><span class="v">${yen(totals.tax)}</span></div>
+  `;
+  document.getElementById("totalWithTax").textContent = yen(totals.totalWithTax);
+
+  document.getElementById("adjustmentInput").oninput = e=>{ state.adjustment = Number(e.target.value)||0; renderSidebar(); };
+}
+
+function drawRing(pct){
+  const svg = document.getElementById("ringGauge");
+  const r = 34, cx=44, cy=44, circ = 2*Math.PI*r;
+  const dash = circ * (pct/100);
+  const color = pct>=30 ? "#5C8A46" : pct>=15 ? "#B7893C" : "#B1543A";
+  svg.innerHTML = `
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#E4DCC6" stroke-width="9"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="9"
+      stroke-linecap="round" stroke-dasharray="${dash} ${circ-dash}"
+      transform="rotate(-90 ${cx} ${cy})" style="transition:stroke-dasharray .4s ease"/>
+    <text x="${cx}" y="${cy+5}" text-anchor="middle" font-size="15" font-weight="800" fill="${color}" font-family="'Zen Kaku Gothic New',sans-serif">${Math.round(pct)}%</text>
+  `;
+}
+
+/* =========================================================
+   操作
+   ========================================================= */
+function startTask(){
+  if(!state.taskName.trim() || state.taskQty<=0) return;
+  state.editingRows = BASE_TEMPLATE.map(t=>({
+    id:genId(), itemName:t.name, category:state.taskName.trim(), spec:"",
+    costPrice:t.costPrice, markupRate:t.markupRate, sellingPrice:Math.round(t.costPrice*t.markupRate),
+    quantity:t.qty, unit:t.unit,
+  }));
+  state.isEditing = true;
+  renderBuilder();
+}
+function cancelTask(){
+  state.taskName=""; state.taskUnit="sqm"; state.taskQty=1;
+  state.editingRows=[]; state.isEditing=false; state.showFeeList=false; state.customFeeName="";
+  renderBuilder();
+}
+function confirmTask(){
+  if(state.editingRows.length===0) return;
+  state.confirmedLines = state.confirmedLines.concat(state.editingRows);
+  state.taskMeta[state.taskName.trim()] = {qty:state.taskQty, unit:state.taskUnit};
+  state.taskName=""; state.taskUnit="sqm"; state.taskQty=1;
+  state.editingRows=[]; state.isEditing=false; state.showFeeList=false; state.customFeeName="";
+  render();
+}
+function updateRow(id, field, value){
+  state.editingRows = state.editingRows.map(r=> r.id===id ? {...r,[field]:value} : r);
+}
+function updateRowPrice(id, field, value){
+  state.editingRows = state.editingRows.map(r=> r.id===id ? recalcPrice(r,field,value) : r);
+}
+function addFeeItem(fee){
+  if(!fee) return;
+  state.editingRows.push({
+    id:genId(), itemName:fee.name, category:state.taskName.trim(), spec:"",
+    costPrice:fee.costPrice, markupRate:fee.markupRate, sellingPrice:Math.round(fee.costPrice*fee.markupRate),
+    quantity:1, unit:fee.unit,
+  });
+  state.showFeeList=false;
+}
+function addCustomFee(){
+  const name = state.customFeeName.trim();
+  if(!name) return;
+  state.editingRows.push({
+    id:genId(), itemName:name, category:state.taskName.trim(), spec:"",
+    costPrice:0, markupRate:1.3, sellingPrice:0, quantity:1, unit:"set",
+  });
+  state.customFeeName=""; state.showFeeList=false;
+  renderBuilder();
+}
+
+/* =========================================================
+   ユーティリティ
+   ========================================================= */
+function groupBy(arr, keyFn){
+  const g = {};
+  arr.forEach(item=>{
+    const k = typeof keyFn==="string" ? item[keyFn] : keyFn(item);
+    if(!g[k]) g[k]=[];
+    g[k].push(item);
+  });
+  return g;
+}
+function escHtml(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function escAttr(s){ return escHtml(s).replace(/"/g,"&quot;"); }
+
+/* =========================================================
+   初期化
+   ========================================================= */
+render();
+</script>
+</body>
+</html>
