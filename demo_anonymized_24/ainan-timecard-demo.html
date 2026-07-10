@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>〇〇町タイムカード</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html { margin: 0; padding: 0; height: 100vh; overflow: hidden; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif; background: #f0f4f8; color: #1a1a2e; margin: 0; padding: 0; height: 100vh; overflow: hidden; }
+
+    /* ===== ログイン ===== */
+    #loginScreen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100dvh; padding: 24px; }
+    .login-card { background: #fff; border-radius: 20px; padding: 40px 28px; width: 100%; max-width: 400px; box-shadow: 0 4px 24px rgba(0,0,0,0.10); }
+    .login-title { text-align: center; font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+    .login-subtitle { text-align: center; font-size: 13px; color: #888; margin-bottom: 32px; }
+    .form-label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; color: #444; }
+    .form-input { display: block; width: 100%; padding: 16px; font-size: 20px; border: 2px solid #e0e0e0; border-radius: 12px; outline: none; transition: border-color 0.2s; letter-spacing: 4px; text-align: center; }
+    .form-input:focus { border-color: #3b7dd8; }
+    .btn-login { display: block; width: 100%; margin-top: 24px; padding: 18px; font-size: 18px; font-weight: 700; color: #fff; background: #3b7dd8; border: none; border-radius: 14px; cursor: pointer; transition: background 0.2s, transform 0.1s; }
+    .btn-login:active { transform: scale(0.97); background: #2c64b5; }
+    .btn-login:disabled { background: #aac4ed; cursor: not-allowed; }
+    .error-msg { margin-top: 16px; padding: 12px 16px; background: #fff0f0; border: 1px solid #ffcccc; border-radius: 10px; color: #c0392b; font-size: 14px; text-align: center; display: none; }
+
+    /* ===== NFC完了画面 ===== */
+    #nfcScreen { display: none; flex-direction: column; align-items: center; justify-content: center; min-height: 100dvh; padding: 32px 24px; text-align: center; }
+    .nfc-icon { font-size: 72px; margin-bottom: 24px; }
+    .nfc-title { font-size: 26px; font-weight: 700; margin-bottom: 12px; }
+    .nfc-msg { font-size: 16px; color: #555; margin-bottom: 32px; line-height: 1.6; }
+    .nfc-msg.error { color: #c0392b; }
+    .btn-back { padding: 16px 32px; font-size: 16px; font-weight: 700; color: #3b7dd8; background: #fff; border: 2px solid #3b7dd8; border-radius: 14px; cursor: pointer; }
+
+    /* ===== メイン画面 ===== */
+    #mainScreen { display: none; flex-direction: column; height: 100vh; overflow: hidden; }
+    .top-bar { background: #3b7dd8; color: #fff; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-shrink: 0; }
+    .user-info .dept { font-size: 12px; opacity: 0.85; }
+    .user-info .name { font-size: 15px; font-weight: 700; }
+    .btn-logout { flex-shrink: 0; padding: 8px 14px; font-size: 13px; font-weight: 600; color: #3b7dd8; background: #fff; border: none; border-radius: 8px; cursor: pointer; }
+
+    /* ===== タブ ===== */
+    .tab-bar { display: flex; background: #fff; border-bottom: 2px solid #e8edf5; flex-shrink: 0; }
+    .tab-btn { flex: 1; padding: 13px 8px; font-size: 15px; font-weight: 600; border: none; background: none; cursor: pointer; color: #aaa; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: color 0.2s, border-color 0.2s; }
+    .tab-btn.active { color: #3b7dd8; border-bottom-color: #3b7dd8; }
+
+    /* ===== 打刻パネル ===== */
+    #punchPanel { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 20px 32px; gap: 16px; overflow-y: auto; }
+    .punch-date { font-size: 15px; color: #666; font-weight: 500; }
+    .punch-time { font-size: 52px; font-weight: 700; color: #1a1a2e; letter-spacing: -1px; line-height: 1; }
+    .punch-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; max-width: 380px; }
+    .btn-punch { padding: 24px 8px; font-size: 20px; font-weight: 700; border: none; border-radius: 18px; cursor: pointer; transition: transform 0.1s, box-shadow 0.1s, opacity 0.15s; box-shadow: 0 5px 16px rgba(0,0,0,0.13); letter-spacing: 2px; line-height: 1.4; }
+    .btn-punch small { display: block; font-size: 11px; font-weight: 500; opacity: 0.75; letter-spacing: 0; margin-top: 2px; }
+    .btn-punch:active { transform: scale(0.95); box-shadow: 0 2px 6px rgba(0,0,0,0.10); }
+    .btn-punch:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .btn-checkin  { background: #27ae60; color: #fff; }
+    .btn-leave    { background: #e67e22; color: #fff; }
+    .btn-return   { background: #8e44ad; color: #fff; }
+    .btn-checkout { background: #e74c3c; color: #fff; }
+    .comment-wrap  { width: 100%; max-width: 380px; }
+    .comment-label { font-size: 12px; color: #888; margin-bottom: 6px; display: block; }
+    .comment-input { width: 100%; padding: 12px 14px; font-size: 14px; border: 2px solid #e0e0e0; border-radius: 12px; outline: none; resize: none; font-family: inherit; transition: border-color 0.2s; background: #fff; }
+    .comment-input:focus { border-color: #3b7dd8; }
+
+    /* ===== 月次確認・修正パネル（見出しバグ修正済み） ===== */
+    #monthlyPanel { flex: 1; display: none; flex-direction: column; overflow: hidden; }
+    .month-nav { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 12px 16px; background: #fff; border-bottom: 1px solid #e8edf5; flex-shrink: 0; }
+    .month-nav-btn { width: 38px; height: 38px; border-radius: 50%; border: 2px solid #3b7dd8; background: #fff; color: #3b7dd8; font-size: 20px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .month-nav-btn:active { background: #e8edf5; }
+    .month-label { font-size: 18px; font-weight: 700; min-width: 130px; text-align: center; }
+
+    .monthly-table-wrap { flex: 1; overflow-x: auto; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 0 12px 12px 12px; min-height: 0; }
+    .monthly-table { width: 100%; min-width: 520px; border-collapse: separate; border-spacing: 0; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.06); font-size: 13px; margin-top: 12px; }
+    .monthly-table th { background: #3b7dd8; color: #fff; padding: 10px 6px; text-align: center; font-size: 12px; font-weight: 700; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 2px -1px rgba(0,0,0,0.15); }
+    .monthly-table td { padding: 8px 6px; text-align: center; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+    .monthly-table tr:last-child td { border-bottom: none; }
+    .monthly-table tr.sunday td, .monthly-table tr.holiday td { background: #fff5f5; }
+    .monthly-table tr.saturday td { background: #f0f4ff; }
+    .day-label { font-weight: 700; font-size: 13px; }
+    .day-label.sun { color: #c0392b; }
+    .day-label.sat { color: #2980b9; }
+    .time-cell { line-height: 1.4; }
+    .time-auto { font-size: 13px; color: #333; }
+    .time-man  { font-size: 12px; color: #27ae60; font-weight: 700; }
+    .time-man::before { content: "修"; font-size: 9px; background: #27ae60; color: #fff; padding: 1px 3px; border-radius: 3px; margin-right: 3px; }
+    .btn-correct { padding: 5px 10px; font-size: 12px; font-weight: 600; color: #3b7dd8; background: #e8edf5; border: none; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+    .btn-correct:active { background: #d0d8f0; }
+
+    .pdf-wrap { padding: 16px; flex-shrink: 0; }
+    .btn-pdf { display: block; width: 100%; padding: 16px; font-size: 16px; font-weight: 700; color: #fff; background: #e74c3c; border: none; border-radius: 14px; cursor: pointer; text-align: center; }
+    .btn-pdf:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-pdf:active { opacity: 0.85; }
+
+    /* ===== 修正モーダル ===== */
+    #corrModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; padding: 24px; }
+    #corrModal.open { display: flex; }
+    .modal-box { background: #fff; border-radius: 20px; padding: 28px 24px; width: 100%; max-width: 380px; }
+    .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+    .modal-label { font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; display: block; }
+    .modal-select, .modal-input, .modal-textarea { width: 100%; padding: 12px; font-size: 15px; border: 2px solid #e0e0e0; border-radius: 10px; outline: none; font-family: inherit; margin-bottom: 14px; }
+    .modal-select:focus, .modal-input:focus, .modal-textarea:focus { border-color: #3b7dd8; }
+    .modal-textarea { resize: none; }
+    .modal-btns { display: flex; gap: 10px; }
+    .btn-modal-cancel { flex: 1; padding: 14px; font-size: 15px; font-weight: 600; color: #666; background: #f0f0f0; border: none; border-radius: 12px; cursor: pointer; }
+    .btn-modal-ok { flex: 2; padding: 14px; font-size: 15px; font-weight: 700; color: #fff; background: #3b7dd8; border: none; border-radius: 12px; cursor: pointer; }
+    .btn-modal-ok:disabled { background: #aac4ed; cursor: not-allowed; }
+
+    /* ===== トースト ===== */
+    #toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(20px); background: #1a1a2e; color: #fff; padding: 14px 24px; border-radius: 14px; font-size: 15px; font-weight: 600; box-shadow: 0 6px 24px rgba(0,0,0,0.20); opacity: 0; transition: opacity 0.25s, transform 0.25s; pointer-events: none; max-width: 90vw; text-align: center; z-index: 999; white-space: pre-wrap; line-height: 1.6; }
+    #toast.show    { opacity: 1; transform: translateX(-50%) translateY(0); }
+    #toast.success { background: #1e8449; }
+    #toast.error   { background: #c0392b; }
+
+    /* ===== スピナー ===== */
+    .spinner      { display: inline-block; width: 18px; height: 18px; border: 3px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
+    .spinner-dark { display: inline-block; width: 16px; height: 16px; border: 3px solid rgba(0,0,0,0.12); border-top-color: #3b7dd8; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <div id="loginScreen">
+    <div class="login-card">
+      <div class="login-title">〇〇町タイムカード</div>
+      <div class="login-subtitle">職員番号でログインしてください</div>
+      <div id="nfcAnnounce" style="display:none;margin-bottom:20px;padding:14px 16px;background:#e8f4fd;border:2px solid #3b7dd8;border-radius:12px;color:#1a5fa8;font-size:14px;line-height:1.7;font-weight:600;"></div>
+      <label class="form-label" for="empNoInput">職員番号</label>
+      <input id="empNoInput" class="form-input" type="number" inputmode="numeric" pattern="[0-9]*" placeholder="例: 1234" autocomplete="off">
+      <button id="loginBtn" class="btn-login" onclick="handleLogin()">ログイン</button>
+      <div id="loginError" class="error-msg"></div>
+    </div>
+  </div>
+
+  <div id="nfcScreen">
+    <div class="nfc-icon" id="nfcIcon">⏳</div>
+    <div class="nfc-title" id="nfcTitle">処理中...</div>
+    <div class="nfc-msg" id="nfcMsg">GPSを取得して打刻しています</div>
+    <button class="btn-back" onclick="openAppFromNfc()" style="display:none" id="nfcBackBtn">タイムカードを開く</button>
+  </div>
+
+  <div id="mainScreen">
+    <div class="top-bar">
+      <div class="user-info">
+        <div class="dept" id="dispDept"></div>
+        <div class="name" id="dispName"></div>
+      </div>
+      <button class="btn-logout" onclick="handleLogout()">ログアウト</button>
+    </div>
+    <div class="tab-bar">
+      <button id="tabPunch"   class="tab-btn active" onclick="switchTab('punch')">打刻</button>
+      <button id="tabMonthly" class="tab-btn"        onclick="switchTab('monthly')">月次確認・修正</button>
+    </div>
+
+    <div id="punchPanel">
+      <div class="punch-date" id="dispDate"></div>
+      <div class="punch-time" id="dispTime"></div>
+      <div class="punch-buttons">
+        <button class="btn-punch btn-checkin"  onclick="handlePunch('出勤')">出勤<small>チェックイン</small></button>
+        <button class="btn-punch btn-leave"    onclick="handlePunch('外出')">外出<small>一時離席</small></button>
+        <button class="btn-punch btn-return"   onclick="handlePunch('戻り')">戻り<small>帰着</small></button>
+        <button class="btn-punch btn-checkout" onclick="handlePunch('退勤')">退勤<small>チェックアウト</small></button>
+      </div>
+      <div class="comment-wrap">
+        <label class="comment-label" for="commentInput">コメント（任意）</label>
+        <textarea id="commentInput" class="comment-input" rows="2" placeholder="外出先・理由など"></textarea>
+      </div>
+    </div>
+
+    <div id="monthlyPanel">
+      <div class="month-nav">
+        <button class="month-nav-btn" onclick="changeMonth(-1)">‹</button>
+        <div class="month-label" id="monthLabel"></div>
+        <button class="month-nav-btn" onclick="changeMonth(1)">›</button>
+      </div>
+      <div class="monthly-table-wrap">
+        <div id="monthlyTableContainer"></div>
+      </div>
+      <div class="pdf-wrap">
+        <button id="btnPdf" class="btn-pdf" onclick="handleGeneratePdf()">出勤簿PDFを自動生成する</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="corrModal">
+    <div class="modal-box">
+      <div class="modal-title">打刻を修正する</div>
+      <span id="corrDateLabel" style="font-size:13px;color:#888;display:block;margin-bottom:16px;"></span>
+      <label class="modal-label">種別</label>
+      <select id="corrType" class="modal-select">
+        <option value="出勤">出勤</option>
+        <option value="外出">外出</option>
+        <option value="戻り">戻り</option>
+        <option value="退勤">退勤</option>
+      </select>
+      <label class="modal-label">正しい時刻</label>
+      <input id="corrTime" class="modal-input" type="time">
+      <label class="modal-label">理由・備考</label>
+      <textarea id="corrMemo" class="modal-textarea" rows="2" placeholder="打刻忘れ・機器不具合など"></textarea>
+      <div class="modal-btns">
+        <button class="btn-modal-cancel" onclick="closeModal()">キャンセル</button>
+        <button id="btnModalOk" class="btn-modal-ok" onclick="submitCorrection()">修正を保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+    // ===== 状態 =====
+    var histYearMonth = "";
+    var corrTargetDate = "";
+    var clockTimer     = null;
+    var pendingAction  = null;
+
+    // ===== Cookie操作 =====
+    function setCookie(name, value, days) {
+      var expires = new Date();
+      expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+      document.cookie = name + "=" + encodeURIComponent(value) +
+        ";expires=" + expires.toUTCString() + ";path=/;SameSite=None;Secure";
+    }
+    function getCookie(name) {
+      var key = name + "=";
+      var cookies = document.cookie.split(";");
+      for (var i = 0; i < cookies.length; i++) {
+        var c = cookies[i].trim();
+        if (c.indexOf(key) === 0) {
+          return decodeURIComponent(c.substring(key.length));
+        }
+      }
+      return null;
+    }
+    function deleteCookie(name) {
+      document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/";
+    }
+
+    // ===== 初期化 =====
+    (function init() {
+      var empNo   = getCookie("empNo");
+      var empName = getCookie("empName");
+      var empDept = getCookie("empDept");
+
+      google.script.url.getLocation(function(loc) {
+        var action = loc.parameter && loc.parameter.action;
+        if (action) {
+          if (empNo) {
+            document.getElementById("loginScreen").style.display = "none";
+            document.getElementById("nfcScreen").style.display   = "flex";
+            document.getElementById("nfcIcon").textContent       = "⏳";
+            document.getElementById("nfcTitle").textContent      = "処理中...";
+            document.getElementById("nfcMsg").className          = "nfc-msg";
+            document.getElementById("nfcBackBtn").style.display  = "none";
+            startNfcFlow(action, empNo, empName, empDept);
+          } else {
+            pendingAction = action;
+            document.getElementById("loginScreen").style.display = "flex";
+            showNfcAnnounce(action);
+          }
+        } else {
+          if (empNo) {
+            showMainScreen(empNo, empName, empDept);
+          } else {
+            document.getElementById("loginScreen").style.display = "flex";
+          }
+        }
+      });
+    })();
+
+    // ===== ユーティリティ =====
+    function pad(n) { return String(n).padStart(2, "0"); }
+    function escHtml(s) {
+      return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    }
+    function getCurrentYM() {
+      var now = new Date();
+      return now.getFullYear() + "-" + pad(now.getMonth() + 1);
+    }
+
+    // ===== 時計 =====
+    function updateClock() {
+      var now  = new Date();
+      var days = ["日","月","火","水","木","金","土"];
+      document.getElementById("dispDate").textContent =
+        now.getFullYear() + "年" + (now.getMonth()+1) + "月" + now.getDate() + "日(" + days[now.getDay()] + ")";
+      document.getElementById("dispTime").textContent =
+        pad(now.getHours()) + ":" + pad(now.getMinutes()) + ":" + pad(now.getSeconds());
+    }
+
+    // ===== NFC自動打刻フロー =====
+    function startNfcFlow(action, empNo, empName, empDept) {
+      document.getElementById("nfcMsg").textContent = "GPS位置情報を取得して打刻しています";
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          function(pos) {
+            var lat = pos.coords.latitude;
+            var lng = pos.coords.longitude;
+            document.getElementById("nfcMsg").textContent = "打刻を記録中...";
+            google.script.run
+              .withSuccessHandler(function(res) {
+                showNfcResult(res.success, res.success ? "打刻完了" : "打刻エラー", res.message);
+              })
+              .withFailureHandler(function(err) {
+                showNfcResult(false, "通信エラー", err && err.message ? err.message : String(err));
+              })
+              .nfcPunch(empNo, empName, empDept, action, lat, lng);
+          },
+          function() {
+            google.script.run
+              .withSuccessHandler(function(res) {
+                showNfcResult(res.success, res.success ? "打刻完了" : "打刻エラー", res.message);
+              })
+              .withFailureHandler(function(err) {
+                showNfcResult(false, "通信エラー", err && err.message ? err.message : String(err));
+              })
+              .nfcPunch(empNo, empName, empDept, action, null, null);
+          },
+          { timeout: 8000, maximumAge: 0, enableHighAccuracy: true }
+        );
+      } else {
+        google.script.run
+          .withSuccessHandler(function(res) {
+            showNfcResult(res.success, res.success ? "打刻完了" : "打刻エラー", res.message);
+          })
+          .withFailureHandler(function(err) {
+            showNfcResult(false, "通信エラー", err && err.message ? err.message : String(err));
+          })
+          .nfcPunch(empNo, empName, empDept, action, null, null);
+      }
+    }
+
+    // ===== NFC完了画面からの遷移 =====
+    function openAppFromNfc() {
+      document.getElementById("nfcScreen").style.display = "none";
+      var no = getCookie("empNo");
+      if (no) {
+        showMainScreen(no, getCookie("empName"), getCookie("empDept"));
+      } else {
+        document.getElementById("loginScreen").style.display = "flex";
+      }
+    }
+
+    function showNfcResult(success, title, msg) {
+      document.getElementById("nfcIcon").textContent  = success ? "✅" : "❌";
+      document.getElementById("nfcTitle").textContent = title;
+      var msgEl = document.getElementById("nfcMsg");
+      msgEl.textContent  = msg;
+      msgEl.className    = "nfc-msg" + (success ? "" : " error");
+      document.getElementById("nfcBackBtn").style.display = "block";
+    }
+
+    // ===== ログイン =====
+    function handleLogin() {
+      var empNo = document.getElementById("empNoInput").value.trim();
+      if (!empNo) { showLoginError("職員番号を入力してください"); return; }
+      var btn = document.getElementById("loginBtn");
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>確認中...';
+      hideLoginError();
+      google.script.run
+        .withSuccessHandler(function(res) {
+          btn.disabled = false;
+          btn.textContent = "ログイン";
+          if (res.success) {
+            setCookie("empNo",   empNo,    30);
+            setCookie("empName", res.name, 30);
+            setCookie("empDept", res.dept, 30);
+            if (pendingAction) {
+              var action = pendingAction;
+              pendingAction = null;
+              document.getElementById("loginScreen").style.display = "none";
+              document.getElementById("nfcScreen").style.display   = "flex";
+              document.getElementById("nfcIcon").textContent  = "⏳";
+              document.getElementById("nfcTitle").textContent = "処理中...";
+              document.getElementById("nfcBackBtn").style.display = "none";
+              startNfcFlow(action, empNo, res.name, res.dept);
+            } else {
+              showMainScreen(empNo, res.name, res.dept);
+            }
+          } else {
+            showLoginError("[GAS応答] " + String(res.message));
+          }
+        })
+        .withFailureHandler(function(err) {
+          btn.disabled = false;
+          btn.textContent = "ログイン";
+          showLoginError("[通信エラー] " + (err && err.message ? err.message : String(err)));
+        })
+        .checkLogin(empNo);
+    }
+
+    document.getElementById("empNoInput").addEventListener("keydown", function(e) {
+      if (e.key === "Enter") handleLogin();
+    });
+    function showLoginError(msg) {
+      var el = document.getElementById("loginError");
+      el.textContent = msg;
+      el.style.display = "block";
+    }
+    function hideLoginError() { document.getElementById("loginError").style.display = "none"; }
+
+    function showNfcAnnounce(action) {
+      var msg;
+      if      (action === "出勤") msg = "📢 自動打刻モード：職員番号を入力してログインすると、そのまま【出勤】が自動で記録されます！";
+      else if (action === "退勤") msg = "📢 自動打刻モード：職員番号を入力してログインすると、そのまま【退勤】が自動で記録されます！";
+      else                        msg = "📢 自動打刻モード：職員番号を入力してログインすると、そのまま【外出・戻り】が自動で記録されます！";
+      var el = document.getElementById("nfcAnnounce");
+      el.textContent = msg;
+      el.style.display = "block";
+    }
+    function hideNfcAnnounce() { document.getElementById("nfcAnnounce").style.display = "none"; }
+
+    // ===== メイン画面表示 =====
+    function showMainScreen(empNo, empName, empDept) {
+      document.getElementById("loginScreen").style.display = "none";
+      document.getElementById("mainScreen").style.display  = "flex";
+      document.getElementById("dispName").textContent = empName + " さん";
+      document.getElementById("dispDept").textContent = empDept || "";
+      updateClock();
+      if (clockTimer) clearInterval(clockTimer);
+      clockTimer = setInterval(updateClock, 1000);
+      histYearMonth = getCurrentYM();
+      updateMonthLabel();
+    }
+
+    // ===== ログアウト =====
+    function handleLogout() {
+      deleteCookie("empNo");
+      deleteCookie("empName");
+      deleteCookie("empDept");
+      if (clockTimer) { clearInterval(clockTimer); clockTimer = null; }
+      document.getElementById("mainScreen").style.display  = "none";
+      document.getElementById("nfcScreen").style.display   = "none";
+      document.getElementById("loginScreen").style.display = "flex";
+      document.getElementById("empNoInput").value = "";
+      hideLoginError();
+      hideNfcAnnounce();
+      switchTab('punch');
+    }
+
+    // ===== 手動打刻 =====
+    function handlePunch(punchType) {
+      var allBtns = document.querySelectorAll(".btn-punch");
+      allBtns.forEach(function(b) { b.disabled = true; });
+      var comment = document.getElementById("commentInput").value.trim();
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          function(pos) { submitPunch(punchType, pos.coords.latitude, pos.coords.longitude, comment, allBtns); },
+          function()    { submitPunch(punchType, null, null, comment, allBtns); },
+          { timeout: 8000, maximumAge: 0, enableHighAccuracy: true }
+        );
+      } else {
+        submitPunch(punchType, null, null, comment, allBtns);
+      }
+    }
+
+    function submitPunch(punchType, lat, lng, comment, allBtns) {
+      var payload = {
+        empNo:     getCookie("empNo"),
+        empName:   getCookie("empName"),
+        empDept:   getCookie("empDept"),
+        punchType: punchType,
+        lat:       lat || "",
+        lng:       lng || "",
+        comment:   comment
+      };
+      google.script.run
+        .withSuccessHandler(function(res) {
+          allBtns.forEach(function(b) { b.disabled = false; });
+          if (res.success) {
+            showToast(res.message || "【" + punchType + "】を記録しました", "success");
+            document.getElementById("commentInput").value = "";
+          } else {
+            showToast("[GAS応答] " + String(res.message), "error");
+          }
+        })
+        .withFailureHandler(function(err) {
+          allBtns.forEach(function(b) { b.disabled = false; });
+          showToast("[通信エラー] " + (err && err.message ? err.message : String(err)), "error");
+        })
+        .savePunch(payload);
+    }
+
+    // ===== タブ切り替え =====
+    function switchTab(tab) {
+      document.getElementById("tabPunch").classList.toggle("active",   tab === "punch");
+      document.getElementById("tabMonthly").classList.toggle("active", tab === "monthly");
+      document.getElementById("punchPanel").style.display   = tab === "punch"   ? "flex" : "none";
+      document.getElementById("monthlyPanel").style.display = tab === "monthly" ? "flex" : "none";
+      if (tab === "monthly") loadMonthly();
+    }
+
+    // ===== 月次確認・修正 =====
+    function updateMonthLabel() {
+      var parts = histYearMonth.split("-");
+      document.getElementById("monthLabel").textContent = parts[0] + "年" + parseInt(parts[1]) + "月";
+    }
+    function changeMonth(delta) {
+      var parts = histYearMonth.split("-");
+      var y = parseInt(parts[0]), m = parseInt(parts[1]) + delta;
+      if (m > 12) { m = 1;  y++; }
+      if (m < 1)  { m = 12; y--; }
+      histYearMonth = y + "-" + pad(m);
+      updateMonthLabel();
+      loadMonthly();
+    }
+
+    function loadMonthly() {
+      var empNo = getCookie("empNo");
+      var cont  = document.getElementById("monthlyTableContainer");
+      cont.innerHTML = '<div style="text-align:center;padding:40px;color:#aaa"><span class="spinner-dark"></span>読み込み中...</div>';
+      google.script.run
+        .withSuccessHandler(function(res) {
+          try {
+            if (!res || !res.success) {
+              cont.innerHTML = '<div style="text-align:center;padding:40px;color:#c0392b">' + escHtml((res && res.message) || "取得失敗") + '</div>';
+              return;
+            }
+            renderMonthlyTable(res.records || []);
+          } catch(e) {
+            cont.innerHTML = '<div style="text-align:center;padding:40px;color:#c0392b">表示エラー: ' + escHtml(String(e)) + '</div>';
+          }
+        })
+        .withFailureHandler(function(err) {
+          cont.innerHTML = '<div style="text-align:center;padding:40px;color:#c0392b">[通信エラー] ' + escHtml(err && err.message ? err.message : String(err)) + '</div>';
+        })
+        .getEmpHistory(empNo, histYearMonth);
+    }
+
+    function renderMonthlyTable(records) {
+      var cont = document.getElementById("monthlyTableContainer");
+      var DOW  = ["日","月","火","水","木","金","土"];
+
+      var parts = histYearMonth.split("-");
+      var y = parseInt(parts[0]), m = parseInt(parts[1]);
+      var daysInMonth = new Date(y, m, 0).getDate();
+      var recMap = {};
+      records.forEach(function(r) { recMap[r.date] = r; });
+
+      var rows = "";
+      for (var d = 1; d <= daysInMonth; d++) {
+        var dateStr = y + "-" + pad(m) + "-" + pad(d);
+        var dt      = new Date(dateStr + "T12:00:00");
+        var dow     = dt.getDay();
+        var r       = recMap[dateStr];
+        var isHol   = r ? r.isHoliday : (dow === 0 || dow === 6);
+        var rowCls  = dow === 0 || isHol ? "sunday" : dow === 6 ? "saturday" : "";
+        var dayCls  = dow === 0 || isHol ? "sun"    : dow === 6 ? "sat"      : "";
+
+        function timeCell(auto, man) {
+          if (!auto && !man) return '<td class="time-cell">—</td>';
+          var html = '<td class="time-cell">';
+          if (man) html += '<div class="time-man">' + escHtml(man) + '</div>';
+          if (auto) html += '<div class="time-auto"' + (man ? ' style="color:#aaa;text-decoration:line-through"' : '') + '>' + escHtml(auto) + '</div>';
+          html += '</td>';
+          return html;
+        }
+
+        var memo = r && r.memo ? '<span style="font-size:11px;color:#888">' + escHtml(r.memo) + '</span>' : '—';
+        rows += '<tr class="' + rowCls + '">' +
+          '<td><span class="day-label ' + dayCls + '">' + d + '(' + DOW[dow] + ')</span></td>' +
+          timeCell(r && r.checkInAuto, r && r.checkInMan) +
+          timeCell(r && r.leaveAuto,   r && r.leaveMan) +
+          timeCell(r && r.returnAuto,  r && r.returnMan) +
+          timeCell(r && r.checkOutAuto, r && r.checkOutMan) +
+          '<td>' + memo + '</td>' +
+          '<td><button class="btn-correct" onclick="openModal(\'' + dateStr + '\')" ' + (r ? '' : 'disabled') + '>修正</button></td>' +
+        '</tr>';
+      }
+
+      if (!rows) { cont.innerHTML = '<div style="text-align:center;padding:40px;color:#aaa">打刻記録がありません</div>'; return; }
+
+      cont.innerHTML = '<table class="monthly-table">' +
+        '<thead><tr><th>日付</th><th>出勤</th><th>外出</th><th>戻り</th><th>退勤</th><th>備考</th><th>操作</th></tr></thead>' +
+        '<tbody>' + rows + '</tbody></table>';
+    }
+
+    // ===== 修正モーダル =====
+    function openModal(dateStr) {
+      corrTargetDate = dateStr;
+      document.getElementById("corrDateLabel").textContent = dateStr + " の打刻を修正します";
+      document.getElementById("corrTime").value = "";
+      document.getElementById("corrMemo").value = "";
+      document.getElementById("corrModal").classList.add("open");
+    }
+    function closeModal() {
+      document.getElementById("corrModal").classList.remove("open");
+    }
+    function submitCorrection() {
+      var type = document.getElementById("corrType").value;
+      var time = document.getElementById("corrTime").value;
+      var memo = document.getElementById("corrMemo").value.trim();
+      if (!time) { alert("正しい時刻を入力してください"); return; }
+      var empNo = getCookie("empNo");
+      var btn   = document.getElementById("btnModalOk");
+      btn.disabled = true;
+      btn.textContent = "保存中...";
+      google.script.run
+        .withSuccessHandler(function(res) {
+          btn.disabled = false;
+          btn.textContent = "修正を保存";
+          closeModal();
+          if (res.success) {
+            showToast(res.message, "success");
+            loadMonthly();
+          } else {
+            showToast("[GAS応答] " + String(res.message), "error");
+          }
+        })
+        .withFailureHandler(function(err) {
+          btn.disabled = false;
+          btn.textContent = "修正を保存";
+          showToast("[通信エラー] " + (err && err.message ? err.message : String(err)), "error");
+        })
+        .saveManualCorrection(empNo, corrTargetDate, type, time, memo);
+    }
+
+    // ===== PDF生成 =====
+    function handleGeneratePdf() {
+      var empNo     = getCookie("empNo");
+      var empName   = getCookie("empName") || "";
+      var empDept   = getCookie("empDept") || "";
+      var yearMonth = histYearMonth || getCurrentYM();
+      if (!empNo) {
+        showToast("ログイン情報がありません。再ログインしてください。", "error");
+        return;
+      }
+      var btn = document.getElementById("btnPdf");
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>PDF生成中...';
+      var PDF_PERM_GUIDE = "\n※初回のみ、GASエディタ側での手動実行による『権限の承認（許可）』が必要な場合があります。";
+      google.script.run
+        .withSuccessHandler(function(res) {
+          btn.disabled = false;
+          btn.textContent = "出勤簿PDFを自動生成する";
+          if (res.success) {
+            showToast(res.message, "success");
+          } else {
+            showToast(String(res.message) + PDF_PERM_GUIDE, "error");
+          }
+        })
+        .withFailureHandler(function(err) {
+          btn.disabled = false;
+          btn.textContent = "出勤簿PDFを自動生成する";
+          showToast("[通信エラー] " + (err && err.message ? err.message : String(err)) + PDF_PERM_GUIDE, "error");
+        })
+        .generatePdf(empNo, empName, empDept, yearMonth);
+    }
+
+    // ===== トースト =====
+    var toastTimer = null;
+    function showToast(msg, type) {
+      var el = document.getElementById("toast");
+      el.textContent = msg;
+      el.className   = "show " + (type || "");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function() { el.className = ""; }, 4000);
+    }
+  </script>
+</body>
+</html>

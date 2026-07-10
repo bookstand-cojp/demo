@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>現場台帳 — デモアプリ</title>
+<style>
+:root{
+  --ink:#1c2430;--paper:#f5f6f4;--line:#d8dcd6;--accent:#0e7c66;--accent2:#c8a24b;
+  --danger:#c0392b;--warn:#d98e04;--mono:'SF Mono',Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);font-size:14px;padding-bottom:76px}
+header{background:var(--ink);color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:baseline;position:sticky;top:0;z-index:20}
+header h1{font-size:16px;letter-spacing:.12em}
+header .proj{font-size:11px;opacity:.75}
+.wrap{max-width:960px;margin:0 auto;padding:12px}
+.tag{font-size:10px;border-radius:3px;padding:2px 6px;font-weight:700;letter-spacing:.04em}
+.num{font-family:var(--mono)}
+/* ===== bottom tab bar ===== */
+nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);display:flex;z-index:30}
+nav button{flex:1;border:none;background:none;padding:10px 0 12px;font-size:11px;color:#7a8494;cursor:pointer}
+nav button .ic{display:block;font-size:20px;margin-bottom:2px}
+nav button.on{color:var(--accent);font-weight:700}
+.screen{display:none}.screen.on{display:block}
+/* ===== dashboard ===== */
+.dash-hero{background:linear-gradient(160deg,var(--ink),#2d3a4d);color:#fff;border-radius:12px;padding:20px 18px;margin-bottom:14px}
+.dash-hero .lbl{font-size:12px;opacity:.7}
+.dash-hero .big{font-size:44px;font-weight:800;font-family:var(--mono);line-height:1.1}
+.dash-hero .sub{font-size:13px;margin-top:6px;opacity:.85}
+.sig{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:baseline}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px}
+.card .lbl{font-size:11px;color:#7a8494}
+.card .v{font-size:22px;font-weight:700;font-family:var(--mono);margin-top:4px}
+.card .d{font-size:11px;margin-top:2px}
+.up{color:var(--accent)}.down{color:var(--danger)}
+.panel{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px}
+.panel h3{font-size:13px;margin-bottom:10px;color:#3a4658;letter-spacing:.06em}
+.bars{display:flex;align-items:flex-end;gap:6px;height:120px}
+.bars .b{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px}
+.bars .bar{width:100%;border-radius:3px 3px 0 0;background:#cfd8d5}
+.bars .bar.g{background:var(--accent)}
+.bars .m{font-size:9px;color:#7a8494}
+.alert{display:flex;justify-content:space-between;align-items:center;padding:9px 4px;border-bottom:1px solid #eef0ed;font-size:13px}
+.alert:last-child{border-bottom:none}
+.pill{font-family:var(--mono);font-size:11px;border-radius:10px;padding:2px 8px;font-weight:700}
+.g-ok{background:#e3efec;color:var(--accent)}.g-mid{background:#faf3df;color:var(--warn)}.g-bad{background:#f9e6e3;color:var(--danger)}
+.line-mock{background:#eef4f2;border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.line-mock .from{font-size:11px;color:#7a8494;margin-bottom:6px}
+.line-bubble{background:#fff;border-radius:12px;padding:12px;font-size:13px;line-height:1.7;box-shadow:0 1px 2px rgba(0,0,0,.06);white-space:pre-line}
+.note{font-size:11px;color:#7a8494;margin:8px 2px 16px}
+/* ===== pipeline ===== */
+.pipe-summary{display:flex;gap:8px;margin-bottom:12px;overflow-x:auto}
+.ps{background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 12px;text-align:center;min-width:74px}
+.ps .n{font-size:20px;font-weight:800;font-family:var(--mono)}
+.ps .l{font-size:10px;color:#7a8494}
+.proj-card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px;cursor:pointer}
+.proj-card .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.proj-card .nm{font-weight:700;font-size:14px}
+.proj-card .meta{font-size:11px;color:#7a8494;display:flex;gap:12px;flex-wrap:wrap}
+.st-hikiai{background:#e8eaf6;color:#3949ab}.st-gencho{background:#e0f2f1;color:#00695c}
+.st-teishutsu{background:#fff3e0;color:#e65100}.st-jucyu{background:#e3efec;color:var(--accent)}
+/* ===== estimate (from v1 demo) ===== */
+.meta{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:#5a6472;padding:6px 2px 12px}
+.meta b{color:var(--ink)}
+.sec{background:#fff;border:1px solid var(--line);border-radius:8px;margin-bottom:14px;overflow:hidden}
+.sec>h2{background:linear-gradient(90deg,var(--ink),#2d3a4d);color:#fff;font-size:13px;padding:8px 12px;letter-spacing:.08em;display:flex;justify-content:space-between}
+.sec>h2 .subtotal{font-family:var(--mono);font-weight:600}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;color:#7a8494;font-weight:600;text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:7px 8px;border-bottom:1px solid #eef0ed;vertical-align:middle;white-space:nowrap}
+td.name{white-space:normal;min-width:130px}
+td.spec{white-space:normal;color:#5a6472;font-size:12px;min-width:110px}
+tr:last-child td{border-bottom:none}
+td.num,th.num{text-align:right}
+input.qty,input.cost{font-family:var(--mono);width:66px;text-align:right;border:1px solid var(--line);border-radius:4px;padding:4px}
+input.cost{width:84px}
+.mode{font-size:10px;border-radius:3px;padding:2px 5px;font-weight:700}
+.mode.build{background:#e3efec;color:var(--accent)}
+.mode.disc{background:#f6efdd;color:#8a6d1f}
+.discsel{font-family:var(--mono);border:1px solid var(--line);border-radius:4px;padding:3px}
+.costtoggle{font-size:11px;color:#5a6472;cursor:pointer;user-select:none;padding:6px 2px}
+body.hidecost .costcol{display:none}
+.bar-est{position:fixed;left:0;right:0;bottom:56px;background:var(--ink);color:#fff;padding:10px 16px 12px;box-shadow:0 -4px 18px rgba(0,0,0,.25);display:none;z-index:25}
+body[data-tab="est"] .bar-est{display:block}
+.bar-est .in{max-width:960px;margin:0 auto}
+.rowline{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.totals{display:flex;gap:16px;font-family:var(--mono);flex-wrap:wrap}
+.totals .lbl{font-size:9px;opacity:.65;display:block;font-family:inherit}
+.totals .val{font-size:15px;font-weight:700}
+.gauge{flex:1;min-width:170px}
+.gauge .track{height:8px;background:#3a4658;border-radius:4px;overflow:hidden;margin-top:4px}
+.gauge .fill{height:100%;background:var(--accent);transition:width .15s,background .15s}
+.slider{display:flex;align-items:center;gap:10px;margin-top:8px}
+.slider input[type=range]{flex:1;accent-color:var(--accent2)}
+.slider .dv{font-family:var(--mono);font-weight:700;min-width:100px;text-align:right}
+@media(max-width:640px){ td.spec,th.spec{display:none} .dash-hero .big{font-size:38px} }
+</style>
+</head>
+<body data-tab="dash">
+<header>
+  <h1>現場台帳</h1><span class="proj" id="hdr">経営ダッシュボード（デモ）</span>
+</header>
+
+<!-- ============ ① DASHBOARD ============ -->
+<div class="screen on wrap" id="scr-dash">
+  <div class="dash-hero">
+    <div class="lbl">2026年7月　売上目標達成率（受注ベース）</div>
+    <div class="big"><span class="sig" style="background:#37d99e"></span>87<span style="font-size:22px">%</span></div>
+    <div class="sub num">受注 ¥10.4M ／ 目標 ¥12.0M　（あと ¥1.6M）</div>
+  </div>
+  <div class="cards">
+    <div class="card"><div class="lbl">今期累計売上</div><div class="v num">¥58.2M</div><div class="d up">前年同期 +12%</div></div>
+    <div class="card"><div class="lbl">期末 着地見込み</div><div class="v num">¥121M</div><div class="d">年間目標 ¥120M — 達成圏内</div></div>
+    <div class="card"><div class="lbl">今月の平均粗利率</div><div class="v num">27.4%</div><div class="d up">目標 25% を確保</div></div>
+    <div class="card"><div class="lbl">進行中の案件</div><div class="v num">14件</div><div class="d">うち見積提出中 5件</div></div>
+  </div>
+
+  <div class="panel">
+    <h3>月別売上（棒＝実績・線目盛＝目標）</h3>
+    <div class="bars" id="bars"></div>
+  </div>
+
+  <div class="panel">
+    <h3>⚠ 低粗利アラート（粗利率20%未満）</h3>
+    <div class="alert"><span>N様邸 外壁塗装</span><span class="pill g-bad">12.8%</span></div>
+    <div class="alert"><span>K様邸 トイレ改修</span><span class="pill g-mid">18.5%</span></div>
+    <div class="alert"><span>それ以外の進行案件 12件</span><span class="pill g-ok">25%以上</span></div>
+  </div>
+
+  <div class="panel">
+    <h3>毎月1日、LINEに自動で届きます（イメージ）</h3>
+    <div class="line-mock">
+      <div class="from">現場台帳 通知</div>
+      <div class="line-bubble">【6月の数字】
+売上 ¥11.2M（目標比 93%）
+粗利率 26.8%　受注 6件
+着地見込み ¥121M（目標圏内）
+▶ 詳細はダッシュボードへ</div>
+    </div>
+  </div>
+  <div class="note">※ このダッシュボードの数字はすべて架空です。実物は日々の案件データから自動集計され、社長の入力はゼロです。</div>
+</div>
+
+<!-- ============ ② PIPELINE ============ -->
+<div class="screen wrap" id="scr-pipe">
+  <div class="pipe-summary">
+    <div class="ps"><div class="n">3</div><div class="l">引合</div></div>
+    <div class="ps"><div class="n">2</div><div class="l">現調</div></div>
+    <div class="ps"><div class="n">5</div><div class="l">見積提出</div></div>
+    <div class="ps"><div class="n">4</div><div class="l">受注・工事中</div></div>
+  </div>
+  <div id="pipeList"></div>
+  <div class="note">※ 案件カードを押すと見積画面へ（デモではT様邸のみ見積が入っています）</div>
+</div>
+
+<!-- ============ ③ ESTIMATE ============ -->
+<div class="screen" id="scr-est">
+  <div class="wrap">
+    <div class="meta">
+      <span>案件：<b>T様邸 リフォーム工事（デモ）</b></span>
+      <span>支払条件：<b>協議の上</b></span>
+      <span>有効期限：<b>30日間</b></span>
+    </div>
+    <div class="costtoggle" onclick="document.body.classList.toggle('hidecost')">▦ 原価・粗利列の表示／非表示（お客様に見せる時はワンタップで隠す）</div>
+    <div id="sections"></div>
+    <div style="height:150px"></div>
+  </div>
+</div>
+
+<div class="bar-est"><div class="in">
+  <div class="rowline">
+    <div class="totals">
+      <span><span class="lbl">直接工事費計</span><span class="val" id="tSub">—</span></span>
+      <span><span class="lbl">値引後(税抜)</span><span class="val" id="tNet">—</span></span>
+      <span><span class="lbl">消費税10%(切捨)</span><span class="val" id="tTax">—</span></span>
+      <span><span class="lbl">御見積金額(税込)</span><span class="val" id="tGross" style="color:var(--accent2)">—</span></span>
+    </div>
+    <div class="gauge">
+      <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:12px">
+        <span>総粗利 <b id="gAmt">—</b></span><span id="gRate">—%</span>
+      </div>
+      <div class="track"><div class="fill" id="gFill" style="width:0%"></div></div>
+    </div>
+  </div>
+  <div class="slider">
+    <span style="font-size:12px">お値引き</span>
+    <input type="range" id="disc" min="0" max="300000" step="5000" value="0">
+    <span class="dv" id="discV">-¥0</span>
+  </div>
+</div></div>
+
+<nav>
+  <button id="tb-dash" class="on" onclick="go('dash')"><span class="ic">◪</span>ダッシュボード</button>
+  <button id="tb-pipe" onclick="go('pipe')"><span class="ic">▤</span>案件</button>
+  <button id="tb-est" onclick="go('est')"><span class="ic">¥</span>見積</button>
+</nav>
+
+<script>
+/* ===== tabs ===== */
+const TITLES={dash:'経営ダッシュボード（デモ）',pipe:'案件パイプライン（デモ）',est:'T様邸 見積 v1（デモ）'};
+function go(t){
+  document.body.dataset.tab=t;
+  ['dash','pipe','est'].forEach(k=>{
+    document.getElementById('scr-'+k).classList.toggle('on',k===t);
+    document.getElementById('tb-'+k).classList.toggle('on',k===t);
+  });
+  document.getElementById('hdr').textContent=TITLES[t];
+  window.scrollTo(0,0);
+}
+
+/* ===== dashboard bars ===== */
+(function(){
+  const months=['2月','3月','4月','5月','6月','7月'];
+  const vals=[8.9,10.8,9.6,11.5,11.2,10.4], goal=12.0;
+  const wrap=document.getElementById('bars');
+  months.forEach((m,i)=>{
+    const h=Math.round(vals[i]/goal*100);
+    wrap.insertAdjacentHTML('beforeend',
+      `<div class="b"><div class="bar ${vals[i]>=goal*0.85?'g':''}" style="height:${h}%"></div><div class="m">${m}</div></div>`);
+  });
+})();
+
+/* ===== pipeline ===== */
+const PROJECTS=[
+ {n:'T様邸 リフォーム工事',st:'teishutsu',stl:'見積提出',amt:'¥2.34M',gr:'25.7%',cls:'g-ok',d:'大阪市内・内装＋UB＋洗面',link:true},
+ {n:'M様邸 キッチン入替',st:'jucyu',stl:'受注・工事中',amt:'¥1.85M',gr:'28.2%',cls:'g-ok',d:'8/4完工予定'},
+ {n:'N様邸 外壁塗装',st:'jucyu',stl:'受注・工事中',amt:'¥1.20M',gr:'12.8%',cls:'g-bad',d:'⚠ 低粗利・追加原価発生'},
+ {n:'S様邸 全面改装',st:'gencho',stl:'現調',amt:'—',gr:'—',cls:'',d:'7/12 現地調査'},
+ {n:'Yマンション 原状回復',st:'teishutsu',stl:'見積提出',amt:'¥0.86M',gr:'31.0%',cls:'g-ok',d:'回答待ち'},
+ {n:'H様邸 浴室・洗面',st:'hikiai',stl:'引合',amt:'—',gr:'—',cls:'',d:'紹介・初回連絡待ち'},
+];
+(function(){
+  const el=document.getElementById('pipeList');
+  PROJECTS.forEach(p=>{
+    el.insertAdjacentHTML('beforeend',`
+    <div class="proj-card" ${p.link?'onclick="go(\'est\')"':''}>
+      <div class="top"><span class="nm">${p.n}</span><span class="tag st-${p.st}">${p.stl}</span></div>
+      <div class="meta"><span>${p.d}</span>
+        ${p.amt!=='—'?`<span class="num">見積 ${p.amt}</span>`:''}
+        ${p.gr!=='—'?`<span>粗利 <span class="pill ${p.cls}">${p.gr}</span></span>`:''}
+      </div>
+    </div>`);
+  });
+})();
+
+/* ===== estimate (T様邸 実データ構造) ===== */
+const DATA=[
+ {sec:'内装工事', items:[
+  {n:'クロス貼替 リビング', s:'壁44m・天井38m サンゲツ量産品', q:85, u:'m', mode:'build', cost:650, sell:1000},
+  {n:'クロス貼替 キッチン', s:'壁9m・天井9m', q:20, u:'m', mode:'build', cost:650, sell:1000},
+  {n:'クロス貼替 洋室5J', s:'壁21m・天井8m', q:32, u:'m', mode:'build', cost:650, sell:1000},
+  {n:'クロス貼替 洋室6.2J', s:'壁25m・天井9.5m', q:36, u:'m', mode:'build', cost:650, sell:1000},
+  {n:'クロス貼替 トイレ・脱衣・廊下', s:'計57.5m', q:57.5, u:'m', mode:'build', cost:650, sell:1000},
+  {n:'ウッドタイル工事', s:'LDK・洋室・廊下 サンゲツWD', q:59, u:'㎡', mode:'build', cost:4200, sell:6000},
+  {n:'クッションフロア貼', s:'トイレ・脱衣場 サンゲツHM', q:4.3, u:'㎡', mode:'build', cost:2300, sell:3500},
+  {n:'ソフト巾木', s:'トイレ5枚・脱衣場5枚', q:10, u:'枚', mode:'build', cost:380, sell:600},
+ ]},
+ {sec:'ユニットバス入替', items:[
+  {n:'ユニット解体', s:'', q:1, u:'式', mode:'build', cost:24000, sell:35000},
+  {n:'給排水仕込み・繋ぎ', s:'', q:1, u:'式', mode:'build', cost:38000, sell:55000},
+  {n:'ユニットバス材料費', s:'Panasonic MR1418', q:1, u:'式', mode:'disc', list:1392000, off:64, cost:430000},
+  {n:'施工費', s:'', q:1, u:'式', mode:'build', cost:63000, sell:90000},
+  {n:'配送・ダクト・電気・樹脂枠', s:'材工共', q:1, u:'式', mode:'build', cost:56000, sell:80000},
+ ]},
+ {sec:'その他（洗面・トイレ）', items:[
+  {n:'既設乾燥機・化粧台解体撤去', s:'', q:1, u:'式', mode:'build', cost:24000, sell:35000},
+  {n:'洗面化粧台材料代', s:'Panasonic Cライン', q:1, u:'式', mode:'disc', list:513700, off:60, cost:175000},
+  {n:'化粧台取付＋洗濯パン', s:'給排水・電気含む', q:1, u:'式', mode:'build', cost:62000, sell:90000},
+  {n:'ウォシュレット材工', s:'Panasonic', q:1, u:'式', mode:'build', cost:22000, sell:32000},
+ ]},
+ {sec:'諸経費等', items:[
+  {n:'産廃運搬処分費', s:'', q:4, u:'㎥', mode:'build', cost:15000, sell:22000},
+  {n:'シーリング移設・食洗器・リペア', s:'材工共', q:1, u:'式', mode:'build', cost:55000, sell:78000},
+  {n:'美装工事', s:'水廻り・サッシ・ベランダ', q:1, u:'式', mode:'build', cost:30000, sell:45000},
+  {n:'諸経費・養生・交通費', s:'', q:1, u:'式', mode:'build', cost:128000, sell:185000},
+ ]},
+];
+const yen=v=>'¥'+Math.round(v).toLocaleString();
+function lineSell(it){ return it.mode==='disc' ? it.list*(1-it.off/100) : it.sell; }
+function render(){
+  const root=document.getElementById('sections'); root.innerHTML='';
+  DATA.forEach((sec,si)=>{
+    let sub=0;
+    const rows=sec.items.map((it,ii)=>{
+      const sell=lineSell(it), amt=sell*it.q, c=it.cost*it.q, g=amt-c, gr=amt? g/amt*100:0;
+      sub+=amt;
+      const cls=gr>=25?'g-ok':gr>=15?'g-mid':'g-bad';
+      const modeTag=it.mode==='disc'?`<span class="mode disc">定価割引</span>`:`<span class="mode build">積上</span>`;
+      const priceCell=it.mode==='disc'
+        ?`<span style="font-size:11px;color:#7a8494">定価 ${yen(it.list)} × </span>
+          <select class="discsel" onchange="DATA[${si}].items[${ii}].off=+this.value;render()">
+            ${[50,55,60,64,65,70].map(o=>`<option ${o===it.off?'selected':''} value="${o}">${o}%off</option>`).join('')}
+          </select>`
+        :`<span class="num">${yen(sell)}</span>`;
+      return `<tr>
+        <td>${modeTag}</td>
+        <td class="name">${it.n}</td>
+        <td class="spec">${it.s}</td>
+        <td class="num"><input class="qty" type="number" value="${it.q}" step="0.5"
+             onchange="DATA[${si}].items[${ii}].q=+this.value;render()"></td>
+        <td>${it.u}</td>
+        <td>${priceCell}</td>
+        <td class="num">${yen(amt)}</td>
+        <td class="num costcol"><input class="cost" type="number" value="${it.cost}"
+             onchange="DATA[${si}].items[${ii}].cost=+this.value;render()"></td>
+        <td class="costcol"><span class="pill ${cls}">${gr.toFixed(1)}%</span></td>
+      </tr>`;
+    }).join('');
+    root.insertAdjacentHTML('beforeend', `<div class="sec">
+      <h2>${sec.sec}<span class="subtotal">${yen(sub)}</span></h2>
+      <div style="overflow-x:auto"><table><thead><tr>
+        <th></th><th>項目</th><th class="spec">仕様・摘要</th><th class="num">数量</th><th>単位</th>
+        <th>単価（出し値）</th><th class="num">金額</th>
+        <th class="costcol num">原価</th><th class="costcol">粗利率</th>
+      </tr></thead><tbody>${rows}</tbody></table></div></div>`);
+  });
+  totals();
+}
+function totals(){
+  let sub=0, cost=0;
+  DATA.forEach(s=>s.items.forEach(it=>{sub+=lineSell(it)*it.q; cost+=it.cost*it.q;}));
+  const disc=+document.getElementById('disc').value;
+  document.getElementById('disc').max=Math.max(300000, Math.floor((sub-cost)/10000)*10000);
+  const net=sub-disc;
+  const tax=Math.floor(net*0.10);
+  const gross=net+tax;
+  const g=net-cost, gr=net? g/net*100:0;
+  document.getElementById('tSub').textContent=yen(sub);
+  document.getElementById('tNet').textContent=yen(net);
+  document.getElementById('tTax').textContent=yen(tax);
+  document.getElementById('tGross').textContent=yen(gross);
+  document.getElementById('discV').textContent='-'+yen(disc);
+  document.getElementById('gAmt').textContent=yen(g);
+  document.getElementById('gRate').textContent=gr.toFixed(1)+'%';
+  const fill=document.getElementById('gFill');
+  fill.style.width=Math.max(0,Math.min(100,gr*2.5))+'%';
+  fill.style.background= gr>=25?'var(--accent)': gr>=15?'var(--warn)':'var(--danger)';
+}
+document.getElementById('disc').addEventListener('input',totals);
+render();
+</script>
+</body>
+</html>

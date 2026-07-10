@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>〇〇電気工事業務DXシステム（デモ）</title>
+<style>
+:root{
+  --navy:#16324F; --navy-d:#0E2238; --paper:#F7F9FB; --white:#FFFFFF;
+  --amber:#F5A623; --amber-d:#D98E0B; --green:#2E7D4F; --green-bg:#E8F5EE;
+  --red:#C0392B; --red-bg:#FDEDEC; --yellow-bg:#FFF8E1; --line:#D9E1E8; --ink:#1C2B36; --sub:#5A6B78;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP',system-ui,sans-serif;background:var(--paper);color:var(--ink);font-size:15px;line-height:1.6}
+header{background:var(--navy);color:#fff;padding:14px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.logo{width:34px;height:34px;background:var(--amber);border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--navy);font-size:19px}
+header h1{font-size:17px;font-weight:700;letter-spacing:.02em}
+header .demo-badge{margin-left:auto;background:rgba(255,255,255,.15);padding:4px 12px;border-radius:20px;font-size:12px}
+.tabs{display:flex;background:var(--navy-d);padding:0 12px;gap:4px;overflow-x:auto}
+.tab{padding:14px 20px;color:#9FB3C4;font-size:14.5px;font-weight:700;cursor:pointer;border:none;background:none;border-bottom:3px solid transparent;white-space:nowrap}
+.tab.active{color:#fff;border-bottom-color:var(--amber)}
+main{max-width:1000px;margin:0 auto;padding:24px 16px 80px}
+.panel{display:none}.panel.active{display:block}
+.steps{display:flex;gap:6px;margin-bottom:22px;flex-wrap:wrap}
+.step{flex:1;min-width:120px;background:var(--white);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12.5px;color:var(--sub);position:relative}
+.step b{display:block;font-size:13.5px;color:var(--ink)}
+.step.on{border-color:var(--amber);background:#FFFDF5}
+.step.on b{color:var(--amber-d)}
+.step.done{border-color:var(--green);background:var(--green-bg)}
+.step.done b{color:var(--green)}
+.card{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:18px}
+.card h2{font-size:16px;margin-bottom:4px;color:var(--navy)}
+.card .hint{font-size:13px;color:var(--sub);margin-bottom:14px}
+.callout{background:linear-gradient(135deg,#16324F,#1E4266);color:#fff;border-radius:12px;padding:18px 22px;margin-bottom:18px;display:flex;gap:14px;align-items:flex-start}
+.callout .ic{font-size:24px}
+.callout b{display:block;font-size:14.5px;margin-bottom:3px}
+.callout span{font-size:13px;opacity:.85}
+
+/* 材料費 */
+.inv-row{display:flex;gap:12px;flex-wrap:wrap}
+.inv{flex:1;min-width:180px;border:2px solid var(--line);border-radius:10px;padding:14px;cursor:pointer;position:relative;overflow:hidden;background:#fff;transition:border-color .2s}
+.inv:hover{border-color:var(--amber)}
+.inv.used{opacity:.45;pointer-events:none}
+.inv .tag{font-size:11px;color:var(--sub)}
+.inv .name{font-weight:700;font-size:14.5px;margin:2px 0}
+.inv .amt{font-size:13px;color:var(--sub)}
+.inv .paper-icon{position:absolute;right:12px;top:12px;width:26px;height:32px;border:2px solid var(--line);border-radius:3px;background:repeating-linear-gradient(#fff,#fff 5px,var(--line) 5px,var(--line) 6px)}
+.scanline{position:absolute;left:0;right:0;height:3px;background:var(--amber);box-shadow:0 0 14px 4px rgba(245,166,35,.55);top:-10px;display:none}
+.inv.scanning .scanline{display:block;animation:scan 1.4s ease-in-out}
+@keyframes scan{0%{top:0}100%{top:100%}}
+.ocr-box{border:1.5px dashed var(--amber);border-radius:10px;padding:16px;background:#FFFDF5;display:none;margin-top:14px}
+.ocr-box.show{display:block}
+.ocr-title{font-size:13px;font-weight:700;color:var(--amber-d);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.pulse{width:8px;height:8px;border-radius:50%;background:var(--amber);animation:pl 1s infinite}
+@keyframes pl{50%{opacity:.3}}
+.ocr-items{display:flex;flex-direction:column;gap:6px}
+.ocr-item-row{display:flex;justify-content:space-between;font-size:13.5px;opacity:0;transform:translateY(4px);transition:all .35s;border-bottom:1px dashed #EAD9AE;padding-bottom:5px}
+.ocr-item-row.in{opacity:1;transform:none}
+.ocr-item-row .nm{font-weight:600}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{background:var(--navy);color:#fff;padding:9px 10px;text-align:left;font-size:12.5px;font-weight:600;white-space:nowrap}
+td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr.rejected{opacity:.4}
+tr.rejected td{text-decoration:line-through}
+.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.chip{display:inline-block;padding:2px 10px;border-radius:12px;font-size:11.5px;font-weight:700;white-space:nowrap}
+.chip.zk{background:var(--yellow-bg);color:var(--amber-d);border:1px solid #F0DFA8}
+.chip.norm{background:#EAF1F7;color:var(--navy)}
+.chip.ok{background:var(--green-bg);color:var(--green)}
+.chip.ng{background:var(--red-bg);color:var(--red)}
+select.acc-select{border:1px solid var(--line);border-radius:6px;padding:4px 6px;font-size:12px;font-family:inherit;background:#fff}
+.btn{border:none;border-radius:8px;padding:11px 20px;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:transform .1s}
+.btn:active{transform:scale(.97)}
+.btn-approve{background:var(--green);color:#fff;padding:6px 13px;font-size:12.5px}
+.btn-reject{background:none;color:var(--red);border:1.5px solid var(--red);padding:5px 11px;font-size:12.5px}
+.btn-csv{background:var(--navy);color:#fff}
+.btn-csv:disabled{background:#B9C6D0;cursor:not-allowed}
+.btn-amber{background:var(--amber);color:var(--navy-d)}
+.btn-all{background:#EAF1F7;color:var(--navy);border:1.5px solid var(--navy);padding:7px 14px;font-size:13px}
+.empty{text-align:center;color:var(--sub);padding:26px;font-size:13.5px}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.mini-total{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin-top:10px;font-size:13.5px;display:flex;justify-content:space-between}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--navy);color:#fff;padding:12px 24px;border-radius:30px;font-size:14px;font-weight:600;transition:transform .3s;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:99}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* 見積もり */
+.seg{display:inline-flex;border:1.5px solid var(--navy);border-radius:8px;overflow:hidden}
+.seg button{border:none;background:#fff;color:var(--navy);padding:8px 18px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.seg button.on{background:var(--navy);color:#fff}
+.search-box{position:relative;margin-bottom:14px}
+.search-box input{width:100%;padding:11px 14px;border:1.5px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit}
+.search-box input:focus{outline:none;border-color:var(--amber)}
+.search-results{position:absolute;left:0;right:0;top:calc(100% + 4px);background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 22px rgba(0,0,0,.12);max-height:280px;overflow-y:auto;z-index:20;display:none}
+.search-results.show{display:block}
+.sr-group{font-size:11px;color:var(--sub);font-weight:700;padding:8px 14px 4px;background:var(--paper)}
+.sr-item{padding:9px 14px;cursor:pointer;display:flex;justify-content:space-between;font-size:13.5px}
+.sr-item:hover{background:var(--yellow-bg)}
+.qhead{display:grid;grid-template-columns:1fr 80px 110px 110px 34px;gap:8px;font-size:11.5px;color:var(--sub);margin-bottom:6px;padding:0 2px}
+.qrow{display:grid;grid-template-columns:1fr 80px 110px 110px 34px;gap:8px;align-items:center;margin-bottom:8px}
+.qrow .nm{font-size:13.5px;font-weight:600}
+.qrow .grp{font-size:10.5px;color:var(--sub);display:block}
+.qrow input{padding:8px 9px;border:1px solid var(--line);border-radius:7px;font-size:13.5px;font-family:inherit;width:100%}
+.qrow .price,.qrow .sub{font-variant-numeric:tabular-nums;text-align:right;font-size:13.5px;padding-right:4px}
+.qrow .sub{font-weight:700}
+.del{background:none;border:none;color:var(--red);font-size:17px;cursor:pointer}
+.total-box{background:var(--navy);color:#fff;border-radius:12px;padding:18px 22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.total-box .lbl{font-size:13px;opacity:.8}
+.total-box .big{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums}
+.sub-lines{font-size:13px;opacity:.85;line-height:1.8;font-variant-numeric:tabular-nums}
+.preview{background:#fff;border:1px solid var(--line);border-radius:4px;padding:34px;max-width:640px;margin:0 auto;box-shadow:0 4px 16px rgba(0,0,0,.08);position:relative;font-size:13px}
+.preview h3{text-align:center;font-size:21px;letter-spacing:.5em;margin-bottom:20px;text-indent:.5em}
+.pv-to{font-size:15px;border-bottom:1.5px solid var(--ink);display:inline-block;padding:0 24px 3px 4px;margin-bottom:14px}
+.pv-meta{position:absolute;right:34px;top:78px;font-size:11.5px;line-height:1.8;text-align:left}
+.stamp{position:absolute;right:44px;top:150px;width:58px;height:58px;border:2.5px solid var(--red);border-radius:50%;color:var(--red);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;transform:rotate(-8deg);opacity:.85;writing-mode:vertical-rl;letter-spacing:2px}
+.pv-total{font-size:17px;font-weight:800;border-bottom:2.5px double var(--ink);display:inline-block;padding:2px 30px 2px 4px;margin:8px 0 18px}
+.preview table{font-size:12px}
+.preview th{background:#EFF3F7;color:var(--ink);border:1px solid var(--line)}
+.preview td{border:1px solid var(--line)}
+.switch-row{display:flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600}
+.switch{position:relative;width:46px;height:26px}
+.switch input{opacity:0;width:0;height:0}
+.slider{position:absolute;inset:0;background:#C4CFD8;border-radius:26px;cursor:pointer;transition:.2s}
+.slider:before{content:"";position:absolute;width:20px;height:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+input:checked+.slider{background:var(--red)}
+input:checked+.slider:before{transform:translateX(20px)}
+
+/* 原価ダッシュボード */
+.proj-chips{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+.proj-chip{flex:1;min-width:220px;background:#fff;border:2px solid var(--line);border-radius:12px;padding:14px 16px;cursor:pointer;transition:border-color .2s}
+.proj-chip:hover{border-color:var(--amber)}
+.proj-chip.on{border-color:var(--navy);background:#EAF1F7}
+.proj-chip .pname{font-weight:700;font-size:14.5px}
+.proj-chip .pstat{font-size:11.5px;color:var(--sub);margin-top:2px}
+.proj-chip .pmargin{font-size:20px;font-weight:800;margin-top:6px}
+.dash-grid{display:grid;grid-template-columns:210px 1fr;gap:24px;align-items:start}
+.gauge-wrap{display:flex;flex-direction:column;align-items:center;background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px}
+.gauge{width:160px;height:160px;border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative}
+.gauge .hole{width:112px;height:112px;background:#fff;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.gauge .pct{font-size:26px;font-weight:800}
+.gauge .lbl2{font-size:11px;color:var(--sub)}
+.gauge-target{font-size:12px;color:var(--sub);margin-top:12px;text-align:center}
+.cost-table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:6px}
+.cost-table td{padding:8px 4px;border-bottom:1px solid var(--line)}
+.cost-table tr.total td{border-top:2px solid var(--navy);border-bottom:none;font-weight:800;padding-top:12px}
+.cost-table .indent{padding-left:18px;color:var(--sub);font-size:12.5px}
+.status-tag{font-size:11px;font-weight:700;padding:3px 10px;border-radius:10px;display:inline-block}
+.status-tag.pending{background:var(--yellow-bg);color:var(--amber-d)}
+@media(max-width:720px){
+  .dash-grid{grid-template-columns:1fr}
+  .qrow,.qhead{grid-template-columns:1fr 60px 85px 85px 28px}
+  .pv-meta{position:static;margin-bottom:10px}
+  .stamp{top:auto;bottom:110px}
+  .preview{padding:20px}
+}
+@media print{
+  header,.tabs,.no-print{display:none!important}
+  main{padding:0;max-width:none}
+  .preview{box-shadow:none;border:none}
+  body{background:#fff}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">H</div>
+  <h1>〇〇電気工事業務DXシステム</h1>
+  <span class="demo-badge">デモ版</span>
+</header>
+
+<div class="tabs no-print">
+  <button class="tab active" onclick="showTab(0)">📄 材料費仕分け</button>
+  <button class="tab" onclick="showTab(1)">📋 見積もり作成</button>
+  <button class="tab" onclick="showTab(2)">📊 案件別 原価ダッシュボード</button>
+</div>
+
+<main>
+
+<!-- ============ 材料費仕分け ============ -->
+<div class="panel active" id="panel0">
+
+  <div class="steps">
+    <div class="step" id="st1"><b>STEP 1</b>請求書アップロード</div>
+    <div class="step" id="st2"><b>STEP 2</b>AIが自動読み取り</div>
+    <div class="step" id="st3"><b>STEP 3</b>自動仕分け</div>
+    <div class="step" id="st4"><b>STEP 4</b>社長承認</div>
+    <div class="step" id="st5"><b>STEP 5</b>TKC用CSV出力</div>
+  </div>
+
+  <div class="card">
+    <h2>請求書をアップロード（案件：山崎邸 電気設備改修工事）</h2>
+    <p class="hint">届いた請求書をタップしてください（デモではサンプル請求書を使います。1枚の請求書に複数の明細が含まれる場合もAIが行ごとに分解します）</p>
+    <div class="inv-row">
+      <div class="inv" id="inv0" onclick="scanInvoice(0)">
+        <div class="scanline"></div>
+        <div class="paper-icon"></div>
+        <div class="tag">2026/06/30</div>
+        <div class="name">関西電材 株式会社</div>
+        <div class="amt">請求書（6月分・2明細）</div>
+      </div>
+      <div class="inv" id="inv1" onclick="scanInvoice(1)">
+        <div class="scanline"></div>
+        <div class="paper-icon"></div>
+        <div class="tag">2026/06/28</div>
+        <div class="name">大阪ケーブル商会</div>
+        <div class="amt">請求書（6月分・2明細）</div>
+      </div>
+      <div class="inv" id="inv2" onclick="scanInvoice(2)">
+        <div class="scanline"></div>
+        <div class="paper-icon"></div>
+        <div class="tag">2026/06/25</div>
+        <div class="name">ナニワ電設資材</div>
+        <div class="amt">請求書（6月分・2明細）</div>
+      </div>
+    </div>
+
+    <div class="ocr-box" id="ocrBox">
+      <div class="ocr-title"><span class="pulse"></span>AI（Gemini）が明細を読み取り中…</div>
+      <div class="ocr-items" id="ocrItems"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="toolbar">
+      <div>
+        <h2>仕分け一覧（社長承認画面）</h2>
+        <p class="hint" style="margin:0">明細ごとに勘定科目を確認・修正できます。100万円以下は「雑工事」として自動判定</p>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-all" id="allBtn" onclick="approveAll()" style="display:none">✓ すべて承認</button>
+        <button class="btn btn-csv" id="csvBtn" onclick="exportCSV()" disabled>⬇ TKC用CSVを出力</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr><th>業者名</th><th>品目</th><th class="num">金額（税込）</th><th>勘定科目</th><th>判定</th><th>ステータス</th></tr>
+        </thead>
+        <tbody id="tbody">
+          <tr class="empty-row"><td colspan="6" class="empty">まだ請求書がありません。上から請求書をアップロードしてください。</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="mini-total">
+      <span>承認済み材料費 合計（この案件）</span>
+      <b id="matTotal">¥0</b>
+    </div>
+  </div>
+
+</div>
+
+<!-- ============ 見積もり ============ -->
+<div class="panel" id="panel1">
+
+  <div class="steps">
+    <div class="step on"><b>STEP 1</b>部材を検索して追加</div>
+    <div class="step"><b>STEP 2</b>金額を自動計算</div>
+    <div class="step"><b>STEP 3</b>見積書PDF出力</div>
+  </div>
+
+  <div class="card no-print">
+    <div class="toolbar">
+      <div>
+        <h2>見積もり入力（案件：山崎邸 電気設備改修工事）</h2>
+        <p class="hint" style="margin:0">部材名で検索して追加。単価はマスタから自動で入ります</p>
+      </div>
+      <div class="seg">
+        <button class="on" id="segMin" onclick="setPriceMode('min')">民間単価</button>
+        <button id="segKan" onclick="setPriceMode('kan')">官公庁単価</button>
+      </div>
+    </div>
+
+    <div style="margin-bottom:14px">
+      <input type="text" id="projName" placeholder="件名" value="山崎邸 電気設備改修工事" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit">
+    </div>
+
+    <div class="search-box">
+      <input type="text" id="matSearch" placeholder="🔍 部材を検索（例：ケーブル、分電盤、配線工事…）" oninput="renderSearch(this.value)" onfocus="renderSearch(this.value)">
+      <div class="search-results" id="searchResults"></div>
+    </div>
+
+    <div class="qhead"><span>部材（工種）</span><span>数量</span><span style="text-align:right">単価</span><span style="text-align:right">金額</span><span></span></div>
+    <div id="qrows"></div>
+  </div>
+
+  <div class="card no-print">
+    <div class="total-box">
+      <div class="sub-lines">
+        <div>小計：<span id="subTotal">¥0</span></div>
+        <div>諸経費（10%）：<span id="expense">¥0</span></div>
+        <div>消費税（10%）：<span id="tax">¥0</span></div>
+      </div>
+      <div style="text-align:right">
+        <div class="lbl">御見積金額（税込）</div>
+        <div class="big" id="grandTotal">¥0</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card no-print">
+    <div class="toolbar">
+      <div class="switch-row">
+        <label class="switch"><input type="checkbox" id="stampToggle" checked onchange="renderPreview()"><span class="slider"></span></label>
+        社印あり
+      </div>
+      <button class="btn btn-amber" onclick="window.print()">🖨 見積書をPDF出力</button>
+    </div>
+  </div>
+
+  <div class="preview" id="preview"></div>
+
+</div>
+
+<!-- ============ 原価ダッシュボード ============ -->
+<div class="panel" id="panel2">
+
+  <div class="callout">
+    <div class="ic">🎯</div>
+    <div>
+      <b>材料費仕分けと見積もりが同じデータでつながっているから、案件ごとの粗利がリアルタイムで見えます</b>
+      <span>これまで別々に管理されていた「見積金額」「材料費実績」「人件費実績（日報）」を1つの案件データに集約。目標利益率21%との比較が自動で出ます。</span>
+    </div>
+  </div>
+
+  <div class="proj-chips" id="projChips"></div>
+
+  <div class="dash-grid" id="dashDetail"></div>
+
+</div>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============ 共通 ============
+function showTab(i){
+  document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',i===j));
+  document.querySelectorAll('.panel').forEach((p,j)=>p.classList.toggle('active',i===j));
+  if(i===2)renderDashboard();
+}
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2600);
+}
+const yen=n=>'¥'+Math.round(n).toLocaleString();
+const accOptions=['材料費','材料費（雑工事）','工具器具費','外注費'];
+
+// ============ 材料費仕分け ============
+const invoices=[
+  {vendor:'関西電材 株式会社',date:'2026/06/30',
+    items:[
+      {name:'CVTケーブル 38sq×3C（150m）',amount:958500},
+      {name:'配管付属品一式',amount:326000},
+    ], zatsu:false},
+  {vendor:'大阪ケーブル商会',date:'2026/06/28',
+    items:[
+      {name:'CV 8sq-3C ケーブル（400m）',amount:248000},
+      {name:'圧着端子・付属品一式',amount:214300},
+    ], zatsu:true},
+  {vendor:'ナニワ電設資材',date:'2026/06/25',
+    items:[
+      {name:'分電盤 主幹60A 12回路',amount:96000},
+      {name:'ブレーカー・配線器具一式',amount:102000},
+    ], zatsu:true},
+];
+let rowSeq=0;
+let matApprovedTotal=0;
+
+function setStep(n,state){
+  const el=document.getElementById('st'+n);
+  el.classList.remove('on','done');
+  if(state)el.classList.add(state);
+}
+
+function scanInvoice(i){
+  const card=document.getElementById('inv'+i);
+  if(card.classList.contains('used')||card.classList.contains('scanning'))return;
+  card.classList.add('scanning');
+  setStep(1,'done');setStep(2,'on');
+
+  const box=document.getElementById('ocrBox');
+  const wrap=document.getElementById('ocrItems');
+  box.classList.add('show');
+  const d=invoices[i];
+  wrap.innerHTML=`<div style="font-size:12.5px;color:var(--sub);margin-bottom:4px">${d.vendor}（${d.date}）</div>`+
+    d.items.map(it=>`<div class="ocr-item-row"><span class="nm">${it.name}</span><span>${yen(it.amount)}</span></div>`).join('');
+  const vals=wrap.querySelectorAll('.ocr-item-row');
+  vals.forEach((v,j)=>setTimeout(()=>v.classList.add('in'),500+j*420));
+
+  setTimeout(()=>{
+    card.classList.remove('scanning');card.classList.add('used');
+    setStep(2,'done');setStep(3,'done');setStep(4,'on');
+    d.items.forEach(it=>addRowToTable(d,it));
+    box.querySelector('.ocr-title').innerHTML='✅ 読み取り完了 → 明細ごとに自動仕分けしました';
+    document.getElementById('allBtn').style.display='inline-block';
+    toast('明細を自動仕分けしました。内容を確認して承認してください');
+  },2300+d.items.length*420);
+}
+
+function addRowToTable(invoice,item){
+  const tb=document.getElementById('tbody');
+  const er=tb.querySelector('.empty-row');if(er)er.remove();
+  const id='row'+(rowSeq++);
+  const tr=document.createElement('tr');
+  tr.id=id;
+  tr.dataset.amount=item.amount;
+  tr.dataset.status='pending';
+  const defaultAcc=invoice.zatsu?'材料費（雑工事）':'材料費';
+  tr.innerHTML=`
+    <td><b>${invoice.vendor}</b></td>
+    <td style="font-size:12.5px">${item.name}</td>
+    <td class="num"><b>${yen(item.amount)}</b></td>
+    <td><select class="acc-select" onchange="toast('勘定科目を修正しました')">
+        ${accOptions.map(a=>`<option${a===defaultAcc?' selected':''}>${a}</option>`).join('')}
+      </select></td>
+    <td><span class="chip ${invoice.zatsu?'zk':'norm'}">${invoice.zatsu?'100万円以下':'通常'}</span></td>
+    <td id="${id}_status">
+      <button class="btn btn-approve" onclick="approveRow('${id}')">承認</button>
+      <button class="btn btn-reject" onclick="rejectRow('${id}')">却下</button>
+    </td>`;
+  tb.appendChild(tr);
+}
+
+function approveRow(id){
+  const tr=document.getElementById(id);
+  if(tr.dataset.status==='approved')return;
+  tr.dataset.status='approved';
+  matApprovedTotal+=parseFloat(tr.dataset.amount);
+  document.getElementById(id+'_status').innerHTML='<span class="chip ok">✓ 承認済み</span>';
+  document.getElementById('csvBtn').disabled=false;
+  setStep(4,'done');setStep(5,'on');
+  updateMatTotal();
+  toast('承認しました');
+}
+function rejectRow(id){
+  const tr=document.getElementById(id);
+  if(tr.dataset.status==='approved')matApprovedTotal-=parseFloat(tr.dataset.amount);
+  tr.dataset.status='rejected';
+  tr.classList.add('rejected');
+  document.getElementById(id+'_status').innerHTML='<span class="chip ng">差し戻し</span>';
+  updateMatTotal();
+  toast('差し戻しました（社長確認待ち）');
+}
+function approveAll(){
+  document.querySelectorAll('#tbody tr[data-status="pending"]').forEach(tr=>approveRow(tr.id));
+  toast('未処理の明細をすべて承認しました');
+}
+function updateMatTotal(){
+  document.getElementById('matTotal').textContent=yen(matApprovedTotal);
+  if(document.getElementById('panel2').classList.contains('active'))renderDashboard();
+}
+function exportCSV(){
+  let csv='\uFEFF日付,業者名,品目,金額,勘定科目,ステータス\n';
+  document.querySelectorAll('#tbody tr').forEach(tr=>{
+    if(!tr.id)return;
+    const cells=tr.querySelectorAll('td');
+    const vendor=cells[0].textContent;
+    const item=cells[1].textContent;
+    const amount=tr.dataset.amount;
+    const acc=cells[3].querySelector('select').value;
+    const status=tr.dataset.status;
+    csv+=`${vendor},${item},${amount},${acc},${status}\n`;
+  });
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='TKC取込用_2026年6月分.csv';
+  a.click();
+  setStep(5,'done');
+  toast('TKC取込用CSVをダウンロードしました');
+}
+
+// ============ 見積もり ============
+const materials=[
+  {name:'CVTケーブル 38sq（m）',group:'幹線工事',min:1850,kan:2100},
+  {name:'CV 8sq-3C ケーブル（m）',group:'幹線工事',min:620,kan:710},
+  {name:'PF管 φ16（m）',group:'幹線工事',min:95,kan:120},
+  {name:'分電盤 主幹60A 12回路',group:'盤工事',min:48000,kan:55000},
+  {name:'安全ブレーカー 20A',group:'盤工事',min:1200,kan:1450},
+  {name:'埋込コンセント 2口',group:'照明・コンセント工事',min:850,kan:980},
+  {name:'LEDベースライト 40W形',group:'照明・コンセント工事',min:9800,kan:11500},
+  {name:'配線工事（人工/日）',group:'施工',min:28000,kan:32000},
+];
+let priceMode='min';
+let rows=[{mat:0,qty:1200},{mat:3,qty:3},{mat:7,qty:20}];
+
+function setPriceMode(m){
+  priceMode=m;
+  document.getElementById('segMin').classList.toggle('on',m==='min');
+  document.getElementById('segKan').classList.toggle('on',m==='kan');
+  renderRows();
+}
+function renderSearch(q){
+  const box=document.getElementById('searchResults');
+  q=(q||'').trim();
+  if(!q){box.classList.remove('show');box.innerHTML='';return;}
+  const hits=materials.filter(m=>m.name.includes(q)||m.group.includes(q));
+  if(!hits.length){box.innerHTML='<div class="sr-item" style="color:var(--sub)">該当する部材がありません</div>';box.classList.add('show');return;}
+  const groups={};
+  hits.forEach(m=>{(groups[m.group]=groups[m.group]||[]).push(m)});
+  let html='';
+  Object.keys(groups).forEach(g=>{
+    html+=`<div class="sr-group">${g}</div>`;
+    groups[g].forEach(m=>{
+      const idx=materials.indexOf(m);
+      html+=`<div class="sr-item" onclick="addFromSearch(${idx})"><span>${m.name}</span><span style="color:var(--sub)">${yen(m[priceMode])}</span></div>`;
+    });
+  });
+  box.innerHTML=html;box.classList.add('show');
+}
+function addFromSearch(idx){
+  rows.push({mat:idx,qty:1});
+  document.getElementById('matSearch').value='';
+  document.getElementById('searchResults').classList.remove('show');
+  renderRows();
+}
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.search-box'))document.getElementById('searchResults').classList.remove('show');
+});
+function delRow(i){rows.splice(i,1);renderRows();}
+function updateQty(i,val){rows[i].qty=Math.max(0,parseInt(val)||0);renderRows();}
+
+function renderRows(){
+  const wrap=document.getElementById('qrows');
+  wrap.innerHTML='';
+  if(!rows.length){wrap.innerHTML='<div class="empty">部材を検索して追加してください</div>';}
+  rows.forEach((r,i)=>{
+    const m=materials[r.mat];
+    const price=m[priceMode];
+    const div=document.createElement('div');
+    div.className='qrow';
+    div.innerHTML=`
+      <div><span class="nm">${m.name}</span><span class="grp">${m.group}</span></div>
+      <input type="number" min="0" value="${r.qty}" onchange="updateQty(${i},this.value)">
+      <div class="price">${yen(price)}</div>
+      <div class="sub">${yen(price*r.qty)}</div>
+      <button class="del" onclick="delRow(${i})">×</button>`;
+    wrap.appendChild(div);
+  });
+  calc();
+}
+
+function calc(){
+  const sub=rows.reduce((s,r)=>s+materials[r.mat][priceMode]*r.qty,0);
+  const exp=Math.round(sub*0.1);
+  const tax=Math.round((sub+exp)*0.1);
+  const total=sub+exp+tax;
+  document.getElementById('subTotal').textContent=yen(sub);
+  document.getElementById('expense').textContent=yen(exp);
+  document.getElementById('tax').textContent=yen(tax);
+  document.getElementById('grandTotal').textContent=yen(total);
+  renderPreview();
+  if(document.getElementById('panel2').classList.contains('active'))renderDashboard();
+}
+function getEstimateTotal(){
+  const sub=rows.reduce((s,r)=>s+materials[r.mat][priceMode]*r.qty,0);
+  const exp=Math.round(sub*0.1);
+  const tax=Math.round((sub+exp)*0.1);
+  return sub+exp+tax;
+}
+
+function renderPreview(){
+  const sub=rows.reduce((s,r)=>s+materials[r.mat][priceMode]*r.qty,0);
+  const exp=Math.round(sub*0.1);
+  const tax=Math.round((sub+exp)*0.1);
+  const total=sub+exp+tax;
+  const stamp=document.getElementById('stampToggle').checked;
+  const today=new Date();
+  const dstr=`${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日`;
+  const name=document.getElementById('projName').value||'（件名未入力）';
+
+  document.getElementById('preview').innerHTML=`
+    <h3>御 見 積 書</h3>
+    <div class="pv-to">株式会社 〇〇工務店 御中</div>
+    <div class="pv-meta">
+      見積番号：Q-2〒000-0000<br>
+      発行日：${dstr}<br>
+      <b>株式会社〇〇電気工事</b><br>
+      TEL：〒000-0000-0000
+    </div>
+    ${stamp?'<div class="stamp">〇〇電気工事</div>':''}
+    <div style="font-size:12.5px;margin-bottom:4px">件名：${name}</div>
+    <div style="font-size:12px;color:var(--sub);margin-bottom:8px">単価区分：${priceMode==='min'?'民間':'官公庁'}</div>
+    <div class="pv-total">御見積金額　${yen(total)} −（税込）</div>
+    <table>
+      <thead><tr><th>品名</th><th style="text-align:right">数量</th><th style="text-align:right">単価</th><th style="text-align:right">金額</th></tr></thead>
+      <tbody>
+        ${rows.map(r=>`<tr><td>${materials[r.mat].name}</td><td class="num">${r.qty}</td><td class="num">${yen(materials[r.mat][priceMode])}</td><td class="num">${yen(materials[r.mat][priceMode]*r.qty)}</td></tr>`).join('')}
+        <tr><td colspan="3" style="text-align:right">小計</td><td class="num">${yen(sub)}</td></tr>
+        <tr><td colspan="3" style="text-align:right">諸経費（10%）</td><td class="num">${yen(exp)}</td></tr>
+        <tr><td colspan="3" style="text-align:right">消費税</td><td class="num">${yen(tax)}</td></tr>
+        <tr><td colspan="3" style="text-align:right"><b>合計</b></td><td class="num"><b>${yen(total)}</b></td></tr>
+      </tbody>
+    </table>
+    <div style="font-size:11px;color:var(--sub);margin-top:14px">有効期限：発行日より30日間　※本見積書はデモ用サンプルです</div>`;
+
+  document.getElementById('projName').oninput=renderPreview;
+}
+
+// ============ 原価ダッシュボード ============
+const TARGET_MARGIN=21;
+
+function laborForYamazaki(){ return 420000+280000; } // 田中12人工+佐藤8人工 @35,000
+function getProjects(){
+  return [
+    {
+      id:'yamazaki', name:'山崎邸 電気設備改修工事', status:'進行中（社長承認待ちあり）',
+      estimate: getEstimateTotal(),
+      material: matApprovedTotal,
+      materialStatus: matApprovedTotal>0 ? '仕分けタブの承認額を自動反映中' : '未承認（材料費仕分けタブで承認すると反映されます）',
+      labor: laborForYamazaki(),
+      laborDetail:[
+        {who:'田中', unit:12, rate:35000},
+        {who:'佐藤', unit:8, rate:35000},
+      ],
+      live:true
+    },
+    {
+      id:'kansai', name:'関西国際空港 照明改修工事', status:'完了・請求済み',
+      estimate:8200000, material:4850000, materialStatus:'仕分け済み・確定',
+      labor:1650000,
+      laborDetail:[
+        {who:'田中', unit:22, rate:35000},
+        {who:'佐藤', unit:18, rate:35000},
+        {who:'外注（照明班）', unit:1, rate:220000},
+      ],
+      live:false
+    }
+  ];
+}
+let currentProjectId='yamazaki';
+
+function renderDashboard(){
+  const projects=getProjects();
+  const chipWrap=document.getElementById('projChips');
+  chipWrap.innerHTML=projects.map(p=>{
+    const cost=p.material+p.labor;
+    const profit=p.estimate-cost;
+    const margin=p.estimate>0? (profit/p.estimate*100):0;
+    const color = margin>=TARGET_MARGIN? 'var(--green)': margin>=TARGET_MARGIN-6? 'var(--amber-d)':'var(--red)';
+    return `<div class="proj-chip ${p.id===currentProjectId?'on':''}" onclick="selectProject('${p.id}')">
+      <div class="pname">${p.name}</div>
+      <div class="pstat">${p.status}${p.live?' <span class="status-tag pending">連動中</span>':''}</div>
+      <div class="pmargin" style="color:${color}">粗利率 ${margin.toFixed(1)}%</div>
+    </div>`;
+  }).join('');
+
+  const p=projects.find(x=>x.id===currentProjectId);
+  const cost=p.material+p.labor;
+  const profit=p.estimate-cost;
+  const margin=p.estimate>0? (profit/p.estimate*100):0;
+  const clamped=Math.max(0,Math.min(100,margin));
+  const color = margin>=TARGET_MARGIN? '#2E7D4F': margin>=TARGET_MARGIN-6? '#F5A623':'#C0392B';
+  const statusText = margin>=TARGET_MARGIN? '✅ 目標利益率（21%）達成' : margin>=0 ? '⚠ 目標利益率（21%）に届いていません' : '🚨 このままだと赤字です';
+
+  document.getElementById('dashDetail').innerHTML=`
+    <div class="gauge-wrap">
+      <div class="gauge" style="background:conic-gradient(${color} ${clamped*3.6}deg, #E5EBF0 0deg)">
+        <div class="hole">
+          <div class="pct" style="color:${color}">${margin.toFixed(1)}%</div>
+          <div class="lbl2">粗利率</div>
+        </div>
+      </div>
+      <div class="gauge-target">目標：21%以上<br><b style="color:${color}">${statusText}</b></div>
+    </div>
+    <div class="card" style="margin:0">
+      <h2>${p.name}</h2>
+      <p class="hint" style="margin-bottom:6px">${p.status}</p>
+      <table class="cost-table">
+        <tr><td>見積金額</td><td class="num">${yen(p.estimate)}</td></tr>
+        <tr><td class="indent">材料費実績（請求書仕分けより自動集計）</td><td class="num indent">− ${yen(p.material)}</td></tr>
+        <tr><td class="indent">人件費実績（日報より自動集計）</td><td class="num indent">− ${yen(p.labor)}</td></tr>
+        <tr class="total"><td>粗利額</td><td class="num">${yen(profit)}</td></tr>
+      </table>
+      ${!p.material && p.live ? `<p class="hint" style="margin-top:10px;color:var(--amber-d)">※ ${p.materialStatus}</p>`:''}
+      <div style="margin-top:16px;font-size:12.5px;color:var(--sub)">
+        <b style="color:var(--ink);font-size:13px">人件費の内訳（日報データより）</b>
+        <table class="cost-table" style="margin-top:6px">
+          ${p.laborDetail.map(l=>`<tr><td class="indent">${l.who}　${l.unit}人工 × ${yen(l.rate)}</td><td class="num">${yen(l.unit*l.rate)}</td></tr>`).join('')}
+        </table>
+      </div>
+    </div>`;
+}
+function selectProject(id){currentProjectId=id;renderDashboard();}
+
+renderRows();
+</script>
+</body>
+</html>

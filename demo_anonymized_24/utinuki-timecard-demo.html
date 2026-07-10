@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>〇〇製作所 タイムカード確認画面</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Hiragino Kaku Gothic Pro', Meiryo, sans-serif;
+      font-size: 14px;
+      background: #f5f5f5;
+      color: #333;
+    }
+
+    /* ── ヘッダー ── */
+    header {
+      background: #1a56db;
+      color: #fff;
+      padding: 12px 20px;
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    /* ── コントロールバー ── */
+    .control-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 20px;
+      background: #fff;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .control-bar select {
+      flex: 1;
+      max-width: 360px;
+      padding: 7px 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .btn {
+      padding: 8px 18px;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .btn-primary { background: #1a56db; color: #fff; }
+    .btn-primary:hover { background: #1447c0; }
+    .btn-success { background: #057a55; color: #fff; }
+    .btn-success:hover { background: #046142; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── 社員情報バー ── */
+    .info-bar {
+      display: none;
+      align-items: center;
+      gap: 16px;
+      padding: 10px 20px;
+      background: #eef2ff;
+      border-bottom: 1px solid #c7d2fe;
+      flex-wrap: wrap;
+    }
+    .info-bar label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+    .info-bar input {
+      padding: 5px 8px;
+      border: 1px solid #aaa;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .info-bar input[name="staffNo"]   { width: 80px; }
+    .info-bar input[name="staffName"] { width: 140px; }
+    .info-bar input[name="yearMonth"] { width: 100px; }
+
+    /* ── メインパネル ── */
+    #mainPanel {
+      display: none;
+      gap: 0;
+      height: calc(100vh - 180px);
+    }
+
+    .image-pane {
+      flex: 1;
+      overflow: auto;
+      padding: 16px;
+      background: #fff;
+      border-right: 1px solid #ddd;
+    }
+    .image-pane img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+    .image-pane .img-label {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+
+    .data-pane {
+      width: 360px;
+      min-width: 280px;
+      overflow: auto;
+      padding: 16px;
+      background: #fff;
+    }
+    .data-pane h3 {
+      font-size: 13px;
+      color: #555;
+      margin-bottom: 10px;
+    }
+
+    /* ── OCRテーブル ── */
+    #ocrTable {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    #ocrTable th {
+      background: #374151;
+      color: #fff;
+      padding: 7px 8px;
+      text-align: center;
+      position: sticky;
+      top: 0;
+    }
+    #ocrTable td {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 4px 6px;
+      text-align: center;
+    }
+    #ocrTable td:first-child {
+      color: #555;
+      font-weight: bold;
+      width: 36px;
+    }
+    .time-input {
+      width: 72px;
+      padding: 4px 6px;
+      border: 1px solid #d1d5db;
+      border-radius: 3px;
+      font-size: 13px;
+      text-align: center;
+    }
+    .time-input:focus { outline: 2px solid #1a56db; border-color: transparent; }
+
+    /* confidence="low" のセルを黄色にする */
+    td.low-confidence {
+      background: #fef9c3;
+    }
+    td.low-confidence .time-input {
+      background: #fef9c3;
+      border-color: #ca8a04;
+    }
+
+    /* ── アラートバー（常時表示・エラー／成功メッセージ） ── */
+    #alertBar {
+      display: none;
+      padding: 10px 20px;
+      font-size: 13px;
+      font-weight: bold;
+    }
+    #alertBar.is-error   { background: #fee2e2; color: #dc2626; display: block; }
+    #alertBar.is-success { background: #d1fae5; color: #057a55; display: block; }
+
+    /* ── 確定バー ── */
+    .confirm-bar {
+      display: none;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 20px;
+      background: #fff;
+      border-top: 1px solid #ddd;
+      position: sticky;
+      bottom: 0;
+    }
+
+    /* ── ローディング ── */
+    #loadingOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(255,255,255,0.75);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      color: #1a56db;
+    }
+  </style>
+</head>
+<body>
+
+<div id="loadingOverlay">読み取り中...</div>
+
+<header>〇〇製作所 タイムカード確認画面</header>
+
+<!-- コントロールバー -->
+<div class="control-bar">
+  <select id="imageSelect">
+    <option value="">画像を読み込み中...</option>
+  </select>
+  <button class="btn btn-primary" id="startBtn" onclick="startProcessing()" disabled>
+    読み取り開始
+  </button>
+</div>
+
+<!-- アラートバー（エラー・成功を常に見える位置に表示） -->
+<div id="alertBar"></div>
+
+<!-- 社員情報バー（読み取り後に表示） -->
+<div class="info-bar" id="infoBar">
+  <label>社員No. <input type="text" name="staffNo" placeholder="例: 001"></label>
+  <label>氏名　　<input type="text" name="staffName" placeholder="例: 山田 太郎"></label>
+  <label>年月　　<input type="text" name="yearMonth" placeholder="例: 2026-05"></label>
+</div>
+
+<!-- メインパネル（左：画像　右：テーブル） -->
+<div id="mainPanel">
+  <div class="image-pane">
+    <div class="img-label" id="imgLabel"></div>
+    <img id="cardImage" src="" alt="タイムカード画像">
+  </div>
+  <div class="data-pane">
+    <h3>読み取り結果　※黄色のマスは要確認</h3>
+    <table id="ocrTable">
+      <thead>
+        <tr>
+          <th>日付</th>
+          <th>出社</th>
+          <th>退社</th>
+        </tr>
+      </thead>
+      <tbody id="ocrTableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 確定バー -->
+<div class="confirm-bar" id="confirmBar">
+  <button class="btn btn-success" id="confirmBtn" onclick="saveData()">
+    この内容で確定
+  </button>
+</div>
+
+<!-- 隠しフィールド -->
+<input type="hidden" id="currentFileId">
+
+<script>
+  // ── 初期化 ──────────────────────────────────────────
+  window.onload = function () {
+    loadImageList();
+  };
+
+  function loadImageList() {
+    google.script.run
+      .withSuccessHandler(function (list) {
+        var sel = document.getElementById('imageSelect');
+        sel.innerHTML = '';
+        list.forEach(function (item) {
+          var opt = document.createElement('option');
+          opt.value = item.id;
+          opt.textContent = item.name;
+          sel.appendChild(opt);
+        });
+        document.getElementById('startBtn').disabled = false;
+      })
+      .withFailureHandler(function (err) {
+        document.getElementById('imageSelect').innerHTML =
+          '<option value="">（フォルダに画像がありません）</option>';
+        showError(err.message || String(err));
+      })
+      .getImageList();
+  }
+
+  // ── 読み取り開始 ────────────────────────────────────
+  function startProcessing() {
+    var fileId = document.getElementById('imageSelect').value;
+    if (!fileId) { showError('画像を選択してください'); return; }
+
+    clearMessages();
+    setLoading(true);
+
+    google.script.run
+      .withSuccessHandler(function (result) {
+        setLoading(false);
+        displayResult(result, fileId);
+      })
+      .withFailureHandler(function (err) {
+        setLoading(false);
+        showError(err.message || String(err));
+      })
+      .processImage(fileId);
+  }
+
+  // ── 結果表示 ─────────────────────────────────────────
+  function displayResult(result, fileId) {
+    // 画像：Drive の thumbnail URL で表示（HEIC も Drive 側が変換）
+    // ブラウザで Google アカウントにサインイン済みであれば表示される
+    document.getElementById('cardImage').src =
+      'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w1200-h1600';
+    document.getElementById('imgLabel').textContent = result.fileName;
+    document.getElementById('currentFileId').value = fileId;
+
+    // テーブル
+    var tbody = document.getElementById('ocrTableBody');
+    tbody.innerHTML = '';
+
+    result.rows.forEach(function (row) {
+      var isLow = row.confidence === 'low';
+      var tr = document.createElement('tr');
+
+      var tdDate = document.createElement('td');
+      tdDate.textContent = row.date;
+
+      var tdStart = document.createElement('td');
+      if (isLow) tdStart.className = 'low-confidence';
+      var inStart = document.createElement('input');
+      inStart.type = 'text';
+      inStart.className = 'time-input';
+      inStart.value = row['出社'] || '';
+      inStart.dataset.field = '出社';
+      tdStart.appendChild(inStart);
+
+      var tdEnd = document.createElement('td');
+      if (isLow) tdEnd.className = 'low-confidence';
+      var inEnd = document.createElement('input');
+      inEnd.type = 'text';
+      inEnd.className = 'time-input';
+      inEnd.value = row['退社'] || '';
+      inEnd.dataset.field = '退社';
+      tdEnd.appendChild(inEnd);
+
+      tr.appendChild(tdDate);
+      tr.appendChild(tdStart);
+      tr.appendChild(tdEnd);
+      tbody.appendChild(tr);
+    });
+
+    // パネル表示
+    document.getElementById('mainPanel').style.display = 'flex';
+    document.getElementById('infoBar').style.display = 'flex';
+    document.getElementById('confirmBar').style.display = 'flex';
+  }
+
+  // ── 確定保存 ─────────────────────────────────────────
+  function saveData() {
+    var fileId    = document.getElementById('currentFileId').value;
+    var staffNo   = document.querySelector('input[name="staffNo"]').value.trim();
+    var staffName = document.querySelector('input[name="staffName"]').value.trim();
+    var yearMonth = document.querySelector('input[name="yearMonth"]').value.trim();
+
+    if (!staffNo || !staffName || !yearMonth) {
+      showError('社員No.・氏名・年月をすべて入力してから確定してください');
+      return;
+    }
+
+    // テーブルから現在の入力値を収集
+    var rows = [];
+    var trs = document.querySelectorAll('#ocrTableBody tr');
+    trs.forEach(function (tr) {
+      var cells = tr.querySelectorAll('td');
+      var date  = cells[0].textContent.trim();
+      var syusya = cells[1].querySelector('input').value.trim();
+      var taisya = cells[2].querySelector('input').value.trim();
+      // 出社・退社どちらかがあれば保存対象とする
+      if (syusya || taisya) {
+        rows.push({ date: date, '出社': syusya, '退社': taisya });
+      }
+    });
+
+    if (rows.length === 0) {
+      showError('保存する行がありません');
+      return;
+    }
+
+    clearMessages();
+    document.getElementById('confirmBtn').disabled = true;
+    setLoading(true);
+
+    var data = {
+      fileId:    fileId,
+      staffNo:   staffNo,
+      staffName: staffName,
+      yearMonth: yearMonth,
+      rows:      rows
+    };
+
+    google.script.run
+      .withSuccessHandler(function (result) {
+        setLoading(false);
+        document.getElementById('confirmBtn').disabled = false;
+        showSuccess('保存しました（' + result.saved + '行）');
+      })
+      .withFailureHandler(function (err) {
+        setLoading(false);
+        document.getElementById('confirmBtn').disabled = false;
+        showError(err.message || String(err));
+      })
+      .saveConfirmed(data);
+  }
+
+  // ── ユーティリティ ───────────────────────────────────
+  function setLoading(flag) {
+    document.getElementById('loadingOverlay').style.display = flag ? 'flex' : 'none';
+  }
+
+  function showError(msg) {
+    var bar = document.getElementById('alertBar');
+    bar.className = 'is-error';
+    bar.textContent = 'エラー: ' + msg;
+  }
+
+  function showSuccess(msg) {
+    var bar = document.getElementById('alertBar');
+    bar.className = 'is-success';
+    bar.textContent = msg;
+  }
+
+  function clearMessages() {
+    var bar = document.getElementById('alertBar');
+    bar.className = '';
+    bar.textContent = '';
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>〇〇テーラー ― 顧客管理デモ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1B2430;
+    --navy-2:#242F3F;
+    --charcoal:#2B2B2B;
+    --paper:#EFE9DE;
+    --paper-2:#F7F4EE;
+    --brass:#B08D57;
+    --brass-light:#D8BD8C;
+    --chalk:#F7F5F0;
+    --line:#C9BFA9;
+    --success:#4A6741;
+    --success-bg:#E7EEE3;
+    --danger:#8B4A3D;
+    --shadow: 0 10px 30px rgba(27,36,48,0.10);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse at top left, rgba(176,141,87,0.06), transparent 45%),
+      var(--paper);
+    color:var(--charcoal);
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  .mono{font-family:'JetBrains Mono', monospace;}
+  .wrap{max-width:960px;margin:0 auto;padding:28px 20px 80px;}
+
+  /* ---------- Header ---------- */
+  header.top{
+    display:flex;align-items:center;justify-content:space-between;
+    padding-bottom:22px;margin-bottom:26px;
+    border-bottom:1px solid var(--line);
+  }
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand-mark{
+    width:38px;height:38px;border-radius:50%;
+    background:var(--navy);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--brass-light);font-family:'Shippori Mincho',serif;font-weight:800;font-size:17px;
+    flex-shrink:0;
+  }
+  .brand-text .name{
+    font-family:'Shippori Mincho',serif;font-weight:800;font-size:20px;color:var(--navy);letter-spacing:.02em;
+  }
+  .brand-text .sub{font-size:11px;color:#8b8474;letter-spacing:.12em;margin-top:1px;}
+  .cap-pill{
+    font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--navy);
+    background:var(--paper-2);border:1px solid var(--line);
+    padding:7px 14px;border-radius:20px;display:flex;align-items:center;gap:8px;
+  }
+  .cap-pill .dot{width:6px;height:6px;border-radius:50%;background:var(--success);}
+
+  /* ---------- Section labels ---------- */
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.18em;
+    color:var(--brass);text-transform:uppercase;margin:0 0 10px 2px;font-weight:600;
+  }
+  .cut-line{
+    border:none;border-top:1px dashed var(--line);margin:40px 0;position:relative;
+  }
+  .cut-line::before{
+    content:'✂';position:absolute;left:0;top:-11px;background:var(--paper);
+    color:var(--line);font-size:15px;padding-right:8px;
+  }
+
+  /* ---------- Hero: Today's pick (fabric-swatch ticket) ---------- */
+  .hero{
+    background:var(--navy);
+    border-radius:18px;
+    padding:0;
+    box-shadow:var(--shadow);
+    overflow:hidden;
+    position:relative;
+    color:var(--chalk);
+  }
+  .hero-inner{padding:30px 30px 26px;position:relative;}
+  .hero-tag{
+    position:absolute;top:0;right:28px;width:34px;height:52px;
+    background:var(--brass);
+    border-radius:0 0 8px 8px;
+  }
+  .hero-tag::after{
+    content:'';position:absolute;top:14px;left:50%;transform:translateX(-50%);
+    width:9px;height:9px;border-radius:50%;background:var(--navy);
+  }
+  .hero-eyebrow{
+    font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.2em;
+    color:var(--brass-light);text-transform:uppercase;margin-bottom:14px;
+  }
+  .hero h1{
+    font-family:'Shippori Mincho',serif;font-weight:800;font-size:30px;margin:0 0 6px;
+    letter-spacing:.01em;
+  }
+  .hero .reason{color:#B9C2CE;font-size:14px;margin-bottom:22px;}
+  .hero .reason b{color:var(--brass-light);font-weight:700;}
+
+  .msg-card{
+    background:rgba(247,245,240,0.06);
+    border:1px solid rgba(216,189,140,0.35);
+    border-radius:12px;padding:18px 20px;margin-bottom:20px;
+  }
+  .msg-card .label{font-size:11px;color:var(--brass-light);letter-spacing:.1em;margin-bottom:8px;font-family:'JetBrains Mono',monospace;}
+  .msg-card p{margin:0;line-height:1.85;font-size:15px;color:var(--chalk);white-space:pre-wrap;}
+
+  .hero-actions{display:flex;gap:10px;flex-wrap:wrap;}
+  .btn{
+    font-family:'Zen Kaku Gothic New',sans-serif;font-weight:700;font-size:14px;
+    border:none;border-radius:9px;padding:12px 22px;cursor:pointer;
+    transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+    display:inline-flex;align-items:center;gap:8px;
+  }
+  .btn:active{transform:scale(.97);}
+  .btn-primary{background:var(--brass);color:var(--navy);}
+  .btn-primary:hover{background:var(--brass-light);}
+  .btn-ghost{background:transparent;color:var(--chalk);border:1px solid rgba(247,245,240,0.35);}
+  .btn-ghost:hover{border-color:var(--chalk);}
+  .btn:disabled{opacity:.45;cursor:not-allowed;}
+
+  .status-line{
+    margin-top:16px;font-size:13px;color:var(--brass-light);
+    display:flex;align-items:center;gap:8px;min-height:18px;
+  }
+  .spinner{
+    width:12px;height:12px;border-radius:50%;
+    border:2px solid rgba(216,189,140,.3);border-top-color:var(--brass-light);
+    animation:spin .7s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .reply-banner{
+    margin-top:16px;background:rgba(74,103,65,0.18);border:1px solid rgba(74,103,65,.5);
+    border-radius:10px;padding:14px 16px;display:none;
+    align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  }
+  .reply-banner.show{display:flex;}
+  .reply-banner .txt{font-size:13px;color:#CFE0C7;}
+  .reply-banner .txt b{color:#fff;}
+
+  .cal-row{margin-top:10px;display:none;gap:8px;flex-wrap:wrap;}
+  .cal-row.show{display:flex;}
+  .cal-chip{
+    font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--chalk);
+    background:rgba(247,245,240,0.08);border:1px solid rgba(247,245,240,.25);
+    border-radius:8px;padding:8px 12px;cursor:pointer;
+  }
+  .cal-chip:hover{border-color:var(--brass-light);color:var(--brass-light);}
+  .cal-chip.picked{background:var(--brass);color:var(--navy);border-color:var(--brass);}
+
+  /* ---------- Queue ---------- */
+  .queue{display:grid;gap:10px;}
+  .qrow{
+    display:flex;align-items:center;gap:14px;
+    background:var(--paper-2);border:1px solid var(--line);
+    border-radius:12px;padding:14px 16px;
+  }
+  .qrow .badge{
+    width:30px;height:30px;border-radius:50%;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:#fff;
+  }
+  .qrow .info{flex:1;min-width:0;}
+  .qrow .info .nm{font-weight:700;font-size:14px;color:var(--navy);}
+  .qrow .info .rs{font-size:12px;color:#8b8474;margin-top:2px;}
+  .qrow .mini-btn{
+    font-size:12px;font-weight:700;color:var(--navy);background:transparent;
+    border:1px solid var(--line);border-radius:7px;padding:7px 12px;cursor:pointer;
+  }
+  .qrow .mini-btn:hover{border-color:var(--brass);color:var(--brass);}
+  .qrow.done{opacity:.5;}
+  .qrow.done .mini-btn{display:none;}
+  .qrow.done::after{content:'送信済み';font-size:11px;color:var(--success);font-family:'JetBrains Mono',monospace;}
+
+  /* ---------- Priority badges ---------- */
+  .p-S{background:#8B4A3D;} .p-A{background:#B08D57;} .p-B{background:#5B7A99;}
+  .p-C{background:#7C8577;} .p-D{background:#A8A196;}
+
+  /* ---------- Filter chips ---------- */
+  .filters{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+  .fchip{
+    font-family:'JetBrains Mono',monospace;font-size:12px;padding:7px 14px;border-radius:20px;
+    border:1px solid var(--line);background:var(--paper-2);color:var(--charcoal);cursor:pointer;
+  }
+  .fchip.active{background:var(--navy);color:var(--chalk);border-color:var(--navy);}
+
+  /* ---------- Customer table ---------- */
+  .clist{display:grid;gap:8px;}
+  .crow{
+    display:grid;grid-template-columns:30px 1fr auto auto;align-items:center;gap:14px;
+    background:var(--paper-2);border:1px solid var(--line);border-radius:12px;
+    padding:13px 16px;cursor:pointer;transition:border-color .12s ease, transform .12s ease;
+  }
+  .crow:hover{border-color:var(--brass);transform:translateX(2px);}
+  .crow .badge{width:28px;height:28px;border-radius:50%;color:#fff;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:center;}
+  .crow .nm{font-weight:700;font-size:14px;color:var(--navy);}
+  .crow .last{font-size:11px;color:#8b8474;margin-top:2px;}
+  .crow .cnt{font-family:'JetBrains Mono',monospace;font-size:12px;color:#8b8474;}
+  .crow .arrow{color:var(--line);font-size:16px;}
+
+  /* ---------- Modal ---------- */
+  .overlay{
+    position:fixed;inset:0;background:rgba(27,36,48,0.55);backdrop-filter:blur(2px);
+    display:none;align-items:flex-start;justify-content:center;padding:40px 16px;z-index:50;overflow-y:auto;
+  }
+  .overlay.show{display:flex;}
+  .modal{
+    background:var(--paper-2);border-radius:16px;max-width:600px;width:100%;
+    box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden;
+  }
+  .modal-head{
+    background:var(--navy);color:var(--chalk);padding:24px 26px;position:relative;
+  }
+  .modal-head .close{
+    position:absolute;top:18px;right:20px;background:none;border:none;color:var(--chalk);
+    font-size:20px;cursor:pointer;opacity:.6;line-height:1;
+  }
+  .modal-head .close:hover{opacity:1;}
+  .modal-head h2{font-family:'Shippori Mincho',serif;font-size:22px;margin:0 0 6px;}
+  .modal-head .mh-sub{font-size:12px;color:var(--brass-light);font-family:'JetBrains Mono',monospace;}
+  .modal-tabs{display:flex;border-bottom:1px solid var(--line);background:var(--paper);}
+  .mtab{
+    flex:1;text-align:center;padding:12px 6px;font-size:12px;font-weight:700;color:#8b8474;
+    cursor:pointer;border-bottom:2px solid transparent;
+  }
+  .mtab.active{color:var(--navy);border-bottom-color:var(--brass);}
+  .modal-body{padding:22px 26px 26px;max-height:52vh;overflow-y:auto;}
+  .mpane{display:none;} .mpane.active{display:block;}
+
+  .spec-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .spec-item{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:11px 13px;}
+  .spec-item .k{font-size:11px;color:#8b8474;font-family:'JetBrains Mono',monospace;}
+  .spec-item .v{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:600;color:var(--navy);margin-top:3px;}
+
+  .order-item{
+    border-left:2px solid var(--brass);padding:4px 0 16px 16px;position:relative;margin-bottom:4px;
+  }
+  .order-item::before{
+    content:'';position:absolute;left:-5px;top:6px;width:8px;height:8px;border-radius:50%;background:var(--brass);
+  }
+  .order-item .od{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--brass);font-weight:600;}
+  .order-item .ot{font-weight:700;font-size:14px;color:var(--navy);margin:3px 0 4px;}
+  .order-item .om{font-size:12px;color:#7a7365;line-height:1.6;}
+
+  .log-item{display:flex;gap:10px;font-size:13px;padding:9px 0;border-bottom:1px solid var(--line);}
+  .log-item:last-child{border-bottom:none;}
+  .log-item .ld{font-family:'JetBrains Mono',monospace;color:#8b8474;flex-shrink:0;width:78px;}
+
+  footer{text-align:center;margin-top:50px;font-size:11px;color:#a39d8d;font-family:'JetBrains Mono',monospace;letter-spacing:.05em;}
+
+  @media(max-width:600px){
+    .hero h1{font-size:24px;}
+    .crow{grid-template-columns:26px 1fr auto;}
+    .crow .cnt{display:none;}
+    .spec-grid{grid-template-columns:1fr 1fr;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <div class="brand-mark">松</div>
+      <div class="brand-text">
+        <div class="name">〇〇テーラー</div>
+        <div class="sub">CUSTOMER LEDGER — DEMO</div>
+      </div>
+    </div>
+    <div class="cap-pill"><span class="dot"></span>本日の送信 <span class="mono" id="capCount">1</span> / 10件</div>
+  </header>
+
+  <!-- ===== HERO: 今日の一人 ===== -->
+  <p class="eyebrow">今日の一人</p>
+  <div class="hero">
+    <div class="hero-tag"></div>
+    <div class="hero-inner">
+      <div class="hero-eyebrow">AI提案 ― 承認待ち</div>
+      <h1 id="heroName">お客様 和彦 様</h1>
+      <div class="reason">前回のご仕立てから <b>2年3ヶ月</b>。紺無地スリーピースをお仕立て。そろそろ2着目のご案内タイミングです。</div>
+
+      <div class="msg-card">
+        <div class="label">LINE 下書き（AI作成）</div>
+        <p id="heroMsg">お客様
+
+いつもお世話になっております、〇〇テーラーの店主です。
+2年前にお仕立ていただいた紺無地のスリーピース、その節はありがとうございました。
+
+季節の変わり目で新しい生地も入りましたので、もしよろしければ一度お顔を見せにいらっしゃいませんか。
+お時間あるときで結構ですので、ご都合よろしいときに教えてください。</p>
+      </div>
+
+      <div class="hero-actions">
+        <button class="btn btn-primary" id="approveBtn" onclick="approveHero()">この内容で承認して送信</button>
+        <button class="btn btn-ghost" onclick="skipHero()">今日はスキップ</button>
+      </div>
+
+      <div class="status-line" id="statusLine"></div>
+
+      <div class="reply-banner" id="replyBanner">
+        <div class="txt">お客様から返信がありました：<b>「来週の水曜、時間あります」</b></div>
+        <button class="btn btn-primary" style="padding:8px 16px;font-size:12px;" onclick="showCal()">アポを入れる</button>
+      </div>
+      <div class="cal-row" id="calRow">
+        <div class="cal-chip" onclick="pickCal(this)">7/15(水) 11:00</div>
+        <div class="cal-chip" onclick="pickCal(this)">7/15(水) 15:00</div>
+        <div class="cal-chip" onclick="pickCal(this)">7/16(木) 10:30</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="cut-line">
+
+  <!-- ===== QUEUE ===== -->
+  <p class="eyebrow">本日の候補（あと4件）</p>
+  <div class="queue" id="queueList"></div>
+
+  <hr class="cut-line">
+
+  <!-- ===== CUSTOMER LIST ===== -->
+  <p class="eyebrow">顧客台帳（全300名のうちサンプル8名）</p>
+  <div class="filters" id="filters"></div>
+  <div class="clist" id="customerList"></div>
+
+  <footer>SAMPLE DATA — 実際の顧客情報は含まれていません / 店主晋一様への提案用デモ</footer>
+</div>
+
+<!-- ===== MODAL ===== -->
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-head">
+      <button class="close" onclick="closeModal()">✕</button>
+      <h2 id="mName">—</h2>
+      <div class="mh-sub" id="mSub">—</div>
+    </div>
+    <div class="modal-tabs">
+      <div class="mtab active" data-tab="spec" onclick="switchTab('spec',this)">採寸表</div>
+      <div class="mtab" data-tab="orders" onclick="switchTab('orders',this)">発注履歴</div>
+      <div class="mtab" data-tab="log" onclick="switchTab('log',this)">連絡履歴</div>
+    </div>
+    <div class="modal-body">
+      <div class="mpane active" id="pane-spec"><div class="spec-grid" id="specGrid"></div></div>
+      <div class="mpane" id="pane-orders"></div>
+      <div class="mpane" id="pane-log"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const customers = [
+  {id:1, name:'お客様 和彦', priority:'S', last:'2024-04-12', count:3,
+    spec:{'身長':'172cm','体重':'71kg','胸囲':'98cm','胴囲':'88cm','肩幅':'46cm','袖丈':'62cm','股下':'80cm'},
+    orders:[
+      {date:'2024-04-12', title:'紺無地 スリーピース', memo:'生地：Loro Piana 紺サージ／ラペル：ピークドラペル／ベスト付き'},
+      {date:'2022-11-03', title:'グレー チェック 2ピース', memo:'生地：VBC グレンチェック／ノッチドラペル'},
+      {date:'2021-02-18', title:'初回：チャコール無地', memo:'生地：Reda チャコール／シングル2釦'},
+    ],
+    log:[{d:'2026-06-02',t:'近況伺いLINE送信・既読'},{d:'2024-04-20',t:'仕立て納品・お渡し'},{d:'2024-03-01',t:'生地選定で来店'}]
+  },
+  {id:2, name:'小林 美咲', priority:'A', last:'2025-01-20', count:2,
+    spec:{'身長':'163cm','体重':'52kg','バスト':'84cm','ウエスト':'64cm','肩幅':'38cm','袖丈':'56cm'},
+    orders:[
+      {date:'2025-01-20', title:'テーラードセットアップ', memo:'生地：英国ウーステッド ネイビー／裏地：バーガンディ'},
+      {date:'2023-08-05', title:'初回：グレーパンツスーツ', memo:'生地：ライトグレー ヘリンボーン'},
+    ],
+    log:[{d:'2026-05-11',t:'周年案内LINE送信・返信あり'},{d:'2025-01-25',t:'仕立て納品'}]
+  },
+  {id:3, name:'山口 隆', priority:'A', last:'2023-09-30', count:4,
+    spec:{'身長':'178cm','体重':'80kg','胸囲':'104cm','胴囲':'94cm','肩幅':'48cm','袖丈':'64cm'},
+    orders:[
+      {date:'2023-09-30', title:'ダブルブレステッド', memo:'生地：Zegna 濃紺ドスキン'},
+      {date:'2022-06-14', title:'サマーウール 2ピース', memo:'生地：杢グレー 春夏用'},
+      {date:'2021-05-02', title:'ネイビー無地', memo:'生地：定番ネイビー'},
+      {date:'2020-01-11', title:'初回オーダー', memo:'採寸のみ・チャコール'},
+    ],
+    log:[{d:'2026-04-18',t:'近況伺いLINE送信・既読スルー'},{d:'2023-10-05',t:'仕立て納品'}]
+  },
+  {id:4, name:'秋山 剛', priority:'B', last:'2025-06-11', count:1,
+    spec:{'身長':'175cm','体重':'68kg','胸囲':'96cm','胴囲':'84cm','肩幅':'45cm','袖丈':'61cm'},
+    orders:[{date:'2025-06-11', title:'初回：グレー無地セットアップ', memo:'紹介経緯：大人のインフルエンサー協会'}],
+    log:[{d:'2025-06-15',t:'仕立て納品'}]
+  },
+  {id:5, name:'橋本 真理子', priority:'B', last:'2024-12-01', count:2,
+    spec:{'身長':'160cm','体重':'50kg','バスト':'82cm','ウエスト':'62cm','肩幅':'37cm','袖丈':'55cm'},
+    orders:[
+      {date:'2024-12-01', title:'ジャケット単品', memo:'生地：黒無地 起毛ウール'},
+      {date:'2023-03-15', title:'初回：ネイビースーツ', memo:'紹介経緯：南大阪経営研究会'},
+    ],
+    log:[{d:'2024-12-05',t:'仕立て納品'}]
+  },
+  {id:6, name:'井上 大輔', priority:'C', last:'2022-07-19', count:1,
+    spec:{'身長':'169cm','体重':'75kg','胸囲':'100cm','胴囲':'92cm','肩幅':'45cm','袖丈':'60cm'},
+    orders:[{date:'2022-07-19', title:'初回：チャコールストライプ', memo:'紹介経緯：BNI阪神チャプター'}],
+    log:[{d:'2022-07-25',t:'仕立て納品'}]
+  },
+  {id:7, name:'中野 陽子', priority:'C', last:'2023-11-08', count:1,
+    spec:{'身長':'158cm','体重':'48kg','バスト':'80cm','ウエスト':'61cm','肩幅':'36cm','袖丈':'54cm'},
+    orders:[{date:'2023-11-08', title:'初回：ベージュセットアップ', memo:'紹介経緯：同友会'}],
+    log:[{d:'2023-11-12',t:'仕立て納品'}]
+  },
+  {id:8, name:'木村 修', priority:'D', last:'2021-03-22', count:1,
+    spec:{'身長':'174cm','体重':'79kg','胸囲':'102cm','胴囲':'96cm','肩幅':'47cm','袖丈':'62cm'},
+    orders:[{date:'2021-03-22', title:'初回：ネイビー無地', memo:'紹介経緯：ゴルフコンペ'}],
+    log:[{d:'2021-03-28',t:'仕立て納品'}]
+  },
+];
+
+const queue = [
+  {name:'小林 美咲', p:'A', reason:'受注1周年'},
+  {name:'橋本 真理子', p:'B', reason:'半年ぶりの接触'},
+  {name:'秋山 剛', p:'B', reason:'初回から1ヶ月・お礼フォロー'},
+  {name:'井上 大輔', p:'C', reason:'3年以上未接触・掘り起こし'},
+];
+
+let sentCount = 1;
+const CAP = 10;
+
+function renderQueue(){
+  const el = document.getElementById('queueList');
+  el.innerHTML = queue.map((q,i)=>`
+    <div class="qrow" id="qrow-${i}">
+      <div class="badge p-${q.p}">${q.p}</div>
+      <div class="info"><div class="nm">${q.name} 様</div><div class="rs">${q.reason}</div></div>
+      <button class="mini-btn" onclick="sendQueue(${i})">承認して送信</button>
+    </div>`).join('');
+}
+
+function sendQueue(i){
+  if(sentCount >= CAP) return;
+  sentCount++;
+  document.getElementById('capCount').textContent = sentCount;
+  const row = document.getElementById('qrow-'+i);
+  row.classList.add('done');
+}
+
+function renderCustomers(filter){
+  const el = document.getElementById('customerList');
+  const list = filter && filter!=='ALL' ? customers.filter(c=>c.priority===filter) : customers;
+  el.innerHTML = list.map(c=>`
+    <div class="crow" onclick="openModal(${c.id})">
+      <div class="badge p-${c.priority}">${c.priority}</div>
+      <div>
+        <div class="nm">${c.name} 様</div>
+        <div class="last">最終受注：${c.last}</div>
+      </div>
+      <div class="cnt">受注 ${c.count}件</div>
+      <div class="arrow">›</div>
+    </div>`).join('');
+}
+
+function renderFilters(){
+  const levels = ['ALL','S','A','B','C','D'];
+  const el = document.getElementById('filters');
+  el.innerHTML = levels.map(l=>`<div class="fchip ${l==='ALL'?'active':''}" data-l="${l}" onclick="filterClick(this,'${l}')">${l==='ALL'?'すべて':l+'ランク'}</div>`).join('');
+}
+function filterClick(node, l){
+  document.querySelectorAll('.fchip').forEach(f=>f.classList.remove('active'));
+  node.classList.add('active');
+  renderCustomers(l);
+}
+
+function approveHero(){
+  const btn = document.getElementById('approveBtn');
+  const status = document.getElementById('statusLine');
+  btn.disabled = true;
+  status.innerHTML = '<span class="spinner"></span> LINEに送信しています…';
+  setTimeout(()=>{
+    sentCount++;
+    document.getElementById('capCount').textContent = sentCount;
+    status.textContent = '送信しました（2026/07/10 08:42）';
+    setTimeout(()=>{
+      document.getElementById('replyBanner').classList.add('show');
+    }, 1400);
+  }, 1100);
+}
+function skipHero(){
+  document.getElementById('statusLine').textContent = '今日はスキップしました（明日また候補に上がります）';
+  document.getElementById('approveBtn').disabled = true;
+}
+function showCal(){
+  document.getElementById('calRow').classList.add('show');
+}
+function pickCal(node){
+  document.querySelectorAll('.cal-chip').forEach(c=>c.classList.remove('picked'));
+  node.classList.add('picked');
+  const status = document.getElementById('statusLine');
+  status.textContent = 'Googleカレンダーに登録しました：' + node.textContent + '（お客様）';
+}
+
+let currentCustomer = null;
+function openModal(id){
+  currentCustomer = customers.find(c=>c.id===id);
+  document.getElementById('mName').textContent = currentCustomer.name + ' 様';
+  document.getElementById('mSub').textContent = `優先度 ${currentCustomer.priority} ／ 最終受注 ${currentCustomer.last} ／ 通算${currentCustomer.count}件`;
+
+  document.getElementById('specGrid').innerHTML = Object.entries(currentCustomer.spec).map(([k,v])=>`
+    <div class="spec-item"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
+
+  document.getElementById('pane-orders').innerHTML = currentCustomer.orders.map(o=>`
+    <div class="order-item">
+      <div class="od">${o.date}</div>
+      <div class="ot">${o.title}</div>
+      <div class="om">${o.memo}</div>
+    </div>`).join('');
+
+  document.getElementById('pane-log').innerHTML = currentCustomer.log.map(l=>`
+    <div class="log-item"><div class="ld">${l.d}</div><div>${l.t}</div></div>`).join('');
+
+  switchTab('spec', document.querySelector('.mtab[data-tab="spec"]'));
+  document.getElementById('overlay').classList.add('show');
+}
+function closeModal(){document.getElementById('overlay').classList.remove('show');}
+function switchTab(tab, node){
+  document.querySelectorAll('.mtab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.mpane').forEach(p=>p.classList.remove('active'));
+  node.classList.add('active');
+  document.getElementById('pane-'+tab).classList.add('active');
+}
+
+renderQueue();
+renderFilters();
+renderCustomers('ALL');
+</script>
+</body>
+</html>

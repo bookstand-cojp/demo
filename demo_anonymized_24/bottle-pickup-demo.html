@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>空き瓶回収登録</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { -webkit-tap-highlight-color: transparent; }
+    input, select, textarea { font-size: 16px !important; }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+  <div class="max-w-lg mx-auto px-4 py-6">
+
+    <!-- ヘッダー -->
+    <div class="bg-blue-600 text-white rounded-2xl p-5 mb-6 shadow-md">
+      <h1 class="text-2xl font-bold">🍶 空き瓶回収登録</h1>
+      <p class="text-blue-100 text-sm mt-1">回収内容を入力して送信してください</p>
+    </div>
+
+    <!-- フォーム -->
+    <form id="collectionForm" class="space-y-5">
+
+      <!-- 取引先 -->
+      <div class="bg-white rounded-2xl p-5 shadow-sm">
+        <label class="block text-gray-600 text-sm font-semibold mb-2">取引先</label>
+        <select id="client" required
+          class="w-full border border-gray-300 rounded-xl p-4 text-gray-800 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400">
+          <option value="">読み込み中...</option>
+        </select>
+      </div>
+
+      <!-- 回収日 -->
+      <div class="bg-white rounded-2xl p-5 shadow-sm">
+        <label class="block text-gray-600 text-sm font-semibold mb-2">回収日</label>
+        <input type="date" id="collectionDate" required
+          class="w-full border border-gray-300 rounded-xl p-4 text-gray-800 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400">
+      </div>
+
+      <!-- 瓶種類・本数（複数入力対応） -->
+      <div class="bg-white rounded-2xl p-5 shadow-sm">
+        <div class="flex justify-between items-center mb-3">
+          <label class="text-gray-600 text-sm font-semibold">瓶種類・本数</label>
+          <span class="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">複数種類入力可</span>
+        </div>
+        <div id="bottleList" class="space-y-3"></div>
+        <button type="button" id="addBottleBtn"
+          class="mt-3 w-full border-2 border-dashed border-blue-300 text-blue-500 font-semibold py-3 rounded-xl hover:bg-blue-50 active:bg-blue-100 transition-colors">
+          ＋ 別の瓶を追加する
+        </button>
+      </div>
+
+      <!-- 回収担当者 -->
+      <div class="bg-white rounded-2xl p-5 shadow-sm">
+        <label class="block text-gray-600 text-sm font-semibold mb-2">
+          回収担当者
+          <span class="text-blue-400 font-normal text-xs ml-2">※次回から自動選択されます</span>
+        </label>
+        <select id="staff" required
+          class="w-full border border-gray-300 rounded-xl p-4 text-gray-800 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400">
+          <option value="">読み込み中...</option>
+        </select>
+      </div>
+
+      <!-- 備考 -->
+      <div class="bg-white rounded-2xl p-5 shadow-sm">
+        <label class="block text-gray-600 text-sm font-semibold mb-2">備考（任意）</label>
+        <textarea id="notes" rows="3" placeholder="特記事項があれば入力してください"
+          class="w-full border border-gray-300 rounded-xl p-4 text-gray-800 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"></textarea>
+      </div>
+
+      <!-- 送信ボタン -->
+      <button type="submit" id="submitBtn"
+        class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xl font-bold py-5 rounded-2xl shadow-md transition-colors duration-150">
+        ✅ 登録する
+      </button>
+
+    </form>
+
+    <!-- 結果メッセージ -->
+    <div id="resultMessage" class="hidden mt-5 p-5 rounded-2xl text-center text-lg font-semibold"></div>
+
+  </div>
+
+  <script>
+    var masterBottleTypes = [];
+
+    // ---- ユーティリティ ----
+    function setTodayDate() {
+      var today = new Date();
+      var yyyy = today.getFullYear();
+      var mm = String(today.getMonth() + 1).padStart(2, "0");
+      var dd = String(today.getDate()).padStart(2, "0");
+      document.getElementById("collectionDate").value = yyyy + "-" + mm + "-" + dd;
+    }
+
+    function populateSelect(selectId, items, placeholder) {
+      var sel = document.getElementById(selectId);
+      sel.innerHTML = '<option value="">' + placeholder + '</option>';
+      items.forEach(function(item) {
+        var opt = document.createElement("option");
+        opt.value = item.id;
+        opt.textContent = item.name;
+        sel.appendChild(opt);
+      });
+    }
+
+    function buildBottleOptions() {
+      var html = '<option value="">-- 種類を選択 --</option>';
+      masterBottleTypes.forEach(function(bt) {
+        html += '<option value="' + bt.id + '">' + bt.name + '</option>';
+      });
+      return html;
+    }
+
+    // ---- 瓶行の管理 ----
+    function createBottleRow() {
+      var row = document.createElement("div");
+      row.className = "bottle-row flex items-center gap-2";
+      row.innerHTML =
+        '<select class="bottle-type flex-1 border border-gray-300 rounded-xl p-3 text-gray-800 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400">' +
+          buildBottleOptions() +
+        '</select>' +
+        '<button type="button" class="btn-minus flex-shrink-0 w-11 h-11 bg-gray-200 hover:bg-gray-300 active:bg-gray-400 text-gray-700 text-2xl font-bold rounded-xl flex items-center justify-center">−</button>' +
+        '<input type="number" class="bottle-count flex-shrink-0 w-16 border border-gray-300 rounded-xl p-2 text-center text-xl font-bold text-gray-800 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400" value="1" min="1">' +
+        '<button type="button" class="btn-plus flex-shrink-0 w-11 h-11 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white text-2xl font-bold rounded-xl flex items-center justify-center">＋</button>' +
+        '<button type="button" class="btn-del flex-shrink-0 w-11 h-11 bg-red-50 hover:bg-red-100 active:bg-red-200 text-red-400 text-xl font-bold rounded-xl flex items-center justify-center">×</button>';
+      return row;
+    }
+
+    function updateDeleteButtons() {
+      var rows = document.querySelectorAll("#bottleList .bottle-row");
+      rows.forEach(function(row, i) {
+        var btn = row.querySelector(".btn-del");
+        btn.style.visibility = (rows.length === 1) ? "hidden" : "visible";
+      });
+    }
+
+    function resetBottleList() {
+      var list = document.getElementById("bottleList");
+      list.innerHTML = "";
+      list.appendChild(createBottleRow());
+      updateDeleteButtons();
+    }
+
+    // 瓶リストへのイベント委譲
+    document.getElementById("bottleList").addEventListener("click", function(e) {
+      var btn = e.target.closest("button");
+      if (!btn) return;
+      var row = btn.closest(".bottle-row");
+      if (btn.classList.contains("btn-minus")) {
+        var inp = row.querySelector(".bottle-count");
+        var v = parseInt(inp.value) || 1;
+        if (v > 1) inp.value = v - 1;
+      } else if (btn.classList.contains("btn-plus")) {
+        var inp = row.querySelector(".bottle-count");
+        inp.value = (parseInt(inp.value) || 0) + 1;
+      } else if (btn.classList.contains("btn-del")) {
+        row.remove();
+        updateDeleteButtons();
+      }
+    });
+
+    document.getElementById("addBottleBtn").addEventListener("click", function() {
+      document.getElementById("bottleList").appendChild(createBottleRow());
+      updateDeleteButtons();
+    });
+
+    // ---- 担当者のlocalStorage記憶 ----
+    document.getElementById("staff").addEventListener("change", function() {
+      if (this.value) {
+        localStorage.setItem("selectedStaff", this.value);
+      }
+    });
+
+    function restoreStaff() {
+      var saved = localStorage.getItem("selectedStaff");
+      if (!saved) return;
+      var sel = document.getElementById("staff");
+      for (var i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value === saved) {
+          sel.selectedIndex = i;
+          break;
+        }
+      }
+    }
+
+    // ---- マスタデータ読み込み ----
+    window.onload = function() {
+      setTodayDate();
+      resetBottleList();
+
+      google.script.run
+        .withSuccessHandler(function(master) {
+          populateSelect("client", master.customers,
+            master.customers.length > 0 ? "-- 取引先を選択 --" : "（取引先マスタにデータがありません）");
+
+          populateSelect("staff", master.staff,
+            master.staff.length > 0 ? "-- 担当者を選択 --" : "（ユーザーマスタにデータがありません）");
+          restoreStaff();
+
+          masterBottleTypes = master.bottleTypes;
+          // 既存の行に瓶種類オプションを反映
+          document.querySelectorAll("#bottleList .bottle-type").forEach(function(sel) {
+            sel.innerHTML = buildBottleOptions();
+          });
+          if (master.bottleTypes.length === 0) {
+            document.querySelectorAll("#bottleList .bottle-type").forEach(function(sel) {
+              sel.innerHTML = '<option value="">（瓶種類マスタにデータがありません）</option>';
+            });
+          }
+        })
+        .withFailureHandler(function(err) {
+          populateSelect("client", [], "読み込み失敗");
+          populateSelect("staff", [], "読み込み失敗");
+          document.querySelectorAll("#bottleList .bottle-type").forEach(function(sel) {
+            sel.innerHTML = '<option value="">読み込み失敗</option>';
+          });
+          console.error("getMasterData エラー:", err.message);
+        })
+        .getMasterData();
+    };
+
+    // ---- フォーム送信 ----
+    document.getElementById("collectionForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+
+      // 瓶データを収集・バリデーション
+      var bottles = [];
+      var rows = document.querySelectorAll("#bottleList .bottle-row");
+      var hasError = false;
+      rows.forEach(function(row) {
+        var typeId = row.querySelector(".bottle-type").value;
+        var count  = parseInt(row.querySelector(".bottle-count").value) || 0;
+        if (!typeId || count < 1) { hasError = true; return; }
+        bottles.push({ bottleTypeId: typeId, count: count });
+      });
+
+      if (hasError || bottles.length === 0) {
+        var msg = document.getElementById("resultMessage");
+        msg.className = "mt-5 p-5 rounded-2xl text-center text-lg font-semibold bg-yellow-100 text-yellow-700";
+        msg.textContent = "⚠️ すべての行で瓶種類と本数（1以上）を入力してください。";
+        return;
+      }
+
+      var btn = document.getElementById("submitBtn");
+      btn.disabled = true;
+      btn.textContent = "送信中...";
+      document.getElementById("resultMessage").className = "hidden";
+
+      var formData = {
+        customerId:     document.getElementById("client").value,
+        collectionDate: document.getElementById("collectionDate").value,
+        staffId:        document.getElementById("staff").value,
+        notes:          document.getElementById("notes").value,
+        bottles:        bottles
+      };
+
+      google.script.run
+        .withSuccessHandler(function() {
+          var msg = document.getElementById("resultMessage");
+          msg.className = "mt-5 p-5 rounded-2xl text-center text-lg font-semibold bg-green-100 text-green-700";
+          msg.textContent = "✅ 登録が完了しました！（" + bottles.length + "種類）";
+
+          // フォームリセット
+          document.getElementById("client").selectedIndex = 0;
+          setTodayDate();
+          document.getElementById("notes").value = "";
+          resetBottleList();
+          restoreStaff(); // 担当者は記憶したものを維持
+
+          btn.disabled = false;
+          btn.textContent = "✅ 登録する";
+        })
+        .withFailureHandler(function(err) {
+          var msg = document.getElementById("resultMessage");
+          msg.className = "mt-5 p-5 rounded-2xl text-center text-lg font-semibold bg-red-100 text-red-700";
+          msg.textContent = "❌ エラーが発生しました: " + err.message;
+          btn.disabled = false;
+          btn.textContent = "✅ 登録する";
+        })
+        .saveCollection(formData);
+    });
+  </script>
+
+</body>
+</html>

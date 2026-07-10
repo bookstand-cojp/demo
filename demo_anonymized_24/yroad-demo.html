@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>屋外広告物申請システム｜ワイロード企画</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;font-size:14px;background:#f5f5f3;color:#1a1a18;min-height:100vh}
+.app{max-width:720px;margin:0 auto;background:#fff;min-height:100vh;border-left:1px solid #e0dfd8;border-right:1px solid #e0dfd8}
+.header{background:#fff;border-bottom:1px solid #e0dfd8;padding:14px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10}
+.header-icon{width:36px;height:36px;background:#E6F1FB;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.header-logo{font-size:15px;font-weight:600;color:#1a1a18}
+.header-sub{font-size:11px;color:#888780}
+.steps{display:flex;background:#f5f5f3;border-bottom:1px solid #e0dfd8;overflow-x:auto}
+.step-tab{padding:10px 14px;font-size:12px;color:#888780;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;display:flex;align-items:center;gap:5px;flex-shrink:0;transition:color .2s}
+.step-tab:hover{color:#378ADD}
+.step-tab.active{color:#185FA5;border-bottom-color:#185FA5;font-weight:600;background:#fff}
+.step-tab.done{color:#3B6D11}
+.screen{display:none;padding:16px 20px 80px}
+.screen.active{display:block}
+.section-title{font-size:11px;font-weight:600;color:#888780;margin-bottom:10px;letter-spacing:0.05em;text-transform:uppercase}
+.card{background:#fff;border:1px solid #e0dfd8;border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f0efe8}
+.row:last-child{border-bottom:none}
+.row-label{font-size:13px;color:#888780}
+.row-value{font-size:13px;font-weight:500}
+.badge{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px}
+.badge-danger{background:#FCEBEB;color:#A32D2D}
+.badge-warn{background:#FAEEDA;color:#854F0B}
+.badge-ok{background:#EAF3DE;color:#3B6D11}
+.badge-muted{background:#f5f5f3;border:1px solid #e0dfd8;color:#888780}
+.btn-primary{width:100%;padding:11px;background:#E6F1FB;border:1px solid #85B7EB;border-radius:8px;font-size:13px;color:#185FA5;font-weight:600;cursor:pointer;text-align:center;margin-top:10px;transition:opacity .2s}
+.btn-primary:hover{opacity:0.8}
+.btn-primary.green{background:#EAF3DE;border-color:#97C459;color:#3B6D11}
+.btn-ghost{padding:8px 16px;border:1px solid #c8c7c0;border-radius:8px;font-size:13px;cursor:pointer;background:#fff;color:#1a1a18;transition:background .2s}
+.btn-ghost:hover{background:#f5f5f3}
+.btn-ghost:disabled{opacity:0.35;cursor:default}
+.status-row{display:flex;align-items:center;gap:10px;padding:9px 12px;background:#f9f9f7;border-radius:8px;border:1px solid #e0dfd8;margin-bottom:6px}
+.status-icon{font-size:16px;width:20px;text-align:center}
+.status-name{flex:1;font-size:13px}
+.popup{background:#FAEEDA;border:1px solid #EF9F27;border-radius:10px;padding:14px 16px;margin-bottom:12px}
+.popup-title{font-size:13px;font-weight:600;color:#633806;margin-bottom:6px}
+.popup-body{font-size:13px;color:#1a1a18;margin-bottom:10px;line-height:1.6}
+.popup-btns{display:flex;gap:8px}
+.popup-btn{flex:1;padding:8px;border-radius:7px;font-size:12px;font-weight:600;text-align:center;cursor:pointer;border:1px solid #c8c7c0;background:#fff;transition:background .2s}
+.popup-btn:hover{background:#f5f5f3}
+.popup-btn-primary{background:#E6F1FB;color:#185FA5;border-color:#85B7EB}
+.popup-btn-primary:hover{opacity:0.85}
+.photo-section{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px}
+.photo-col-title{font-size:12px;font-weight:600;color:#888780;margin-bottom:8px}
+.photo-card{border-radius:8px;overflow:hidden;border:1px solid #e0dfd8;margin-bottom:8px;cursor:grab;transition:opacity .2s;user-select:none}
+.photo-card:active{cursor:grabbing}
+.photo-card.dragging{opacity:0.3}
+.photo-thumb{height:70px;background:#f5f5f3;display:flex;align-items:center;justify-content:center;font-size:28px;border-bottom:1px solid #e0dfd8}
+.photo-label{font-size:11px;color:#888780;padding:5px 8px;background:#fff}
+.drop-zone{border:2px dashed #c8c7c0;border-radius:8px;min-height:76px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#888780;margin-bottom:8px;transition:all .2s}
+.drop-zone.over{background:#E6F1FB;border-color:#185FA5;color:#185FA5}
+.drop-zone.filled{border-style:solid;border-color:#639922;background:#EAF3DE;color:#3B6D11;font-weight:600}
+.checklist-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #f0efe8;cursor:pointer}
+.checklist-item:last-child{border-bottom:none}
+.check-box{width:18px;height:18px;border-radius:4px;border:1.5px solid #c8c7c0;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .2s}
+.check-box.checked{background:#EAF3DE;border-color:#639922;color:#3B6D11}
+.check-text{font-size:13px;flex:1}
+.check-text.done{color:#888780;text-decoration:line-through}
+.comment-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #f0efe8}
+.comment-row:last-child{border-bottom:none}
+.comment-name{font-size:13px;flex:1}
+.comment-select{font-size:12px;padding:5px 8px;border-radius:6px;border:1px solid #c8c7c0;background:#fff;cursor:pointer}
+.file-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#f9f9f7;border-radius:8px;border:1px solid #e0dfd8;margin-bottom:6px}
+.file-icon{font-size:18px}
+.file-name{flex:1;font-size:13px}
+.stop-box{background:#FCEBEB;border:1px solid #F09595;border-radius:10px;padding:14px 16px;margin-bottom:12px}
+.stop-title{font-size:13px;font-weight:600;color:#A32D2D;margin-bottom:5px}
+.stop-body{font-size:12px;color:#1a1a18;line-height:1.6}
+.nav-footer{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;border-top:1px solid #e0dfd8;background:#fff;position:sticky;bottom:0}
+.case-tag{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;margin-bottom:12px}
+.tag-auto{background:#E1F5EE;color:#085041}
+.tag-manual{background:#EEEDFE;color:#3C3489}
+.tag-check{background:#FAEEDA;color:#633806}
+.tag-stop{background:#FCEBEB;color:#791F1F}
+.success-screen{text-align:center;padding:40px 20px}
+.success-icon{font-size:48px;margin-bottom:12px}
+.success-title{font-size:20px;font-weight:600;margin-bottom:8px}
+.success-sub{font-size:13px;color:#888780;margin-bottom:24px;line-height:1.6}
+input[type=text]{width:100%;padding:8px 10px;border:1px solid #c8c7c0;border-radius:6px;font-size:13px;font-family:inherit;outline:none;transition:border .2s}
+input[type=text]:focus{border-color:#185FA5}
+.tag-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.legend-item{display:flex;align-items:center;font-size:12px;color:#888780}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="header">
+  <div class="header-icon">🏢</div>
+  <div>
+    <div class="header-logo">屋外広告物申請システム</div>
+    <div class="header-sub">株式会社ワイロード企画　デモ版</div>
+  </div>
+</div>
+
+<div class="steps" id="step-tabs">
+  <div class="step-tab active" data-step="0">📋 期限管理</div>
+  <div class="step-tab" data-step="1">⬇️ 様式取得</div>
+  <div class="step-tab" data-step="2">👤 担当者確認</div>
+  <div class="step-tab" data-step="3">📄 書類生成</div>
+  <div class="step-tab" data-step="4">📷 写真準備</div>
+  <div class="step-tab" data-step="5">✅ 点検報告書</div>
+  <div class="step-tab" data-step="6">🚀 最終確認</div>
+</div>
+
+<!-- STEP 0: 期限管理 -->
+<div id="screen-0" class="screen active">
+  <div class="legend">
+    <span class="legend-item"><span class="tag-dot" style="background:#0F6E56"></span>自動処理</span>
+    <span class="legend-item"><span class="tag-dot" style="background:#534AB7"></span>手作業</span>
+    <span class="legend-item"><span class="tag-dot" style="background:#BA7517"></span>確認・判断</span>
+    <span class="legend-item"><span class="tag-dot" style="background:#A32D2D"></span>ハードストップ</span>
+  </div>
+  <div class="section-title">案件一覧</div>
+  <div class="card">
+    <div class="row" style="background:#FCEBEB;margin:-14px -16px 0;padding:10px 16px;border-radius:11px 11px 0 0;border-bottom:1px solid #F09595">
+      <div>
+        <div style="font-size:13px;font-weight:600;color:#A32D2D">池田泉州銀行　北豊中支店</div>
+        <div style="font-size:11px;color:#A32D2D;opacity:0.8">豊中市西緑丘3-12-1　／　許可番号：第24-広-0074号</div>
+      </div>
+      <span class="badge badge-danger">⚠ 期限まで14日</span>
+    </div>
+    <div class="row"><div class="row-label">許可期限</div><div class="row-value">令和8年4月29日</div></div>
+    <div class="row"><div class="row-label">前回申請者</div><div class="row-value">企画総務部長　永井 一生</div></div>
+    <div class="row"><div class="row-label">自治体</div><div class="row-value">豊中市</div></div>
+    <button class="btn-primary" onclick="goTo(1)">▶ この案件の更新手続きを開始する</button>
+  </div>
+  <div class="card">
+    <div class="row">
+      <div><div style="font-size:13px;font-weight:500">池田泉州銀行　石橋支店</div><div style="font-size:11px;color:#888780">池田市石橋2丁目17-13</div></div>
+      <span class="badge badge-warn">期限まで42日</span>
+    </div>
+    <div class="row"><div class="row-label">許可期限</div><div class="row-value">令和8年6月8日</div></div>
+  </div>
+  <div class="card">
+    <div class="row">
+      <div><div style="font-size:13px;font-weight:500">○○ビル　豊中市</div><div style="font-size:11px;color:#888780">豊中市庄内西町</div></div>
+      <span class="badge badge-ok">問題なし</span>
+    </div>
+    <div class="row"><div class="row-label">許可期限</div><div class="row-value">令和10年1月15日</div></div>
+  </div>
+</div>
+
+<!-- STEP 1: 様式取得 -->
+<div id="screen-1" class="screen">
+  <span class="case-tag tag-auto">🤖 自動処理</span>
+  <div class="section-title">最新様式を豊中市サイトから自動取得</div>
+  <div class="card">
+    <div class="status-row" id="s1-r1"><span class="status-icon">⏳</span><span class="status-name">許可申請書（様式3号）</span><span class="badge badge-muted" id="s1-b1">取得中...</span></div>
+    <div class="status-row" id="s1-r2"><span class="status-icon">⏳</span><span class="status-name">点検結果報告書（様式6号）</span><span class="badge badge-muted" id="s1-b2">待機中</span></div>
+    <div class="status-row" id="s1-r3"><span class="status-icon">⏳</span><span class="status-name">変更届出書（様式8号）</span><span class="badge badge-muted" id="s1-b3">待機中</span></div>
+  </div>
+  <div id="s1-next" style="display:none">
+    <div style="font-size:12px;color:#3B6D11;margin-bottom:10px;padding:8px 12px;background:#EAF3DE;border-radius:8px">✓ 全ての様式を最新版に更新しました</div>
+    <button class="btn-primary" onclick="goTo(2)">担当者の確認へ →</button>
+  </div>
+</div>
+
+<!-- STEP 2: 担当者確認 -->
+<div id="screen-2" class="screen">
+  <span class="case-tag tag-check">⚠ 確認・判断</span>
+  <div class="section-title">申請者の確認</div>
+  <div class="card" id="popup-main">
+    <div class="popup">
+      <div class="popup-title">⚠ 担当者を確認してください</div>
+      <div class="popup-body">前回の申請者：<strong>企画総務部長　永井 一生</strong><br><span style="font-size:12px;color:#888780">今回も同じ方ですか？</span></div>
+      <div class="popup-btns">
+        <div class="popup-btn" onclick="showChange()">変更あり → 入力する</div>
+        <div class="popup-btn popup-btn-primary" onclick="noChange()">同じ → このまま進む</div>
+      </div>
+    </div>
+  </div>
+  <div id="popup-change" style="display:none">
+    <div class="card">
+      <div style="font-size:13px;font-weight:600;color:#633806;margin-bottom:12px">⚠ 変更後の担当者を入力してください</div>
+      <div style="margin-bottom:10px">
+        <div style="font-size:12px;color:#888780;margin-bottom:4px">氏名</div>
+        <input type="text" id="new-name" placeholder="例：藤本 康幸">
+      </div>
+      <div>
+        <div style="font-size:12px;color:#888780;margin-bottom:4px">役職</div>
+        <input type="text" id="new-role" placeholder="例：企画総務部長">
+      </div>
+      <button class="btn-primary" onclick="confirmChange()" style="margin-top:12px">変更を確定する</button>
+    </div>
+  </div>
+  <div id="change-confirmed" style="display:none">
+    <div class="card">
+      <div class="row"><div class="row-label">前回</div><div class="row-value" style="color:#888780;text-decoration:line-through">永井 一生（企画総務部長）</div></div>
+      <div class="row"><div class="row-label">今回</div><div class="row-value" id="confirmed-name" style="color:#3B6D11">藤本 康幸（企画総務部長）</div></div>
+      <div style="font-size:12px;color:#888780;margin-top:8px">ℹ 変更届出書（様式8号）を自動で追加生成します</div>
+    </div>
+    <button class="btn-primary" onclick="goTo(3)">書類生成へ →</button>
+  </div>
+  <div id="no-change-confirmed" style="display:none">
+    <div class="card">
+      <div class="row"><div class="row-label">申請者</div><div class="row-value">永井 一生（企画総務部長）</div></div>
+      <div style="font-size:12px;color:#888780;margin-top:8px">変更なし。変更届の生成はスキップします。</div>
+    </div>
+    <button class="btn-primary" onclick="goTo(3)">書類生成へ →</button>
+  </div>
+</div>
+
+<!-- STEP 3: 書類生成 -->
+<div id="screen-3" class="screen">
+  <span class="case-tag tag-auto">🤖 自動処理</span>
+  <div class="section-title">申請書類を自動生成中</div>
+  <div class="card">
+    <div class="status-row"><span class="status-icon">📄</span><span class="status-name">許可申請書（様式3号）</span><span class="badge badge-muted" id="s3-b1w">生成中...</span><span class="badge badge-ok" id="s3-b1" style="display:none">✓ 完了</span></div>
+    <div class="status-row"><span class="status-icon">📄</span><span class="status-name">委任状</span><span class="badge badge-muted" id="s3-b2w">待機中</span><span class="badge badge-ok" id="s3-b2" style="display:none">✓ 完了</span></div>
+    <div class="status-row"><span class="status-icon">📄</span><span class="status-name">変更届出書（様式8号）</span><span class="badge badge-muted" id="s3-b3w">待機中</span><span class="badge badge-ok" id="s3-b3" style="display:none">✓ 完了</span></div>
+    <div class="status-row"><span class="status-icon">📁</span><span class="status-name">配置図・立面図・付近見取図</span><span class="badge badge-muted">前回流用</span></div>
+  </div>
+  <div id="s3-next" style="display:none">
+    <button class="btn-primary" onclick="goTo(4)">写真の準備へ →</button>
+  </div>
+</div>
+
+<!-- STEP 4: 写真準備 -->
+<div id="screen-4" class="screen">
+  <span class="case-tag tag-manual">✋ 手作業</span>
+  <div class="section-title">撮影チェックリスト</div>
+  <div style="font-size:12px;color:#888780;margin-bottom:10px">前回の申請書から自動で抽出した撮影対象です。</div>
+  <div class="card">
+    <div class="checklist-item" onclick="toggleCheck(0)"><div class="check-box" id="chk0"></div><div class="check-text" id="chkt0">地上広告塔①　全体・支柱・表示面</div></div>
+    <div class="checklist-item" onclick="toggleCheck(1)"><div class="check-box" id="chk1"></div><div class="check-text" id="chkt1">突出広告板②　北面・南面</div></div>
+    <div class="checklist-item" onclick="toggleCheck(2)"><div class="check-box" id="chk2"></div><div class="check-text" id="chkt2">壁面広告板③　全体・接合部</div></div>
+    <div class="checklist-item" onclick="toggleCheck(3)"><div class="check-box" id="chk3"></div><div class="check-text" id="chkt3">壁面広告板④　表示面・清掃</div></div>
+    <div class="checklist-item" onclick="toggleCheck(4)"><div class="check-box" id="chk4"></div><div class="check-text" id="chkt4">突出広告板⑥　北面・南面</div></div>
+  </div>
+  <div id="check-progress" style="font-size:12px;color:#888780;margin-bottom:16px">0 / 5 撮影完了</div>
+
+  <span class="case-tag tag-check">⚠ 確認・判断</span>
+  <div class="section-title">写真の割り当て</div>
+  <div style="font-size:12px;color:#888780;margin-bottom:12px">前回の写真を見ながら、新しい写真をドラッグ&ドロップで割り当ててください。</div>
+  <div class="photo-section">
+    <div>
+      <div class="photo-col-title">🕐 前回の写真（参考）</div>
+      <div class="photo-card" draggable="true" id="drag-p1" ondragstart="dragStart('p1')" ondragend="dragEnd('p1')">
+        <div class="photo-thumb">🏛</div>
+        <div class="photo-label">地上広告塔①</div>
+      </div>
+      <div class="photo-card" draggable="true" id="drag-p2" ondragstart="dragStart('p2')" ondragend="dragEnd('p2')">
+        <div class="photo-thumb">🪧</div>
+        <div class="photo-label">突出広告板②　北面</div>
+      </div>
+      <div class="photo-card" draggable="true" id="drag-p3" ondragstart="dragStart('p3')" ondragend="dragEnd('p3')">
+        <div class="photo-thumb">📋</div>
+        <div class="photo-label">壁面広告板③</div>
+      </div>
+    </div>
+    <div>
+      <div class="photo-col-title">📷 新しい写真をここへ</div>
+      <div class="drop-zone" id="drop1" ondragover="dragOver(event,'drop1')" ondragleave="dragLeave('drop1')" ondrop="dropPhoto(event,'drop1','地上広告塔①')">ここにドラッグ</div>
+      <div class="drop-zone" id="drop2" ondragover="dragOver(event,'drop2')" ondragleave="dragLeave('drop2')" ondrop="dropPhoto(event,'drop2','突出広告板②　北面')">ここにドラッグ</div>
+      <div class="drop-zone" id="drop3" ondragover="dragOver(event,'drop3')" ondragleave="dragLeave('drop3')" ondrop="dropPhoto(event,'drop3','壁面広告板③')">ここにドラッグ</div>
+    </div>
+  </div>
+  <div id="photo-next" style="display:none">
+    <button class="btn-primary" onclick="goTo(5)">点検コメントの入力へ →</button>
+  </div>
+</div>
+
+<!-- STEP 5: 点検報告書 -->
+<div id="screen-5" class="screen">
+  <span class="case-tag tag-manual">✋ 手作業</span>
+  <div class="section-title">安全点検コメント入力</div>
+  <div style="font-size:12px;color:#888780;margin-bottom:10px">看板ごとに点検結果を選択してください。</div>
+  <div class="card">
+    <div class="comment-row"><div class="comment-name">No.1　地上広告塔</div><select class="comment-select" id="cmt1" onchange="checkReady()"><option value="">選択</option><option>異常なし</option><option>経過観察</option><option>要修繕</option></select></div>
+    <div class="comment-row"><div class="comment-name">No.2　突出広告板②</div><select class="comment-select" id="cmt2" onchange="checkReady()"><option value="">選択</option><option>異常なし</option><option>経過観察</option><option>要修繕</option></select></div>
+    <div class="comment-row"><div class="comment-name">No.3　壁面広告板③</div><select class="comment-select" id="cmt3" onchange="checkReady()"><option value="">選択</option><option>異常なし</option><option>経過観察</option><option>要修繕</option></select></div>
+    <div class="comment-row"><div class="comment-name">No.4　壁面広告板④</div><select class="comment-select" id="cmt4" onchange="checkReady()"><option value="">選択</option><option>異常なし</option><option>経過観察</option><option>要修繕</option></select></div>
+    <div class="comment-row"><div class="comment-name">No.5　突出広告板⑥</div><select class="comment-select" id="cmt5" onchange="checkReady()"><option value="">選択</option><option>異常なし</option><option>経過観察</option><option>要修繕</option></select></div>
+  </div>
+  <button class="btn-primary" id="gen-report-btn" onclick="generateReport()" style="opacity:0.4;cursor:not-allowed" disabled>📋 点検報告書PDFを生成する</button>
+  <div id="report-done" style="display:none;margin-top:10px">
+    <div class="status-row" style="border-color:#639922;background:#EAF3DE">
+      <span class="status-icon">✓</span>
+      <span class="status-name">安全点検結果報告書（様式6号）.pdf　生成完了</span>
+      <span class="badge badge-ok">完了</span>
+    </div>
+    <button class="btn-primary green" onclick="goTo(6)" style="margin-top:8px">最終確認へ →</button>
+  </div>
+</div>
+
+<!-- STEP 6: 最終確認 -->
+<div id="screen-6" class="screen">
+  <span class="case-tag tag-stop">🛑 ハードストップ</span>
+  <div class="stop-box">
+    <div class="stop-title">🛑 提出前に必ず全ての書類を確認してください</div>
+    <div class="stop-body">生成されたPDFを全て開いて内容を確認してから、豊中市へ提出してください。<br>このシステムは書類の自動提出を行いません。最終判断は必ず藤原社長が行ってください。</div>
+  </div>
+  <div class="section-title">生成された書類一式</div>
+  <div style="font-size:12px;color:#888780;margin-bottom:10px">各書類をクリックして「確認済」にしてください</div>
+  <div class="file-row" onclick="confirmFile(1)" style="cursor:pointer">
+    <span class="file-icon">📄</span>
+    <span class="file-name">許可申請書（様式3号）.pdf</span>
+    <span class="badge" id="f1-badge" style="background:#FAEEDA;color:#854F0B">未確認</span>
+  </div>
+  <div class="file-row" onclick="confirmFile(2)" style="cursor:pointer">
+    <span class="file-icon">📄</span>
+    <span class="file-name">変更届出書（様式8号）.pdf</span>
+    <span class="badge" id="f2-badge" style="background:#FAEEDA;color:#854F0B">未確認</span>
+  </div>
+  <div class="file-row" onclick="confirmFile(3)" style="cursor:pointer">
+    <span class="file-icon">📄</span>
+    <span class="file-name">委任状.pdf</span>
+    <span class="badge" id="f3-badge" style="background:#FAEEDA;color:#854F0B">未確認</span>
+  </div>
+  <div class="file-row" onclick="confirmFile(4)" style="cursor:pointer">
+    <span class="file-icon">📄</span>
+    <span class="file-name">安全点検結果報告書（様式6号）.pdf</span>
+    <span class="badge" id="f4-badge" style="background:#FAEEDA;color:#854F0B">未確認</span>
+  </div>
+  <div class="file-row">
+    <span class="file-icon" style="opacity:0.5">📁</span>
+    <span class="file-name" style="color:#888780">配置図・立面図・付近見取図（前回流用）</span>
+    <span class="badge badge-muted">流用</span>
+  </div>
+  <button class="btn-primary" id="submit-btn" onclick="submitAll()" style="opacity:0.4;cursor:not-allowed;margin-top:12px" disabled>全ての確認が完了すると提出できます</button>
+  <div id="submit-done" style="display:none">
+    <div class="success-screen">
+      <div class="success-icon">🎉</div>
+      <div class="success-title">申請手続きが完了しました</div>
+      <div class="success-sub">次回更新期限（令和10年4月29日）を<br>スプレッドシートに自動登録しました。</div>
+      <button class="btn-ghost" onclick="goTo(0)">← 案件一覧に戻る</button>
+    </div>
+  </div>
+</div>
+
+<div class="nav-footer">
+  <button class="btn-ghost" id="prev-btn" onclick="goTo(curStep-1)" disabled>← 戻る</button>
+  <span style="font-size:12px;color:#888780" id="step-label">STEP 1 / 7</span>
+  <div style="width:80px"></div>
+</div>
+</div>
+
+<script>
+let curStep=0,dragItem=null,assigned=0,filesConfirmed=0;
+const checks=[false,false,false,false,false];
+
+function goTo(n){
+  if(n<0||n>6)return;
+  document.getElementById('screen-'+curStep).classList.remove('active');
+  document.querySelectorAll('.step-tab').forEach((t,i)=>{t.classList.toggle('active',i===n)});
+  curStep=n;
+  document.getElementById('screen-'+curStep).classList.add('active');
+  document.getElementById('prev-btn').disabled=curStep===0;
+  document.getElementById('step-label').textContent='STEP '+(curStep+1)+' / 7';
+  window.scrollTo(0,0);
+  if(curStep===1)startFetch();
+  if(curStep===3)startGenerate();
+}
+
+function startFetch(){
+  const set=(id,txt,cls)=>{document.getElementById(id).className='badge '+cls;document.getElementById(id).textContent=txt;};
+  setTimeout(()=>set('s1-b1','✓ 取得完了','badge-ok'),800);
+  setTimeout(()=>{set('s1-b2','取得中...','badge-muted');},800);
+  setTimeout(()=>set('s1-b2','✓ 取得完了','badge-ok'),1600);
+  setTimeout(()=>{set('s1-b3','取得中...','badge-muted');},1600);
+  setTimeout(()=>{set('s1-b3','✓ 取得完了','badge-ok');document.getElementById('s1-next').style.display='block';},2400);
+}
+
+function showChange(){document.getElementById('popup-main').style.display='none';document.getElementById('popup-change').style.display='block';}
+function noChange(){document.getElementById('popup-main').style.display='none';document.getElementById('no-change-confirmed').style.display='block';}
+function confirmChange(){
+  const n=document.getElementById('new-name').value||'藤本 康幸';
+  const r=document.getElementById('new-role').value||'企画総務部長';
+  document.getElementById('confirmed-name').textContent=n+'（'+r+'）';
+  document.getElementById('popup-change').style.display='none';
+  document.getElementById('change-confirmed').style.display='block';
+}
+
+function startGenerate(){
+  const show=(wid,bid,delay)=>setTimeout(()=>{document.getElementById(wid).style.display='none';document.getElementById(bid).style.display='inline-flex';},delay);
+  show('s3-b1w','s3-b1',700);
+  setTimeout(()=>{document.getElementById('s3-b2w').textContent='生成中...';},700);
+  show('s3-b2w','s3-b2',1400);
+  setTimeout(()=>{document.getElementById('s3-b3w').textContent='生成中...';},1400);
+  setTimeout(()=>{document.getElementById('s3-b3w').style.display='none';document.getElementById('s3-b3').style.display='inline-flex';document.getElementById('s3-next').style.display='block';},2100);
+}
+
+function toggleCheck(i){
+  checks[i]=!checks[i];
+  const b=document.getElementById('chk'+i),t=document.getElementById('chkt'+i);
+  b.classList.toggle('checked',checks[i]);
+  b.textContent=checks[i]?'✓':'';
+  t.classList.toggle('done',checks[i]);
+  const cnt=checks.filter(Boolean).length;
+  document.getElementById('check-progress').textContent=cnt+' / 5 撮影完了';
+  if(cnt>=3&&assigned>=2)document.getElementById('photo-next').style.display='block';
+}
+
+function dragStart(id){dragItem=id;setTimeout(()=>document.getElementById('drag-'+id).classList.add('dragging'),0);}
+function dragEnd(id){document.getElementById('drag-'+id).classList.remove('dragging');}
+function dragOver(e,z){e.preventDefault();document.getElementById(z).classList.add('over');}
+function dragLeave(z){document.getElementById(z).classList.remove('over');}
+function dropPhoto(e,z,label){
+  e.preventDefault();
+  const el=document.getElementById(z);
+  el.classList.remove('over');
+  el.classList.add('filled');
+  el.textContent='✓ '+label;
+  assigned++;
+  const cnt=checks.filter(Boolean).length;
+  if(cnt>=3&&assigned>=2)document.getElementById('photo-next').style.display='block';
+}
+
+function checkReady(){
+  const all=[1,2,3,4,5].every(i=>document.getElementById('cmt'+i).value!=='');
+  const btn=document.getElementById('gen-report-btn');
+  btn.disabled=!all;
+  btn.style.opacity=all?'1':'0.4';
+  btn.style.cursor=all?'pointer':'not-allowed';
+}
+
+function generateReport(){
+  setTimeout(()=>{document.getElementById('report-done').style.display='block';},700);
+}
+
+function confirmFile(n){
+  const b=document.getElementById('f'+n+'-badge');
+  if(b.style.color==='rgb(133, 79, 11)'){
+    b.style.background='#EAF3DE';b.style.color='#3B6D11';b.textContent='✓ 確認済';
+    filesConfirmed++;
+    if(filesConfirmed>=4){
+      const btn=document.getElementById('submit-btn');
+      btn.style.opacity='1';btn.style.cursor='pointer';btn.disabled=false;
+      btn.textContent='▶ 豊中市へ提出する（全ての確認が完了）';
+      btn.style.background='#EAF3DE';btn.style.borderColor='#97C459';btn.style.color='#3B6D11';
+    }
+  }
+}
+
+function submitAll(){
+  document.getElementById('submit-btn').style.display='none';
+  document.querySelector('.stop-box').style.display='none';
+  document.querySelectorAll('#screen-6 .file-row').forEach(r=>r.style.display='none');
+  document.querySelectorAll('#screen-6 .section-title, #screen-6 .case-tag').forEach(r=>r.style.display='none');
+  document.querySelectorAll('#screen-6 [style*="margin-bottom:10px"]').forEach(r=>r.style.display='none');
+  document.getElementById('submit-done').style.display='block';
+  document.querySelectorAll('.step-tab').forEach(t=>t.classList.add('done'));
+}
+</script>
+</body>
+</html>

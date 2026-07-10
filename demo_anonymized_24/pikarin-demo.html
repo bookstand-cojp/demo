@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>〇〇クリーニング Partner — FC業務管理アプリ</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Yu Gothic UI', sans-serif; background: #f0f0f0; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding: 20px; }
+
+.app { width: 100%; max-width: 420px; background: #fff; min-height: 700px; border: 1px solid #e0e0e0; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+
+.header { background: #fff; border-bottom: 0.5px solid #e0e0e0; padding: 14px 16px; display: flex; align-items: center; gap: 10px; }
+.header-logo { width: 32px; height: 32px; border-radius: 8px; background: #1a6b8a; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 15px; font-weight: 600; flex-shrink: 0; }
+.header-title { font-size: 15px; font-weight: 600; color: #111; }
+.header-sub { font-size: 11px; color: #888; }
+
+.nav { display: flex; border-bottom: 0.5px solid #e0e0e0; background: #fff; }
+.nav-btn { flex: 1; padding: 10px 4px; font-size: 11px; color: #999; border: none; background: transparent; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; transition: color 0.15s; border-bottom: 2px solid transparent; }
+.nav-btn i { font-size: 18px; }
+.nav-btn.active { color: #1a6b8a; border-bottom: 2px solid #1a6b8a; }
+
+.content { flex: 1; overflow-y: auto; padding: 14px; display: none; }
+.content.active { display: block; }
+
+.section-label { font-size: 11px; font-weight: 600; color: #aaa; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+
+.alert-card { background: #e8f5f0; border: 0.5px solid #a3d4c0; border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; }
+.alert-card .alert-title { font-size: 13px; font-weight: 600; color: #0f6e56; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+.alert-card .alert-body { font-size: 12px; color: #0f6e56; line-height: 1.5; }
+
+.customer-card { background: #fafafa; border: 0.5px solid #e0e0e0; border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; cursor: pointer; transition: border-color 0.15s; }
+.customer-card:hover { border-color: #1a6b8a; }
+.customer-card .c-row { display: flex; justify-content: space-between; align-items: flex-start; }
+.customer-card .c-name { font-size: 14px; font-weight: 600; color: #111; }
+.customer-card .c-badge { font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 600; }
+.badge-hot { background: #faeeda; color: #854f0b; }
+.badge-normal { background: #f0f0f0; color: #666; }
+.customer-card .c-meta { font-size: 11px; color: #888; margin-top: 4px; }
+.customer-card .c-service { font-size: 12px; color: #333; margin-top: 6px; }
+
+.btn-primary { width: 100%; padding: 12px; background: #1a6b8a; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 8px; transition: opacity 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.btn-primary:hover { opacity: 0.88; }
+.btn-outline { width: 100%; padding: 10px; background: transparent; color: #1a6b8a; border: 1.5px solid #1a6b8a; border-radius: 8px; font-size: 13px; cursor: pointer; margin-top: 6px; }
+
+.matching-card { background: #fafafa; border: 0.5px solid #e0e0e0; border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; }
+.matching-card .job-title { font-size: 13px; font-weight: 600; color: #111; }
+.matching-card .job-meta { font-size: 11px; color: #888; margin-top: 3px; }
+.staff-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-top: 0.5px solid #e0e0e0; margin-top: 8px; }
+.staff-avatar { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; flex-shrink: 0; }
+.staff-info { flex: 1; }
+.staff-name { font-size: 12px; font-weight: 600; color: #111; }
+.staff-dist { font-size: 11px; color: #888; }
+.staff-action { font-size: 11px; padding: 5px 12px; border-radius: 6px; cursor: pointer; border: 0.5px solid #ddd; background: #fff; color: #333; transition: all 0.15s; }
+.staff-action:hover { background: #f0f0f0; }
+.rank-1 .staff-action { background: #1a6b8a; color: #fff; border-color: #1a6b8a; }
+.rank-1 .staff-action:hover { background: #155a75; }
+
+.estimate-form label { font-size: 12px; color: #666; display: block; margin-bottom: 4px; margin-top: 12px; }
+.estimate-form input, .estimate-form select { width: 100%; padding: 9px 12px; border: 0.5px solid #ddd; border-radius: 8px; font-size: 13px; background: #fff; color: #111; outline: none; }
+.estimate-form input:focus, .estimate-form select:focus { border-color: #1a6b8a; box-shadow: 0 0 0 2px rgba(26,107,138,0.12); }
+.total-row { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; padding: 14px 16px; background: #f0f8fc; border-radius: 10px; border: 0.5px solid #b8dcea; }
+.total-label { font-size: 12px; color: #555; }
+.total-amount { font-size: 26px; font-weight: 700; color: #1a6b8a; }
+
+.sign-area { border: 1.5px dashed #ccc; border-radius: 10px; height: 130px; margin-top: 12px; cursor: crosshair; position: relative; background: #fafafa; overflow: hidden; }
+.sign-label { font-size: 12px; color: #bbb; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none; white-space: nowrap; }
+.sign-hint { font-size: 10px; color: #ccc; position: absolute; bottom: 8px; right: 12px; pointer-events: none; }
+.signed-badge { display: none; position: absolute; top: 8px; right: 10px; background: #e8f5f0; color: #0f6e56; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; align-items: center; gap: 4px; }
+
+.toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #1a6b8a; color: #fff; font-size: 13px; padding: 10px 22px; border-radius: 8px; display: none; white-space: nowrap; z-index: 999; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+.toast.show { display: block; animation: fadein 0.2s ease; }
+@keyframes fadein { from { opacity: 0; transform: translateX(-50%) translateY(6px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
+#signCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+
+.complete-summary { background: #f0f8fc; border: 0.5px solid #b8dcea; border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; }
+.complete-summary .cs-label { font-size: 11px; color: #888; margin-bottom: 2px; }
+.complete-summary .cs-value { font-size: 14px; font-weight: 600; color: #111; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="header">
+    <div class="header-logo">P</div>
+    <div>
+      <div class="header-title">〇〇クリーニング Partner</div>
+      <div class="header-sub">FC業務管理アプリ — デモ版</div>
+    </div>
+  </div>
+
+  <div class="nav">
+    <button class="nav-btn active" onclick="switchTab('follow')" id="nav-follow">
+      <i class="ti ti-users"></i>追客
+    </button>
+    <button class="nav-btn" onclick="switchTab('match')" id="nav-match">
+      <i class="ti ti-bolt"></i>案件
+    </button>
+    <button class="nav-btn" onclick="switchTab('estimate')" id="nav-estimate">
+      <i class="ti ti-file-text"></i>見積
+    </button>
+    <button class="nav-btn" onclick="switchTab('complete')" id="nav-complete">
+      <i class="ti ti-circle-check"></i>完了
+    </button>
+  </div>
+
+  <!-- 追客リスト -->
+  <div class="content active" id="tab-follow">
+    <div class="alert-card">
+      <div class="alert-title"><i class="ti ti-bell"></i> 今月の追客候補 3件</div>
+      <div class="alert-body">昨年同月にサービスを受けたお客様です。声かけのタイミングです。</div>
+    </div>
+
+    <div class="section-label">追客リスト（1年前の顧客）</div>
+
+    <div class="customer-card" onclick="goToEstimate('田中 恵子', 'エアコン洗浄 2台')">
+      <div class="c-row">
+        <div class="c-name">田中 恵子 様</div>
+        <span class="c-badge badge-hot">要連絡</span>
+      </div>
+      <div class="c-meta">Last visit: 2025年7月5日（365日前）</div>
+      <div class="c-service">エアコン洗浄 2台 — ¥28,000</div>
+    </div>
+
+    <div class="customer-card" onclick="showToast('山本 隆司さんの詳細を開きました')">
+      <div class="c-row">
+        <div class="c-name">山本 隆司 様</div>
+        <span class="c-badge badge-hot">要連絡</span>
+      </div>
+      <div class="c-meta">Last visit: 2025年7月12日（358日前）</div>
+      <div class="c-service">エアコン洗浄 1台 · 換気扇 — ¥21,000</div>
+    </div>
+
+    <div class="customer-card" onclick="showToast('伊藤 美咲さんの詳細を開きました')">
+      <div class="c-row">
+        <div class="c-name">伊藤 美咲 様</div>
+        <span class="c-badge badge-normal">候補</span>
+      </div>
+      <div class="c-meta">Last visit: 2025年7月28日（342日前）</div>
+      <div class="c-service">水回りパック — ¥34,000</div>
+    </div>
+
+    <button class="btn-primary" onclick="showToast('LINEメッセージを3件下書きしました')">
+      <i class="ti ti-brand-line"></i> まとめてLINE下書き
+    </button>
+  </div>
+
+  <!-- 案件マッチング -->
+  <div class="content" id="tab-match">
+    <div class="section-label">新着案件</div>
+    <div class="matching-card">
+      <div class="job-title">エアコン洗浄 2台</div>
+      <div class="job-meta"><i class="ti ti-map-pin" style="font-size:12px;"></i> 大阪府堺市南区 — 2026年7月15日 10:00</div>
+
+      <div class="section-label" style="margin-top:14px; margin-bottom:0;">距離でスタッフを自動ランキング</div>
+
+      <div class="staff-row rank-1">
+        <div class="staff-avatar" style="background:#cce8f4; color:#0c447c;">佐</div>
+        <div class="staff-info">
+          <div class="staff-name">佐藤 健太</div>
+          <div class="staff-dist">2.1km · 空き ✓</div>
+        </div>
+        <button class="staff-action" onclick="assignStaff('佐藤 健太')">アサイン</button>
+      </div>
+
+      <div class="staff-row">
+        <div class="staff-avatar" style="background:#e8f5f0; color:#0f6e56;">中</div>
+        <div class="staff-info">
+          <div class="staff-name">中村 由美</div>
+          <div class="staff-dist">3.8km · 空き ✓</div>
+        </div>
+        <button class="staff-action" onclick="assignStaff('中村 由美')">アサイン</button>
+      </div>
+
+      <div class="staff-row">
+        <div class="staff-avatar" style="background:#faeeda; color:#854f0b;">木</div>
+        <div class="staff-info">
+          <div class="staff-name">木下 誠</div>
+          <div class="staff-dist">6.2km · 空き ✓</div>
+        </div>
+        <button class="staff-action" onclick="assignStaff('木下 誠')">アサイン</button>
+      </div>
+    </div>
+
+    <div class="matching-card" style="opacity:0.55;">
+      <div class="job-title">水回りパック</div>
+      <div class="job-meta"><i class="ti ti-map-pin" style="font-size:12px;"></i> 大阪府堺市中区 — 2026年7月16日 13:00</div>
+      <div style="font-size:12px; color:#888; margin-top:8px; display:flex; align-items:center; gap:4px;"><i class="ti ti-check" style="color:#0f6e56;"></i> 担当：木下 誠（確定済み）</div>
+    </div>
+  </div>
+
+  <!-- 見積 -->
+  <div class="content" id="tab-estimate">
+    <div class="section-label">見積作成</div>
+    <div class="estimate-form">
+      <label>お客様名</label>
+      <input type="text" id="est-name" value="田中 恵子" />
+
+      <label>サービス</label>
+      <select id="est-service" onchange="calcTotal()">
+        <option value="14000">エアコン洗浄（1台）¥14,000</option>
+        <option value="28000" selected>エアコン洗浄（2台）¥28,000</option>
+        <option value="21000">水回りパック ¥21,000</option>
+        <option value="34000">全室パック ¥34,000</option>
+      </select>
+
+      <label>オプション</label>
+      <select id="est-option" onchange="calcTotal()">
+        <option value="0">なし</option>
+        <option value="3000">防カビコート +¥3,000</option>
+        <option value="5000">消臭オプション +¥5,000</option>
+      </select>
+
+      <div class="total-row">
+        <div>
+          <div class="total-label">お見積り金額（税込）</div>
+          <div class="total-amount" id="est-total">¥30,800</div>
+        </div>
+        <div style="font-size:11px; color:#888; text-align:right;">消費税10%<br>含む</div>
+      </div>
+
+      <button class="btn-primary" onclick="showToast('PDF生成 → LINEで送信しました ✓')">
+        <i class="ti ti-file-export"></i> PDF生成・LINE送信
+      </button>
+      <button class="btn-outline" onclick="goToComplete()">作業完了報告へ →</button>
+    </div>
+  </div>
+
+  <!-- 作業完了・署名 -->
+  <div class="content" id="tab-complete">
+    <div class="section-label">作業完了報告</div>
+
+    <div class="complete-summary">
+      <div class="cs-label">お客様</div>
+      <div class="cs-value" id="complete-name">田中 恵子 様</div>
+      <div class="cs-label" style="margin-top:8px;">サービス</div>
+      <div class="cs-value">エアコン洗浄 2台</div>
+      <div class="cs-label" style="margin-top:8px;">担当スタッフ</div>
+      <div class="cs-value">佐藤 健太</div>
+      <div class="cs-label" style="margin-top:8px;">日時</div>
+      <div class="cs-value">2026年7月15日 10:00</div>
+    </div>
+
+    <div class="section-label">お客様サイン</div>
+    <div class="sign-area" id="signArea">
+      <canvas id="signCanvas"></canvas>
+      <div class="sign-label" id="signLabel">ここにサインしてください</div>
+      <div class="sign-hint">指またはマウスで描く</div>
+      <div class="signed-badge" id="signedBadge"><i class="ti ti-check"></i> サイン完了</div>
+    </div>
+
+    <button class="btn-outline" onclick="clearSign()">やり直す</button>
+    <button class="btn-primary" onclick="completeJob()" style="margin-top:8px;">
+      <i class="ti ti-circle-check"></i> 作業完了を記録する
+    </button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+function switchTab(name) {
+  document.querySelectorAll('.content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+  if (name === 'complete') initCanvas();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function goToEstimate(name) {
+  document.getElementById('est-name').value = name;
+  switchTab('estimate');
+  showToast(name + 'さんの見積を開きました');
+}
+
+function goToComplete() {
+  switchTab('complete');
+}
+
+function assignStaff(name) {
+  showToast(name + ' さんをアサインしました ✓');
+}
+
+function calcTotal() {
+  const base = parseInt(document.getElementById('est-service').value) || 0;
+  const opt = parseInt(document.getElementById('est-option').value) || 0;
+  const total = Math.round((base + opt) * 1.1);
+  document.getElementById('est-total').textContent = '¥' + total.toLocaleString();
+}
+
+function completeJob() {
+  showToast('作業完了を記録しました。お疲れ様でした！');
+}
+
+// 署名キャンバス
+let drawing = false, lastX = 0, lastY = 0, hasSigned = false, ctx = null;
+
+function initCanvas() {
+  const area = document.getElementById('signArea');
+  const canvas = document.getElementById('signCanvas');
+  canvas.width = area.offsetWidth;
+  canvas.height = area.offsetHeight;
+  ctx = canvas.getContext('2d');
+  ctx.strokeStyle = '#1a6b8a';
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+}
+
+function getPos(e) {
+  const canvas = document.getElementById('signCanvas');
+  const r = canvas.getBoundingClientRect();
+  const pt = e.touches ? e.touches[0] : e;
+  const scaleX = canvas.width / r.width;
+  const scaleY = canvas.height / r.height;
+  return [(pt.clientX - r.left) * scaleX, (pt.clientY - r.top) * scaleY];
+}
+
+function startDraw(e) {
+  if (!ctx) initCanvas();
+  drawing = true;
+  [lastX, lastY] = getPos(e);
+  e.preventDefault();
+}
+
+function moveDraw(e) {
+  if (!drawing) return;
+  e.preventDefault();
+  const [x, y] = getPos(e);
+  ctx.beginPath();
+  ctx.moveTo(lastX, lastY);
+  ctx.lineTo(x, y);
+  ctx.stroke();
+  [lastX, lastY] = [x, y];
+  if (!hasSigned) {
+    hasSigned = true;
+    document.getElementById('signedBadge').style.display = 'flex';
+    document.getElementById('signLabel').style.display = 'none';
+  }
+}
+
+function endDraw() { drawing = false; }
+
+function clearSign() {
+  if (ctx) ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  hasSigned = false;
+  document.getElementById('signedBadge').style.display = 'none';
+  document.getElementById('signLabel').style.display = 'block';
+}
+
+window.addEventListener('load', () => {
+  const canvas = document.getElementById('signCanvas');
+  canvas.addEventListener('mousedown', startDraw);
+  canvas.addEventListener('mousemove', moveDraw);
+  canvas.addEventListener('mouseup', endDraw);
+  canvas.addEventListener('mouseleave', endDraw);
+  canvas.addEventListener('touchstart', startDraw, { passive: false });
+  canvas.addEventListener('touchmove', moveDraw, { passive: false });
+  canvas.addEventListener('touchend', endDraw);
+});
+</script>
+</body>
+</html>

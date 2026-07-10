@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>〇〇EC EC業務 自動化デモ | ブックスタンド</title>
+<style>
+  /* ===== TOKENS ===== */
+  :root {
+    --bg: #0A0F1E;
+    --surface: #111827;
+    --surface2: #1A2332;
+    --border: #1E2D42;
+    --rakuten: #BF0000;
+    --rakuten-dim: #3D0A0A;
+    --yayoi: #1A6B3C;
+    --yayoi-dim: #0A2318;
+    --yamato: #2563EB;
+    --yamato-dim: #0D1F4A;
+    --sagawa: #16A34A;
+    --sagawa-dim: #0A2018;
+    --accent: #F59E0B;
+    --accent-dim: #3D2600;
+    --text: #F1F5F9;
+    --text-sub: #94A3B8;
+    --text-dim: #475569;
+    --green: #22C55E;
+    --font-display: 'Noto Sans JP', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-display);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ===== HERO ===== */
+  .hero {
+    padding: 80px 24px 60px;
+    text-align: center;
+    position: relative;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(245,158,11,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-label {
+    display: inline-block;
+    background: var(--accent-dim);
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    padding: 4px 14px;
+    border-radius: 100px;
+    margin-bottom: 24px;
+    text-transform: uppercase;
+  }
+  .hero h1 {
+    font-size: clamp(28px, 6vw, 52px);
+    font-weight: 900;
+    line-height: 1.15;
+    margin-bottom: 16px;
+    letter-spacing: -0.02em;
+  }
+  .hero h1 em {
+    font-style: normal;
+    color: var(--accent);
+  }
+  .hero-sub {
+    font-size: 15px;
+    color: var(--text-sub);
+    max-width: 480px;
+    margin: 0 auto 40px;
+    line-height: 1.7;
+  }
+  .hero-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+  .hero-badge span { color: var(--green); font-weight: 700; }
+
+  /* ===== SECTION ===== */
+  .section {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+  .section-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ===== FLOW DEMO ===== */
+  .flow-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 40px;
+  }
+  .flow-trigger {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  #startBtn {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    padding: 14px 36px;
+    font-size: 15px;
+    font-weight: 700;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: var(--font-display);
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  #startBtn:hover { background: #FBBF24; transform: translateY(-1px); }
+  #startBtn:active { transform: translateY(0); }
+  #startBtn:disabled { background: var(--text-dim); cursor: not-allowed; transform: none; }
+  .trigger-note { font-size: 12px; color: var(--text-dim); margin-top: 8px; }
+
+  /* ===== FLOW STEPS ===== */
+  .flow-steps {
+    display: grid;
+    gap: 12px;
+  }
+  .flow-step {
+    display: grid;
+    grid-template-columns: 40px 1fr auto;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    opacity: 0.35;
+    transition: all 0.5s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .flow-step.active {
+    opacity: 1;
+    border-color: currentColor;
+  }
+  .flow-step.done {
+    opacity: 1;
+  }
+  .flow-step::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+  .flow-step.active::before { opacity: 1; }
+
+  /* カラーテーマ */
+  .step-rakuten { color: var(--rakuten); }
+  .step-rakuten.active { background: var(--rakuten-dim); border-color: var(--rakuten); }
+  .step-rakuten.done { background: #1A0808; border-color: #7A0000; }
+
+  .step-process { color: var(--accent); }
+  .step-process.active { background: var(--accent-dim); border-color: var(--accent); }
+  .step-process.done { background: #1F1500; border-color: #92600A; }
+
+  .step-yayoi { color: #4ADE80; }
+  .step-yayoi.active { background: var(--yayoi-dim); border-color: var(--yayoi); }
+  .step-yayoi.done { background: #081510; border-color: #166534; }
+
+  .step-carrier { color: #60A5FA; }
+  .step-carrier.active { background: var(--yamato-dim); border-color: #3B82F6; }
+  .step-carrier.done { background: #080E1A; border-color: #1D4ED8; }
+
+  .step-complete { color: var(--green); }
+  .step-complete.active { background: #071A0E; border-color: var(--green); }
+  .step-complete.done { background: #071A0E; border-color: #15803D; }
+
+  .step-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    background: rgba(255,255,255,0.05);
+    flex-shrink: 0;
+  }
+  .step-body { min-width: 0; }
+  .step-name {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .step-desc {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+  .step-status {
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .status-waiting { color: var(--text-dim); }
+  .status-running { color: var(--accent); }
+  .status-done { color: var(--green); }
+
+  /* 矢印 */
+  .flow-arrow {
+    text-align: center;
+    color: var(--border);
+    font-size: 18px;
+    line-height: 1;
+    transition: color 0.3s;
+    margin: -4px 0;
+    padding-left: 28px;
+  }
+  .flow-arrow.active { color: var(--accent); }
+
+  /* プログレスバー */
+  .step-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    background: currentColor;
+    width: 0%;
+    transition: width linear;
+    opacity: 0.6;
+  }
+  .flow-step.active .step-progress { width: 100%; }
+
+  /* ===== ORDER CARD ===== */
+  .order-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 32px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.8;
+  }
+  .order-card-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    font-family: var(--font-display);
+  }
+  .order-field { display: flex; gap: 16px; }
+  .order-key { color: var(--text-dim); min-width: 120px; }
+  .order-val { color: var(--text); }
+  .order-val.highlight { color: var(--accent); font-weight: 600; }
+
+  /* ===== RESULTS ===== */
+  .results-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 24px;
+    opacity: 0;
+    transform: translateY(16px);
+    transition: all 0.5s ease;
+  }
+  .results-grid.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .result-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .result-yayoi::before { background: var(--green); }
+  .result-carrier::before { background: var(--yamato); }
+  .result-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .result-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .result-detail {
+    font-size: 12px;
+    color: var(--text-sub);
+    line-height: 1.7;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .result-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(34,197,94,0.1);
+    color: var(--green);
+    border: 1px solid rgba(34,197,94,0.3);
+    border-radius: 100px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-top: 12px;
+  }
+
+  /* ===== RESET ===== */
+  #resetBtn {
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    padding: 10px 24px;
+    font-size: 13px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: var(--font-display);
+    margin-top: 16px;
+    display: none;
+    transition: all 0.2s;
+  }
+  #resetBtn:hover { border-color: var(--text-sub); color: var(--text); }
+
+  /* ===== STATS ===== */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 80px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 20px;
+    text-align: center;
+  }
+  .stat-num {
+    font-size: 40px;
+    font-weight: 900;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-unit { font-size: 16px; font-weight: 400; }
+  .stat-label {
+    font-size: 12px;
+    color: var(--text-sub);
+    margin-bottom: 4px;
+  }
+  .stat-note { font-size: 11px; color: var(--text-dim); }
+
+  /* ===== FOOTER ===== */
+  footer {
+    text-align: center;
+    padding: 40px 24px;
+    border-top: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 12px;
+  }
+  footer strong { color: var(--text-sub); }
+
+  /* ===== PULSE ANIMATION ===== */
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  .pulsing { animation: pulse 1s ease infinite; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ===== LOG ===== */
+  .log-area {
+    background: #050A10;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    line-height: 2;
+    color: var(--text-dim);
+    height: 120px;
+    overflow-y: auto;
+    margin-top: 16px;
+  }
+  .log-line { animation: fadeIn 0.3s ease forwards; }
+  .log-ok { color: var(--green); }
+  .log-run { color: var(--accent); }
+  .log-info { color: #60A5FA; }
+
+  @media (max-width: 600px) {
+    .results-grid { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: 1fr; }
+    .flow-step { grid-template-columns: 36px 1fr; }
+    .step-status { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-label">Demo — 株式会社ブックスタンド</div>
+  <h1>楽天の受注が入ったら、<br><em>すべて自動で完了する。</em></h1>
+  <p class="hero-sub">受注確認・弥生販売への伝票作成・送り状の振り分けまで、人が触らずに一気に処理される様子をデモでご覧ください。</p>
+  <div class="hero-badge">
+    <span>■</span> 楽天API + 弥生販売API — RPA不要・直接連携
+  </div>
+</div>
+
+<div class="section">
+
+  <!-- FLOW DEMO -->
+  <div class="section-title">受注処理 自動化フロー</div>
+
+  <!-- 注文データ -->
+  <div class="order-card">
+    <div class="order-card-title">サンプル注文データ（楽天より取得）</div>
+    <div class="order-field"><span class="order-key">注文番号</span><span class="order-val">RK-20260〒000-00007</span></div>
+    <div class="order-field"><span class="order-key">商品</span><span class="order-val highlight">キャディバッグ Pro-X / ネイビー</span></div>
+    <div class="order-field"><span class="order-key">数量</span><span class="order-val">1個</span></div>
+    <div class="order-field"><span class="order-key">金額</span><span class="order-val">¥32,800（税込）</span></div>
+    <div class="order-field"><span class="order-key">配送先</span><span class="order-val">富山県富山市 ○○様</span></div>
+    <div class="order-field"><span class="order-key">サイズ</span><span class="order-val">140サイズ / 重量 3.2kg</span></div>
+  </div>
+
+  <div class="flow-container">
+    <div class="flow-trigger">
+      <button id="startBtn" onclick="startFlow()">▶ 自動処理をスタート</button>
+      <div class="trigger-note">※ 実際はバックグラウンドで自動実行されます</div>
+    </div>
+
+    <div class="flow-steps" id="flowSteps">
+      <div class="flow-step step-rakuten" id="step0">
+        <div class="step-icon">🛒</div>
+        <div class="step-body">
+          <div class="step-name">楽天API — 注文データ取得</div>
+          <div class="step-desc">楽天RMSのAPIを呼び出し、新着注文を自動取得</div>
+        </div>
+        <div class="step-status status-waiting" id="status0">待機中</div>
+        <div class="step-progress" id="prog0"></div>
+      </div>
+
+      <div class="flow-arrow" id="arrow0">↓</div>
+
+      <div class="flow-step step-process" id="step1">
+        <div class="step-icon">⚙️</div>
+        <div class="step-body">
+          <div class="step-name">データ変換・ルール判定</div>
+          <div class="step-desc">商品サイズ・都道府県から運送会社を自動判別</div>
+        </div>
+        <div class="step-status status-waiting" id="status1">待機中</div>
+        <div class="step-progress" id="prog1"></div>
+      </div>
+
+      <div class="flow-arrow" id="arrow1">↓</div>
+
+      <div class="flow-step step-yayoi" id="step2">
+        <div class="step-icon">📋</div>
+        <div class="step-body">
+          <div class="step-name">弥生販売API — 売上伝票を自動作成</div>
+          <div class="step-desc">弥生販売に注文データを送信、伝票を自動登録</div>
+        </div>
+        <div class="step-status status-waiting" id="status2">待機中</div>
+        <div class="step-progress" id="prog2"></div>
+      </div>
+
+      <div class="flow-arrow" id="arrow2">↓</div>
+
+      <div class="flow-step step-carrier" id="step3">
+        <div class="step-icon">🚚</div>
+        <div class="step-body">
+          <div class="step-name">ヤマト運輸 B2 — 送り状を自動発行</div>
+          <div class="step-desc">140サイズ × 富山県 → ヤマト運輸へ自動振り分け・発行</div>
+        </div>
+        <div class="step-status status-waiting" id="status3">待機中</div>
+        <div class="step-progress" id="prog3"></div>
+      </div>
+
+      <div class="flow-arrow" id="arrow3">↓</div>
+
+      <div class="flow-step step-complete" id="step4">
+        <div class="step-icon">✅</div>
+        <div class="step-body">
+          <div class="step-name">完了 — 担当者に通知</div>
+          <div class="step-desc">処理完了をメールで通知。確認・承認するだけ</div>
+        </div>
+        <div class="step-status status-waiting" id="status4">待機中</div>
+        <div class="step-progress" id="prog4"></div>
+      </div>
+    </div>
+
+    <!-- ログ -->
+    <div class="log-area" id="logArea">
+      <div class="log-line">システム待機中... スタートボタンを押してください</div>
+    </div>
+
+    <!-- 結果 -->
+    <div class="results-grid" id="results">
+      <div class="result-card result-yayoi">
+        <div class="result-label">弥生販売</div>
+        <div class="result-title">売上伝票 — 自動作成済み</div>
+        <div class="result-detail">
+          伝票番号：YY-2〒000-00007<br>
+          品名：キャディバッグ Pro-X ネイビー<br>
+          金額：¥32,800（税込10%）<br>
+          登録日時：2026/06/28 09:14:22
+        </div>
+        <div class="result-check">✓ 弥生販売に登録完了</div>
+      </div>
+      <div class="result-card result-carrier">
+        <div class="result-label">ヤマト運輸 B2</div>
+        <div class="result-title">送り状 — 自動発行済み</div>
+        <div class="result-detail">
+          お問い合わせ番号：1〒000-0000-9012<br>
+          サイズ：140 / 3.2kg<br>
+          お届け先：富山県富山市 ○○様<br>
+          発行日時：2026/06/28 09:14:25
+        </div>
+        <div class="result-check">✓ 送り状 発行完了</div>
+      </div>
+    </div>
+
+    <div style="text-align:center">
+      <button id="resetBtn" onclick="resetFlow()">↺ もう一度見る</button>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="section-title">導入効果（試算）</div>
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-num" id="statTime">0<span class="stat-unit">秒</span></div>
+      <div class="stat-label">受注1件あたりの処理時間</div>
+      <div class="stat-note">現状：約5〜10分 → 導入後：数秒</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="statZero">0<span class="stat-unit">件</span></div>
+      <div class="stat-label">手入力ミス</div>
+      <div class="stat-note">人が触らないため、構造的にゼロに</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="statH">0<span class="stat-unit">時間/月</span></div>
+      <div class="stat-label">削減できる工数（目安）</div>
+      <div class="stat-note">月500件処理の場合の試算</div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <strong>株式会社ブックスタンド</strong>｜中小企業向けDXコンサルティング・システム開発<br>
+  このページはデモンストレーション用です。実際のシステムの詳細はお問い合わせください。
+</footer>
+
+<script>
+const STEPS = [
+  { delay: 600,  duration: 1200, log: ['[INFO] 楽天RMS APIに接続中...', '[OK] 新着注文 1件を取得', '[INFO] 注文番号: RK-20260〒000-00007'] },
+  { delay: 500,  duration: 900,  log: ['[RUN] データ変換処理を開始', '[RUN] サイズ判定: 140サイズ → ヤマト運輸を選択', '[OK] ルール判定完了'] },
+  { delay: 400,  duration: 1400, log: ['[INFO] 弥生販売APIに接続中...', '[RUN] 売上伝票を登録中...', '[OK] 伝票番号 YY-2〒000-00007 を作成'] },
+  { delay: 300,  duration: 1100, log: ['[INFO] ヤマト運輸 B2に接続中...', '[RUN] 送り状データを送信中...', '[OK] お問い合わせ番号: 1〒000-0000-9012'] },
+  { delay: 200,  duration: 600,  log: ['[OK] 全処理が正常に完了しました', '[INFO] 担当者へ完了メールを送信'] },
+];
+
+let running = false;
+
+function addLog(text, cls = '') {
+  const area = document.getElementById('logArea');
+  const line = document.createElement('div');
+  line.className = 'log-line' + (cls ? ' ' + cls : '');
+  line.textContent = text;
+  area.appendChild(line);
+  area.scrollTop = area.scrollHeight;
+}
+
+async function startFlow() {
+  if (running) return;
+  running = true;
+  document.getElementById('startBtn').disabled = true;
+  document.getElementById('logArea').innerHTML = '';
+
+  for (let i = 0; i < STEPS.length; i++) {
+    const s = STEPS[i];
+    await sleep(s.delay);
+
+    // アクティブ化
+    const stepEl = document.getElementById('step' + i);
+    const statusEl = document.getElementById('status' + i);
+    const arrowEl = document.getElementById('arrow' + (i - 1));
+
+    stepEl.classList.add('active');
+    statusEl.textContent = '処理中...';
+    statusEl.className = 'step-status status-running pulsing';
+
+    if (arrowEl) arrowEl.classList.add('active');
+
+    // プログレスバーアニメ
+    const prog = document.getElementById('prog' + i);
+    prog.style.transition = `width ${s.duration}ms linear`;
+    prog.style.width = '100%';
+
+    // ログ出力
+    for (const log of s.log) {
+      await sleep(s.duration / (s.log.length + 1));
+      const cls = log.startsWith('[OK]') ? 'log-ok' : log.startsWith('[RUN]') ? 'log-run' : 'log-info';
+      addLog(log, cls);
+    }
+
+    await sleep(200);
+
+    // 完了
+    stepEl.classList.remove('active');
+    stepEl.classList.add('done');
+    statusEl.textContent = '✓ 完了';
+    statusEl.className = 'step-status status-done';
+    statusEl.classList.remove('pulsing');
+  }
+
+  // 結果表示
+  await sleep(400);
+  document.getElementById('results').classList.add('visible');
+  addLog('─────────────────────────────', '');
+  addLog('[OK] 処理完了 — 所要時間: 約4.2秒', 'log-ok');
+
+  // カウントアップ
+  await sleep(300);
+  countUp('statTime', 0, 4, '秒', 800);
+  countUp('statZero', 0, 0, '件', 800);
+  countUp('statH', 0, 40, '時間/月', 1200);
+
+  document.getElementById('resetBtn').style.display = 'inline-block';
+  running = false;
+}
+
+function resetFlow() {
+  for (let i = 0; i < 5; i++) {
+    const s = document.getElementById('step' + i);
+    s.classList.remove('active', 'done');
+    document.getElementById('status' + i).textContent = '待機中';
+    document.getElementById('status' + i).className = 'step-status status-waiting';
+    const prog = document.getElementById('prog' + i);
+    prog.style.transition = 'none';
+    prog.style.width = '0%';
+    const arrow = document.getElementById('arrow' + (i - 1));
+    if (arrow) arrow.classList.remove('active');
+  }
+  document.getElementById('results').classList.remove('visible');
+  document.getElementById('resetBtn').style.display = 'none';
+  document.getElementById('startBtn').disabled = false;
+  document.getElementById('logArea').innerHTML = '<div class="log-line">システム待機中... スタートボタンを押してください</div>';
+
+  // カウンターリセット
+  document.getElementById('statTime').innerHTML = '0<span class="stat-unit">秒</span>';
+  document.getElementById('statZero').innerHTML = '0<span class="stat-unit">件</span>';
+  document.getElementById('statH').innerHTML = '0<span class="stat-unit">時間/月</span>';
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function countUp(id, from, to, unit, duration) {
+  const el = document.getElementById(id);
+  const start = performance.now();
+  function frame(now) {
+    const p = Math.min((now - start) / duration, 1);
+    const val = Math.round(from + (to - from) * easeOut(p));
+    el.innerHTML = val + '<span class="stat-unit">' + unit + '</span>';
+    if (p < 1) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+</script>
+</body>
+</html>

@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>〇〇製薬 在庫・製造管理｜Webアプリ デモ</title>
+<style>
+  :root{
+    --ink:#17222E;
+    --ink-2:#3A4A5A;
+    --muted:#6B7C8C;
+    --line:#E1E7ED;
+    --paper:#EEF2F5;
+    --surface:#FFFFFF;
+    --brand:#0F766E;        /* medicinal teal */
+    --brand-ink:#0B5C56;
+    --brand-soft:#E3F2EF;
+    --amber:#C77A0A;
+    --amber-soft:#FBEFD8;
+    --red:#C4443B;
+    --red-soft:#FBE4E2;
+    --slate:#8497A8;
+    --radius:14px;
+    --shadow:0 1px 2px rgba(20,32,44,.05), 0 6px 20px rgba(20,32,44,.06);
+    --mono:"SFMono-Regular",Menlo,Consolas,"Roboto Mono",monospace;
+    --sans:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic UI",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:var(--sans);
+    color:var(--ink);
+    background:var(--paper);
+    -webkit-font-smoothing:antialiased;
+    line-height:1.5;
+  }
+  button{font-family:inherit}
+
+  /* ---------- shell ---------- */
+  .app{display:flex;min-height:100vh}
+  .rail{
+    width:236px;flex:0 0 236px;
+    background:var(--ink);
+    color:#C6D2DC;
+    display:flex;flex-direction:column;
+    position:sticky;top:0;height:100vh;
+  }
+  .brand{
+    padding:20px 20px 16px;
+    display:flex;align-items:center;gap:11px;
+    border-bottom:1px solid rgba(255,255,255,.08);
+  }
+  .brand .mark{
+    width:34px;height:34px;border-radius:9px;
+    background:linear-gradient(135deg,var(--brand),#14b8a6);
+    display:grid;place-items:center;color:#fff;font-weight:700;font-size:15px;
+    box-shadow:0 4px 12px rgba(15,118,110,.4);
+  }
+  .brand .t{font-size:14px;font-weight:700;color:#fff;letter-spacing:.02em}
+  .brand .s{font-size:11px;color:#7E93A4}
+  .nav{padding:12px 12px;flex:1;overflow:auto}
+  .nav .grp{font-size:10.5px;letter-spacing:.14em;color:#5E7383;
+    text-transform:uppercase;padding:14px 10px 6px;font-weight:700}
+  .nav a{
+    display:flex;align-items:center;gap:11px;
+    padding:10px 11px;border-radius:9px;
+    color:#B7C5D0;text-decoration:none;font-size:13.5px;font-weight:500;
+    cursor:pointer;margin-bottom:1px;transition:.13s;
+  }
+  .nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+  .nav a.on{background:var(--brand);color:#fff;box-shadow:0 2px 10px rgba(15,118,110,.35)}
+  .nav a .ico{width:19px;text-align:center;font-size:15px;opacity:.9}
+  .nav a .who{margin-left:auto;font-size:9.5px;font-weight:700;letter-spacing:.03em;
+    padding:2px 6px;border-radius:20px;background:rgba(255,255,255,.1);color:#9FB2C0}
+  .nav a.on .who{background:rgba(255,255,255,.2);color:#EAF3F1}
+
+  .railfoot{padding:14px 16px;border-top:1px solid rgba(255,255,255,.08);
+    font-size:11px;color:#6C808F;display:flex;align-items:center;gap:8px}
+  .railfoot .dot{width:7px;height:7px;border-radius:50%;background:#3BB58A}
+
+  .main{flex:1;min-width:0;display:flex;flex-direction:column}
+  .topbar{
+    background:var(--surface);border-bottom:1px solid var(--line);
+    padding:0 24px;height:58px;display:flex;align-items:center;gap:16px;
+    position:sticky;top:0;z-index:20;
+  }
+  .topbar .crumb{font-size:12px;color:var(--muted)}
+  .topbar h1{font-size:16px;margin:0;font-weight:700}
+  .topbar .search{
+    margin-left:auto;background:var(--paper);border:1px solid var(--line);
+    border-radius:9px;padding:8px 12px;font-size:13px;color:var(--muted);
+    width:230px;display:flex;align-items:center;gap:8px
+  }
+  .topbar .search input{border:0;background:transparent;outline:0;font-size:13px;width:100%;color:var(--ink)}
+  .topbar .me{width:34px;height:34px;border-radius:50%;background:var(--brand-soft);
+    color:var(--brand-ink);display:grid;place-items:center;font-weight:700;font-size:13px}
+
+  .view{padding:24px;max-width:1120px;width:100%;margin:0 auto;animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .pagehead{margin-bottom:18px}
+  .pagehead h2{margin:0 0 3px;font-size:20px;font-weight:700}
+  .pagehead p{margin:0;color:var(--muted);font-size:13px}
+
+  /* ---------- cards / kpi ---------- */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+  .kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px 18px;box-shadow:var(--shadow)}
+  .kpi .lab{font-size:12px;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:6px}
+  .kpi .num{font-size:28px;font-weight:800;letter-spacing:-.02em;margin-top:6px;font-variant-numeric:tabular-nums}
+  .kpi .num small{font-size:14px;font-weight:600;color:var(--muted);margin-left:2px}
+  .kpi .sub{font-size:11.5px;color:var(--slate);margin-top:3px}
+  .kpi.alert{background:var(--red-soft);border-color:#F2CFCB}
+  .kpi.alert .num{color:var(--red)}
+  .kpi.alert .lab{color:#A93A32}
+
+  .grid2{display:grid;grid-template-columns:1.5fr 1fr;gap:18px}
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);overflow:hidden}
+  .panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+  .panel .ph h3{margin:0;font-size:14px;font-weight:700}
+  .panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);cursor:pointer;font-weight:600}
+  .panel .pb{padding:6px 0}
+
+  /* ---------- order / lot cards ---------- */
+  .lotlist{display:flex;flex-direction:column}
+  .lotrow{display:flex;align-items:center;gap:16px;padding:15px 18px;
+    border-bottom:1px solid var(--line);cursor:pointer;transition:.12s}
+  .lotrow:last-child{border-bottom:0}
+  .lotrow:hover{background:#F7FAFB}
+  .lotcode{font-family:var(--mono);font-weight:700;font-size:15px;letter-spacing:.02em;min-width:74px}
+  .lotmeta{min-width:150px}
+  .lotmeta .prod{font-size:13.5px;font-weight:600}
+  .lotmeta .date{font-size:11.5px;color:var(--muted);font-family:var(--mono)}
+
+  /* stepper */
+  .stepper{display:flex;align-items:center;flex:1;gap:0;min-width:0}
+  .step{display:flex;flex-direction:column;align-items:center;gap:5px;flex:1;position:relative}
+  .step .bub{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;
+    font-size:12px;font-weight:700;background:var(--paper);color:var(--slate);
+    border:2px solid var(--line);z-index:2}
+  .step.done .bub{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .step.active .bub{background:var(--amber);color:#fff;border-color:var(--amber);
+    box-shadow:0 0 0 4px var(--amber-soft)}
+  .step .lb{font-size:10px;color:var(--muted);white-space:nowrap;font-weight:600}
+  .step.done .lb,.step.active .lb{color:var(--ink)}
+  .step::before{content:"";position:absolute;top:13px;left:-50%;width:100%;height:2px;
+    background:var(--line);z-index:1}
+  .step:first-child::before{display:none}
+  .step.done::before,.step.active::before{background:var(--brand)}
+
+  .badge{font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap}
+  .b-run{background:var(--amber-soft);color:var(--amber)}
+  .b-done{background:var(--brand-soft);color:var(--brand-ink)}
+  .b-wait{background:var(--paper);color:var(--muted)}
+  .lotrow .badge{min-width:56px;text-align:center}
+
+  /* alert list */
+  .alist{padding:4px 0}
+  .arow{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line)}
+  .arow:last-child{border-bottom:0}
+  .arow .ai{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;font-size:15px}
+  .arow.lo .ai{background:var(--red-soft)}
+  .arow.mid .ai{background:var(--amber-soft)}
+  .arow .an{font-size:13px;font-weight:600}
+  .arow .as{font-size:11.5px;color:var(--muted)}
+  .arow .aq{margin-left:auto;text-align:right}
+  .arow .aq .v{font-family:var(--mono);font-weight:700;font-size:14px}
+  .arow.lo .aq .v{color:var(--red)}
+  .arow .aq .u{font-size:10.5px;color:var(--muted)}
+
+  /* ---------- process tiles (現場) ---------- */
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:8px}
+  .tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:22px 18px;box-shadow:var(--shadow);cursor:pointer;transition:.14s;text-align:left}
+  .tile:hover{border-color:var(--brand);transform:translateY(-2px);box-shadow:0 8px 24px rgba(15,118,110,.13)}
+  .tile .ti{width:46px;height:46px;border-radius:12px;background:var(--brand-soft);
+    display:grid;place-items:center;font-size:22px;margin-bottom:12px}
+  .tile h3{margin:0 0 3px;font-size:16px;font-weight:700}
+  .tile p{margin:0;font-size:12px;color:var(--muted)}
+  .tile .st{margin-top:11px;font-size:11px;font-weight:700;color:var(--brand);
+    display:flex;align-items:center;gap:5px}
+
+  /* ---------- form ---------- */
+  .formwrap{max-width:640px}
+  .field{margin-bottom:17px}
+  .field label{display:block;font-size:12.5px;font-weight:700;margin-bottom:6px;color:var(--ink-2)}
+  .field label .req{color:var(--red);margin-left:3px}
+  .field input,.field select,.field textarea{
+    width:100%;padding:11px 13px;border:1.5px solid var(--line);border-radius:10px;
+    font-size:14px;font-family:inherit;color:var(--ink);background:var(--surface);outline:0;transition:.13s}
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--brand);
+    box-shadow:0 0 0 3px var(--brand-soft)}
+  .field .hint{font-size:11px;color:var(--muted);margin-top:5px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .toggle{display:flex;gap:8px}
+  .toggle button{flex:1;padding:11px;border:1.5px solid var(--line);background:var(--surface);
+    border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;color:var(--muted);transition:.13s}
+  .toggle button.sel{border-color:var(--brand);background:var(--brand-soft);color:var(--brand-ink)}
+  .ocr{background:var(--brand-soft);border:1px dashed var(--brand);border-radius:12px;
+    padding:16px;display:flex;align-items:center;gap:13px;margin-bottom:18px;cursor:pointer}
+  .ocr .oi{font-size:26px}
+  .ocr .ot{font-size:13.5px;font-weight:700;color:var(--brand-ink)}
+  .ocr .os{font-size:11.5px;color:var(--brand-ink);opacity:.75}
+  .actions{display:flex;gap:10px;margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
+  .btn{padding:12px 22px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;border:0;transition:.13s}
+  .btn.pri{background:var(--brand);color:#fff}
+  .btn.pri:hover{background:var(--brand-ink)}
+  .btn.gho{background:var(--surface);color:var(--ink-2);border:1.5px solid var(--line)}
+  .btn.gho:hover{background:var(--paper)}
+
+  /* ---------- inventory table + tabs ---------- */
+  .tabs{display:flex;gap:4px;margin-bottom:18px;background:var(--surface);
+    padding:5px;border-radius:12px;border:1px solid var(--line);width:fit-content}
+  .tabs button{padding:9px 18px;border:0;background:transparent;border-radius:8px;
+    font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;transition:.13s}
+  .tabs button.on{background:var(--brand);color:#fff}
+  table{width:100%;border-collapse:collapse;background:var(--surface);
+    border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  thead th{text-align:left;font-size:11px;letter-spacing:.05em;text-transform:uppercase;
+    color:var(--muted);font-weight:700;padding:12px 16px;background:#F7FAFB;border-bottom:1px solid var(--line)}
+  tbody td{padding:13px 16px;border-bottom:1px solid var(--line);font-size:13.5px}
+  tbody tr:last-child td{border-bottom:0}
+  tbody tr:hover{background:#F7FAFB}
+  td.code{font-family:var(--mono);font-weight:700}
+  td.qty{font-family:var(--mono);font-weight:700;font-variant-numeric:tabular-nums}
+  .stk{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700}
+  .stk .bar{width:60px;height:6px;border-radius:4px;background:var(--paper);overflow:hidden}
+  .stk .bar i{display:block;height:100%;border-radius:4px}
+
+  /* master menu */
+  .mlist{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+  .mrow{background:var(--surface);border:1px solid var(--line);border-radius:12px;
+    padding:16px 18px;display:flex;align-items:center;gap:14px;cursor:pointer;
+    box-shadow:var(--shadow);transition:.13s}
+  .mrow:hover{border-color:var(--brand)}
+  .mrow .mi{width:40px;height:40px;border-radius:10px;background:var(--brand-soft);
+    display:grid;place-items:center;font-size:18px}
+  .mrow .mt{font-size:14px;font-weight:700}
+  .mrow .ms{font-size:11.5px;color:var(--muted)}
+  .mrow .mc{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--slate);font-weight:700}
+
+  /* toast */
+  .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--ink);color:#fff;padding:13px 22px;border-radius:11px;font-size:13.5px;
+    font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,.25);opacity:0;pointer-events:none;
+    transition:.28s;display:flex;align-items:center;gap:10px;z-index:100}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast .tk{width:22px;height:22px;border-radius:50%;background:var(--brand);
+    display:grid;place-items:center;font-size:13px}
+
+  .rolehint{background:var(--brand-soft);border:1px solid #BFE0DA;border-radius:11px;
+    padding:11px 15px;font-size:12.5px;color:var(--brand-ink);margin-bottom:18px;
+    display:flex;align-items:center;gap:9px}
+  .rolehint b{font-weight:800}
+
+  /* mobile */
+  .mtab{display:none}
+  @media(max-width:860px){
+    .rail{display:none}
+    .kpis{grid-template-columns:1fr 1fr}
+    .grid2{grid-template-columns:1fr}
+    .tiles{grid-template-columns:1fr}
+    .mlist{grid-template-columns:1fr}
+    .row2{grid-template-columns:1fr}
+    .topbar .search{display:none}
+    .view{padding:16px 14px 84px}
+    .lotrow{flex-wrap:wrap}
+    .stepper{order:5;width:100%;flex:1 1 100%;margin-top:6px}
+    .mtab{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--surface);
+      border-top:1px solid var(--line);z-index:40;padding:6px 4px 8px}
+    .mtab a{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+      padding:6px;color:var(--muted);text-decoration:none;font-size:10px;font-weight:600;cursor:pointer}
+    .mtab a.on{color:var(--brand)}
+    .mtab a .mi{font-size:19px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- sidebar -->
+  <aside class="rail">
+    <div class="brand">
+      <div class="mark">宇</div>
+      <div>
+        <div class="t">〇〇製薬</div>
+        <div class="s">在庫・製造管理</div>
+      </div>
+    </div>
+    <nav class="nav" id="nav">
+      <div class="grp">現場</div>
+      <a data-v="dash" class="on"><span class="ico">◧</span>ダッシュボード<span class="who">経営</span></a>
+      <a data-v="orders"><span class="ico">▤</span>製造指図<span class="who">全員</span></a>
+      <a data-v="process"><span class="ico">⚗</span>工程入力<span class="who">現場</span></a>
+      <div class="grp">在庫・データ</div>
+      <a data-v="inv"><span class="ico">▦</span>在庫一覧<span class="who">生産管理</span></a>
+      <a data-v="master"><span class="ico">⚙</span>マスタ<span class="who">生産管理</span></a>
+    </nav>
+    <div class="railfoot"><span class="dot"></span>デモ版（モックデータ）</div>
+  </aside>
+
+  <!-- main -->
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div class="crumb" id="crumb">現場</div>
+        <h1 id="ptitle">ダッシュボード</h1>
+      </div>
+      <div class="search">🔍<input placeholder="ロット・製品を検索"></div>
+      <div class="me">田</div>
+    </div>
+    <div id="stage"></div>
+  </div>
+</div>
+
+<!-- mobile tab -->
+<nav class="mtab" id="mtab">
+  <a data-v="dash" class="on"><span class="mi">◧</span>状況</a>
+  <a data-v="orders"><span class="mi">▤</span>指図</a>
+  <a data-v="process"><span class="mi">⚗</span>入力</a>
+  <a data-v="inv"><span class="mi">▦</span>在庫</a>
+  <a data-v="master"><span class="mi">⚙</span>マスタ</a>
+</nav>
+
+<div class="toast" id="toast"><span class="tk">✓</span><span id="toastmsg"></span></div>
+
+<script>
+/* ---------- mock data ---------- */
+const STEPS = ["入荷","粉砕","溶解","乾燥","包装","製品"];
+const orders = [
+  {code:"4E88-1", prod:"活性炭 K-2",   date:"2024/05/14", stage:4, status:"run"},
+  {code:"4E78-1", prod:"塩化カリウム",  date:"2024/04/30", stage:3, status:"run"},
+  {code:"4D93-1", prod:"活性炭 K-2",   date:"2024/04/18", stage:6, status:"done"},
+  {code:"4B99-1", prod:"塩化カリウム",  date:"2024/02/23", stage:6, status:"done"},
+  {code:"2C98-1", prod:"活性炭 F-1",   date:"2022/03/24", stage:2, status:"run"},
+  {code:"3L90-1", prod:"塩化カリウム",  date:"2023/12/15", stage:6, status:"done"},
+  {code:"3D79-1", prod:"活性炭 K-2",   date:"2023/04/05", stage:6, status:"done"},
+  {code:"2J81-1", prod:"塩化カリウム",  date:"2022/10/07", stage:6, status:"done"},
+];
+const inv = {
+  raw:[
+    {code:"RM-KCL", name:"塩化カリウム", stock:1240, unit:"kg", max:2000},
+    {code:"RM-AC1", name:"活性炭 F-1",  stock:85,   unit:"kg", max:600},
+    {code:"RM-AC2", name:"活性炭 K-2",  stock:430,  unit:"kg", max:800},
+    {code:"RM-NA",  name:"炭酸ナトリウム", stock:660, unit:"kg", max:1000},
+  ],
+  prod:[
+    {code:"P-KCL10", name:"塩化カリウム 10kg袋", stock:52, unit:"袋", max:120},
+    {code:"P-AC205", name:"活性炭 K-2 5kg袋",   stock:8,  unit:"袋", max:80},
+    {code:"P-AC201", name:"活性炭 F-1 5kg袋",   stock:34, unit:"袋", max:80},
+  ],
+  inner:[
+    {code:"IB-500", name:"内袋 500×700", stock:1800, unit:"枚", max:5000},
+    {code:"IB-300", name:"内袋 300×450", stock:240,  unit:"枚", max:3000},
+  ],
+  outer:[
+    {code:"OB-KR", name:"外袋 クラフト 10kg", stock:420, unit:"枚", max:2000},
+    {code:"OB-PP", name:"外袋 PP 5kg",       stock:90,  unit:"枚", max:1500},
+  ]
+};
+const masters = [
+  {i:"🏢",t:"納品先マスタ",s:"出荷先の企業・住所",c:"38 件"},
+  {i:"💊",t:"製品マスタ",s:"完成品の規格・グレード",c:"24 件"},
+  {i:"🏷",t:"品名マスタ",s:"表示名の対応表",c:"31 件"},
+  {i:"⚗",t:"原材料マスタ",s:"原料コード・入荷単位",c:"12 件"},
+  {i:"📦",t:"外袋マスタ",s:"外装資材の規格",c:"9 件"},
+  {i:"🛍",t:"内袋マスタ",s:"内装資材の規格",c:"7 件"},
+];
+
+/* ---------- render helpers ---------- */
+const $ = s=>document.querySelector(s);
+const stage = $("#stage");
+
+function stepper(cur){
+  return `<div class="stepper">`+STEPS.map((s,i)=>{
+    const n=i+1;
+    let cls = n<cur?"done" : n===cur?"active":"";
+    const mark = n<cur?"✓":n;
+    return `<div class="step ${cls}"><div class="bub">${mark}</div><div class="lb">${s}</div></div>`;
+  }).join("")+`</div>`;
+}
+function badge(st){
+  if(st==="run")  return `<span class="badge b-run">製造中</span>`;
+  if(st==="done") return `<span class="badge b-done">完了</span>`;
+  return `<span class="badge b-wait">待機</span>`;
+}
+function stkbar(o){
+  const pct = Math.round(o.stock/o.max*100);
+  const col = pct<15?"var(--red)":pct<35?"var(--amber)":"var(--brand)";
+  return `<span class="stk"><span class="bar"><i style="width:${Math.max(pct,4)}%;background:${col}"></i></span>${pct}%</span>`;
+}
+
+/* ---------- views ---------- */
+const views = {
+  dash(){
+    const running = orders.filter(o=>o.status==="run");
+    const low = [...inv.raw,...inv.prod,...inv.inner,...inv.outer]
+      .map(o=>({...o,pct:o.stock/o.max})).filter(o=>o.pct<0.2).sort((a,b)=>a.pct-b.pct);
+    return `
+      <div class="view">
+        <div class="rolehint">👀 <b>経営・工場長</b>は、この画面を開くだけ。入力も操作も不要 ― 見る人はシステムを触らない設計です。</div>
+        <div class="kpis">
+          <div class="kpi"><div class="lab">📋 製造中ロット</div><div class="num">${running.length}<small>件</small></div><div class="sub">本日稼働中</div></div>
+          <div class="kpi"><div class="lab">✅ 今月完了</div><div class="num">14<small>件</small></div><div class="sub">先月比 +3</div></div>
+          <div class="kpi"><div class="lab">📦 出荷待ち</div><div class="num">6<small>件</small></div><div class="sub">3営業日以内</div></div>
+          <div class="kpi alert"><div class="lab">⚠ 在庫アラート</div><div class="num">${low.length}<small>品目</small></div><div class="sub">要発注</div></div>
+        </div>
+        <div class="grid2">
+          <div class="panel">
+            <div class="ph"><h3>製造中のロット</h3><span class="more" data-go="orders">すべて見る →</span></div>
+            <div class="pb lotlist">
+              ${running.map(o=>`
+                <div class="lotrow" data-go="orders">
+                  <div class="lotcode">${o.code}</div>
+                  <div class="lotmeta"><div class="prod">${o.prod}</div><div class="date">${o.date} 指図</div></div>
+                  ${stepper(o.stage)}
+                </div>`).join("")}
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>在庫アラート</h3><span class="more" data-go="inv">在庫へ →</span></div>
+            <div class="alist">
+              ${low.map(o=>{
+                const lo=o.pct<0.12;
+                return `<div class="arow ${lo?'lo':'mid'}">
+                  <div class="ai">${lo?'🔴':'🟠'}</div>
+                  <div><div class="an">${o.name}</div><div class="as">${o.code}</div></div>
+                  <div class="aq"><div class="v">${o.stock.toLocaleString()}</div><div class="u">${o.unit} 残</div></div>
+                </div>`;
+              }).join("")}
+            </div>
+          </div>
+        </div>
+      </div>`;
+  },
+
+  orders(){
+    return `
+      <div class="view">
+        <div class="pagehead"><h2>製造指図一覧</h2><p>ロットごとの工程進捗が一目で分かります。行をタップで詳細（デモ）。</p></div>
+        <div class="panel">
+          <div class="pb lotlist">
+            ${orders.map(o=>`
+              <div class="lotrow" onclick="toast('${o.code} の工程詳細を開きます（デモ）')">
+                <div class="lotcode">${o.code}</div>
+                <div class="lotmeta"><div class="prod">${o.prod}</div><div class="date">${o.date}</div></div>
+                ${stepper(o.stage)}
+                ${badge(o.status)}
+              </div>`).join("")}
+          </div>
+        </div>
+      </div>`;
+  },
+
+  process(){
+    const tiles=[
+      {i:"📥",t:"原材料入荷登録",s:"入荷した原料のロット・数量",st:"3件 未処理"},
+      {i:"🔨",t:"粉砕結果入力",s:"粉砕工程の実績",st:"2件 進行中"},
+      {i:"💧",t:"溶解結果入力",s:"溶解工程の実績",st:"1件 進行中"},
+      {i:"🌡",t:"乾燥結果入力",s:"乾燥温度・時間・水分",st:"OCR対応"},
+      {i:"📦",t:"包装結果入力",s:"内袋・外袋・製品数",st:"待機中"},
+      {i:"🚚",t:"出荷指示",s:"納品先・出荷ロット",st:"6件 出荷待ち"},
+    ];
+    return `
+      <div class="view">
+        <div class="rolehint">🔧 <b>現場スタッフ</b>は、この6つのタイルだけ。マスタもシステム設定も見えません。タブレットで大きくタップできます。</div>
+        <div class="tiles">
+          ${tiles.map((t,i)=>`
+            <button class="tile" onclick="${i===3?"showView('form')":`toast('${t.t}（デモ）')`}">
+              <div class="ti">${t.i}</div>
+              <h3>${t.t}</h3><p>${t.s}</p>
+              <div class="st">● ${t.st}</div>
+            </button>`).join("")}
+        </div>
+      </div>`;
+  },
+
+  form(){
+    return `
+      <div class="view">
+        <div class="pagehead"><h2>乾燥結果入力</h2><p>ロット 4E88-1 ／ 活性炭 K-2 の乾燥工程</p></div>
+        <div class="formwrap">
+          <div class="ocr" onclick="toast('計器の写真からOCRで自動入力（デモ）')">
+            <div class="oi">📷</div>
+            <div><div class="ot">計器の写真から自動入力</div><div class="os">乾燥機パネルを撮影 → 温度・時間を自動読取（OCR）</div></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label>対象ロット<span class="req">*</span></label>
+              <select><option>4E88-1 ／ 活性炭 K-2</option><option>4E78-1 ／ 塩化カリウム</option></select></div>
+            <div class="field"><label>作業日時<span class="req">*</span></label><input type="text" value="2024/05/16 09:20"></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label>乾燥温度 (℃)<span class="req">*</span></label><input type="number" placeholder="例：80"></div>
+            <div class="field"><label>乾燥時間 (分)<span class="req">*</span></label><input type="number" placeholder="例：120"></div>
+          </div>
+          <div class="field"><label>乾燥後 水分値 (%)<span class="req">*</span></label><input type="number" placeholder="例：4.2"></div>
+          <div class="field"><label>外観 判定</label>
+            <div class="toggle">
+              <button class="sel" onclick="tog(this)">良好</button>
+              <button onclick="tog(this)">要確認</button>
+              <button onclick="tog(this)">不良</button>
+            </div></div>
+          <div class="field"><label>備考</label><textarea rows="2" placeholder="特記事項があれば入力"></textarea></div>
+          <div class="actions">
+            <button class="btn pri" onclick="toast('乾燥結果を記録しました')">記録する</button>
+            <button class="btn gho" onclick="showView('process')">戻る</button>
+          </div>
+        </div>
+      </div>`;
+  },
+
+  inv(){
+    const tab = state.invtab;
+    const map={raw:"原材料",prod:"製品",inner:"内袋",outer:"外袋"};
+    const rows = inv[tab];
+    return `
+      <div class="view">
+        <div class="pagehead"><h2>在庫一覧</h2><p>生産管理が全件を確認。数量は工程実績から自動集計されます。</p></div>
+        <div class="tabs">
+          ${Object.keys(map).map(k=>`<button class="${k===tab?'on':''}" onclick="setTab('${k}')">${map[k]}</button>`).join("")}
+        </div>
+        <table>
+          <thead><tr><th>コード</th><th>品名</th><th>在庫数</th><th style="width:130px">充足率</th><th>状態</th></tr></thead>
+          <tbody>
+            ${rows.map(o=>{
+              const pct=o.stock/o.max;
+              const st=pct<0.15?`<span class="badge b-run" style="background:var(--red-soft);color:var(--red)">要発注</span>`
+                      :pct<0.35?`<span class="badge b-run">少なめ</span>`:`<span class="badge b-done">十分</span>`;
+              return `<tr>
+                <td class="code">${o.code}</td>
+                <td>${o.name}</td>
+                <td class="qty">${o.stock.toLocaleString()} <span style="color:var(--muted);font-weight:500">${o.unit}</span></td>
+                <td>${stkbar(o)}</td>
+                <td>${st}</td>
+              </tr>`;
+            }).join("")}
+          </tbody>
+        </table>
+      </div>`;
+  },
+
+  master(){
+    return `
+      <div class="view">
+        <div class="rolehint">⚙ <b>生産管理</b>だけがマスタを管理。設定値は全てここに集約 ― コードに埋め込みません。</div>
+        <div class="pagehead"><h2>マスタメニュー</h2><p>基準データの管理。現場スタッフには表示されません。</p></div>
+        <div class="mlist">
+          ${masters.map(m=>`
+            <div class="mrow" onclick="toast('${m.t}を開きます（デモ）')">
+              <div class="mi">${m.i}</div>
+              <div><div class="mt">${m.t}</div><div class="ms">${m.s}</div></div>
+              <div class="mc">${m.c}</div>
+            </div>`).join("")}
+        </div>
+      </div>`;
+  }
+};
+
+/* ---------- state + nav ---------- */
+const state={view:"dash",invtab:"raw"};
+const titles={dash:["現場","ダッシュボード"],orders:["現場","製造指図一覧"],
+  process:["現場","工程入力"],form:["現場","乾燥結果入力"],
+  inv:["在庫・データ","在庫一覧"],master:["在庫・データ","マスタメニュー"]};
+
+function showView(v){
+  state.view=v;
+  stage.innerHTML=views[v]();
+  $("#crumb").textContent=titles[v][0];
+  $("#ptitle").textContent=titles[v][1];
+  const navKey = v==="form"?"process":v;
+  document.querySelectorAll("#nav a,#mtab a").forEach(a=>a.classList.toggle("on",a.dataset.v===navKey));
+  // delegate "見る" links
+  stage.querySelectorAll("[data-go]").forEach(el=>el.onclick=()=>showView(el.dataset.go));
+  window.scrollTo(0,0);
+}
+function setTab(k){state.invtab=k;showView("inv");}
+function tog(b){b.parentElement.querySelectorAll("button").forEach(x=>x.classList.remove("sel"));b.classList.add("sel");}
+
+let tt;
+function toast(msg){
+  $("#toastmsg").textContent=msg;$("#toast").classList.add("show");
+  clearTimeout(tt);tt=setTimeout(()=>$("#toast").classList.remove("show"),2200);
+}
+
+document.querySelectorAll("#nav a,#mtab a").forEach(a=>{
+  a.addEventListener("click",()=>showView(a.dataset.v));
+});
+showView("dash");
+</script>
+</body>
+</html>

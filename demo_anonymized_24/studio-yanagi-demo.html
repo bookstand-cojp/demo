@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>〇〇スタジオ｜顧客台帳</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#241F21;
+    --ink-soft:#4A4245;
+    --paper:#FBF7F1;
+    --paper-deep:#F1E9DD;
+    --paper-card:#FFFDFA;
+    --plum:#7A2E3E;
+    --plum-soft:#F4E3E6;
+    --gold:#A98552;
+    --gold-soft:#F1E7D6;
+    --moss:#69735F;
+    --moss-soft:#E6EAE1;
+    --line:#E2D9CC;
+    --radius:10px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family:'Zen Kaku Gothic New', 'Hiragino Kaku Gothic ProN', sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mincho{ font-family:'Shippori Mincho', serif; }
+
+  /* ===== レイアウト ===== */
+  .app{ min-height:100vh; display:flex; flex-direction:column; }
+
+  header.top{
+    background:var(--ink);
+    color:var(--paper);
+    padding:22px 28px 20px;
+    position:relative;
+    overflow:hidden;
+  }
+  header.top::after{
+    content:"";
+    position:absolute; inset:0;
+    background:
+      repeating-linear-gradient(115deg, rgba(250,246,240,0.035) 0 1px, transparent 1px 26px);
+    pointer-events:none;
+  }
+  .brand-row{ display:flex; align-items:baseline; justify-content:space-between; gap:16px; position:relative; z-index:1; flex-wrap:wrap; }
+  .brand{ display:flex; align-items:baseline; gap:14px; }
+  .brand .mark{
+    font-family:'Shippori Mincho', serif;
+    font-size:1.5rem; font-weight:700; letter-spacing:0.08em;
+  }
+  .brand .sub{ font-size:0.74rem; letter-spacing:0.22em; color:#C9BEB5; }
+  .today-tag{
+    font-size:0.76rem; color:#D9CFC4; letter-spacing:0.04em;
+    border:1px solid rgba(217,207,196,0.35); border-radius:99px; padding:5px 14px;
+  }
+
+  nav.tabs{
+    display:flex; gap:2px; margin-top:20px; position:relative; z-index:1;
+  }
+  nav.tabs button{
+    font-family:inherit; font-size:0.92rem; font-weight:700;
+    color:#C9BEB5; background:none; border:none; cursor:pointer;
+    padding:10px 18px 12px; letter-spacing:0.02em;
+    border-bottom:2px solid transparent;
+    transition:color .15s, border-color .15s;
+  }
+  nav.tabs button .num{
+    font-family:'Zen Kaku Gothic New',sans-serif; font-weight:900; font-size:0.72rem;
+    background:rgba(250,246,240,0.14); color:#F1EAE2;
+    border-radius:99px; padding:1px 7px; margin-left:7px;
+  }
+  nav.tabs button.active{ color:var(--paper); border-color:var(--gold); }
+  nav.tabs button:hover{ color:var(--paper); }
+
+  main{ flex:1; max-width:1080px; width:100%; margin:0 auto; padding:34px 28px 80px; }
+  .view{ display:none; animation:fade .35s ease; }
+  .view.active{ display:block; }
+  @keyframes fade{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+
+  .view-head{ margin-bottom:26px; }
+  .eyebrow{
+    font-size:0.72rem; letter-spacing:0.24em; color:var(--plum); font-weight:700;
+    display:flex; align-items:center; gap:8px; margin-bottom:8px;
+  }
+  .eyebrow::before{ content:""; width:16px; height:1px; background:var(--plum); display:inline-block; }
+  h1{
+    font-family:'Shippori Mincho', serif; font-weight:700;
+    font-size:1.7rem; letter-spacing:0.02em; margin-bottom:6px;
+  }
+  .lead{ color:var(--ink-soft); font-size:0.92rem; max-width:56ch; }
+
+  /* ===== ご案内リスト（ヒーロー機能） ===== */
+  .event-tabs{ display:flex; gap:10px; margin:22px 0 20px; flex-wrap:wrap; }
+  .event-tab{
+    font-family:inherit; font-size:0.84rem; font-weight:700;
+    border:1px solid var(--line); background:var(--paper-card);
+    border-radius:99px; padding:8px 16px 8px 12px; cursor:pointer;
+    display:flex; align-items:center; gap:8px; color:var(--ink-soft);
+    transition:all .15s;
+  }
+  .event-tab .dot{ width:8px; height:8px; border-radius:50%; }
+  .event-tab[data-cat="shichigosan"] .dot{ background:var(--plum); }
+  .event-tab[data-cat="birthday"] .dot{ background:var(--gold); }
+  .event-tab[data-cat="anniv"] .dot{ background:var(--moss); }
+  .event-tab.active{ border-color:var(--ink); color:var(--ink); background:var(--paper-deep); }
+  .event-tab .count{ font-weight:900; }
+
+  .karte-grid{ display:flex; flex-direction:column; gap:14px; }
+
+  .karte-card{
+    background:var(--paper-card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:20px 22px 20px 26px;
+    position:relative;
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:14px 20px;
+    align-items:start;
+  }
+  /* 和綴じ（書物の綴じ糸）風の左端ステッチ — このデモのシグネチャ */
+  .karte-card::before{
+    content:"";
+    position:absolute; left:0; top:10px; bottom:10px; width:8px;
+    background-image: radial-gradient(circle, var(--line) 1.6px, transparent 1.7px);
+    background-size:8px 13px;
+    background-repeat:repeat-y;
+    background-position:2px 0;
+  }
+  .karte-card[data-cat="shichigosan"]::before{ background-image: radial-gradient(circle, var(--plum) 1.6px, transparent 1.7px); opacity:.55;}
+  .karte-card[data-cat="birthday"]::before{ background-image: radial-gradient(circle, var(--gold) 1.6px, transparent 1.7px); opacity:.7;}
+  .karte-card[data-cat="anniv"]::before{ background-image: radial-gradient(circle, var(--moss) 1.6px, transparent 1.7px); opacity:.6;}
+
+  .karte-top{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:6px; }
+  .cat-badge{
+    font-size:0.68rem; font-weight:700; letter-spacing:0.06em;
+    padding:3px 10px; border-radius:99px;
+  }
+  .cat-badge.shichigosan{ background:var(--plum-soft); color:var(--plum); }
+  .cat-badge.birthday{ background:var(--gold-soft); color:#8A6B3D; }
+  .cat-badge.anniv{ background:var(--moss-soft); color:var(--moss); }
+  .date-chip{ font-size:0.78rem; color:var(--ink-soft); }
+
+  .fam-name{ font-family:'Shippori Mincho', serif; font-size:1.18rem; font-weight:700; }
+  .fam-name .nickname{ font-family:'Zen Kaku Gothic New',sans-serif; font-weight:500; font-size:0.86rem; color:var(--plum); margin-left:8px; }
+
+  .karte-memo{
+    margin-top:9px; font-size:0.85rem; color:var(--ink-soft);
+    background:var(--paper-deep); border-radius:8px; padding:10px 13px;
+    max-width:52ch;
+  }
+  .karte-memo b{ color:var(--ink); font-weight:700; }
+
+  .karte-actions{ display:flex; flex-direction:column; gap:8px; align-items:stretch; min-width:150px; }
+  .btn{
+    font-family:inherit; font-size:0.84rem; font-weight:700;
+    border-radius:8px; padding:10px 16px; cursor:pointer; border:1px solid transparent;
+    text-align:center; transition:opacity .15s, transform .1s;
+  }
+  .btn:active{ transform:scale(0.97); }
+  .btn-line{ background:#06C755; color:white; display:flex; align-items:center; justify-content:center; gap:6px;}
+  .btn-line:hover{ opacity:0.88; }
+  .btn-ghost{ background:none; border-color:var(--line); color:var(--ink-soft); }
+  .btn-ghost:hover{ border-color:var(--ink); color:var(--ink); }
+
+  .empty{
+    text-align:center; padding:60px 20px; color:var(--ink-soft);
+    border:1px dashed var(--line); border-radius:var(--radius); font-size:0.9rem;
+  }
+
+  /* ===== 顧客一覧 ===== */
+  .search-row{ display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
+  .search-box{
+    flex:1; min-width:220px; position:relative;
+  }
+  .search-box input{
+    width:100%; font-family:inherit; font-size:0.92rem;
+    border:1px solid var(--line); border-radius:8px;
+    padding:11px 14px 11px 38px; background:var(--paper-card);
+  }
+  .search-box input:focus{ outline:none; border-color:var(--plum); }
+  .search-box .icon{ position:absolute; left:13px; top:50%; transform:translateY(-50%); opacity:.5; font-size:0.9rem;}
+
+  table.roster{ width:100%; border-collapse:collapse; background:var(--paper-card); border-radius:var(--radius); overflow:hidden; border:1px solid var(--line); }
+  table.roster th{
+    text-align:left; font-size:0.72rem; letter-spacing:0.1em; color:var(--ink-soft);
+    background:var(--paper-deep); padding:11px 16px; font-weight:700;
+  }
+  table.roster td{ padding:13px 16px; font-size:0.88rem; border-top:1px solid var(--line); }
+  table.roster tr.rowbtn{ cursor:pointer; transition:background .12s; }
+  table.roster tr.rowbtn:hover{ background:var(--paper-deep); }
+  .roster-name{ font-family:'Shippori Mincho', serif; font-weight:700; font-size:0.98rem; }
+  .roster-sub{ color:var(--ink-soft); font-size:0.78rem; margin-top:2px; }
+  .tag-mini{ font-size:0.68rem; font-weight:700; padding:2px 8px; border-radius:99px; background:var(--paper-deep); color:var(--ink-soft); margin-right:4px; display:inline-block;}
+
+  /* ===== カルテ詳細 ===== */
+  .karte-detail{ display:none; }
+  .karte-detail.active{ display:block; }
+  .back-link{
+    font-size:0.82rem; color:var(--plum); cursor:pointer; font-weight:700;
+    display:inline-flex; align-items:center; gap:6px; margin-bottom:18px;
+  }
+  .detail-head{
+    display:flex; justify-content:space-between; align-items:flex-start; gap:20px;
+    flex-wrap:wrap; padding-bottom:20px; border-bottom:1px solid var(--line); margin-bottom:22px;
+  }
+  .detail-head h2{ font-family:'Shippori Mincho', serif; font-size:1.5rem; }
+  .detail-meta{ font-size:0.84rem; color:var(--ink-soft); margin-top:6px; }
+  .family-members{ display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+  .member-chip{
+    font-size:0.78rem; background:var(--paper-deep); border-radius:99px; padding:5px 12px;
+    display:flex; align-items:center; gap:6px;
+  }
+  .member-chip .age-badge{ background:var(--plum); color:white; font-size:0.66rem; font-weight:700; border-radius:99px; padding:1px 7px; }
+
+  .visit-timeline{ display:flex; flex-direction:column; gap:0; margin-top:8px;}
+  .visit-item{ display:grid; grid-template-columns:100px 1fr; gap:16px; padding:16px 0; border-top:1px solid var(--line); }
+  .visit-item:first-child{ border-top:none; }
+  .visit-date{ font-size:0.8rem; color:var(--ink-soft); font-weight:700; }
+  .visit-title{ font-weight:700; margin-bottom:4px; }
+  .visit-note{ font-size:0.86rem; color:var(--ink-soft); background:var(--paper-deep); border-radius:8px; padding:10px 13px; margin-top:6px;}
+  .visit-note .heart{ color:var(--plum); }
+
+  footer.note{
+    text-align:center; padding:26px; font-size:0.76rem; color:#B7ACA0;
+    border-top:1px solid var(--line); background:var(--paper-deep);
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="top">
+    <div class="brand-row">
+      <div class="brand">
+        <span class="mark">〇</span>
+        <span class="sub">STUDIO YANAGI &nbsp;顧客台帳</span>
+      </div>
+      <div class="today-tag" id="todayTag"></div>
+    </div>
+    <nav class="tabs">
+      <button class="active" data-view="guide">ご案内リスト <span class="num" id="guideCount">0</span></button>
+      <button data-view="roster">顧客一覧</button>
+      <button data-view="detail" id="detailTabBtn" style="display:none;">カルテ</button>
+    </nav>
+  </header>
+
+  <main>
+
+    <!-- ============ ①ご案内リスト（本命機能） ============ -->
+    <section class="view active" id="view-guide">
+      <div class="view-head">
+        <div class="eyebrow">今月・来月のお知らせ対象</div>
+        <h1>ご案内リスト</h1>
+        <p class="lead">七五三・お誕生日・結婚記念日が近いご家族です。カルテのメモを確認して、そのままLINEで一報を。</p>
+      </div>
+
+      <div class="event-tabs" id="eventTabs">
+        <button class="event-tab active" data-cat="all">すべて</button>
+        <button class="event-tab" data-cat="shichigosan"><span class="dot"></span>七五三 <span class="count"></span></button>
+        <button class="event-tab" data-cat="birthday"><span class="dot"></span>お誕生日 <span class="count"></span></button>
+        <button class="event-tab" data-cat="anniv"><span class="dot"></span>結婚記念日 <span class="count"></span></button>
+      </div>
+
+      <div class="karte-grid" id="guideList"></div>
+    </section>
+
+    <!-- ============ ②顧客一覧 ============ -->
+    <section class="view" id="view-roster">
+      <div class="view-head">
+        <div class="eyebrow">全顧客</div>
+        <h1>顧客一覧</h1>
+        <p class="lead">お名前・お子様のお名前で検索できます。行をクリックするとカルテを開きます。</p>
+      </div>
+      <div class="search-row">
+        <div class="search-box">
+          <span class="icon">⌕</span>
+          <input type="text" id="rosterSearch" placeholder="お名前・呼び方で検索…">
+        </div>
+      </div>
+      <table class="roster">
+        <thead><tr><th>ご家族</th><th>お子様</th><th>直近のご来店</th><th>連絡先</th></tr></thead>
+        <tbody id="rosterBody"></tbody>
+      </table>
+    </section>
+
+    <!-- ============ ③カルテ詳細 ============ -->
+    <section class="view" id="view-detail">
+      <div class="karte-detail active" id="detailBody"></div>
+    </section>
+
+  </main>
+
+  <footer class="note">〇〇スタジオ顧客台帳｜デモ版（サンプルデータ表示中・実データは含まれません）</footer>
+</div>
+
+<script>
+'use strict';
+
+// ───────── サンプルデータ ─────────
+const today = new Date(2026, 6, 10); // デモ用の「今日」＝2026/07/10
+document.getElementById('todayTag').textContent =
+  today.getFullYear()+'年'+(today.getMonth()+1)+'月'+today.getDate()+'日';
+
+const families = [
+  {
+    id:'f1', family:'田中', kana:'たなか', phone:'〒000-0000-0000',
+    lastVisit:'2026-03-15', lastNote:'花奏ちゃん、カメラ目線が上手になってきました。ご主人様は青のスーツをご希望。',
+    members:[
+      {name:'田中 花奏', nickname:'はなちゃん', role:'長女', birthday:'2019-08-22'},
+    ],
+    anniversary:'2016-05-20',
+    events:[
+      {cat:'shichigosan', date:'2026-08-22', label:'7歳・七五三の対象年齢', person:'花奏ちゃん'},
+    ],
+    visits:[
+      {date:'2026-03-15', title:'お宮参り後撮影', note:'花奏ちゃんの好きなキャラクターはうさぎ。人見知りするので最初は母親と一緒に。'},
+      {date:'2023-11-03', title:'三歳・七五三撮影', note:'ご祖母様も同席。桜色の着物をとても気に入っていらっしゃいました。'},
+    ]
+  },
+  {
+    id:'f2', family:'佐々木', kana:'ささき', phone:'〒000-0000-0000',
+    lastVisit:'2026-01-08', lastNote:'蓮くん、七五三の衣装合わせ予約済み。お父様の誕生日が近いのでご案内済み。',
+    members:[
+      {name:'佐々木 蓮', nickname:'れんくん', role:'長男', birthday:'2021-07-30'},
+    ],
+    anniversary:'2019-11-11',
+    events:[
+      {cat:'shichigosan', date:'2026-07-30', label:'5歳・七五三の対象年齢', person:'蓮くん'},
+      {cat:'birthday', date:'2026-07-30', label:'5歳のお誕生日', person:'蓮くん'},
+    ],
+    visits:[
+      {date:'2026-01-08', title:'お正月ミニ撮影', note:'蓮くん、電車が好き。次回は新幹線柄の小物を用意すると喜びそう。'},
+    ]
+  },
+  {
+    id:'f3', family:'山本', kana:'やまもと', phone:'〒000-0000-0000',
+    lastVisit:'2025-12-20', lastNote:'陽菜ちゃん、人見知りが激しかったが撮影後半で笑顔に。次回はぬいぐるみ持参予定。',
+    members:[
+      {name:'山本 陽菜', nickname:'ひなちゃん', role:'長女', birthday:'2023-08-05'},
+    ],
+    anniversary:'2020-09-27',
+    events:[
+      {cat:'shichigosan', date:'2026-08-05', label:'3歳・七五三の対象年齢', person:'陽菜ちゃん'},
+      {cat:'birthday', date:'2026-08-05', label:'3歳のお誕生日', person:'陽菜ちゃん'},
+    ],
+    visits:[
+      {date:'2025-12-20', title:'お宮参り撮影', note:'ご両親ともに写真がお好き。SNS掲載のご許可あり。'},
+    ]
+  },
+  {
+    id:'f4', family:'中村', kana:'なかむら', phone:'〒000-0000-0000',
+    lastVisit:'2025-08-01', lastNote:'ご主人様のお誕生日にご家族写真を贈りたいとのご相談あり。',
+    members:[
+      {name:'中村 大輔', nickname:'', role:'ご主人', birthday:'2026-07-25'},
+      {name:'中村 optional', nickname:'', role:'—', birthday:''},
+    ],
+    anniversary:'2015-04-03',
+    events:[
+      {cat:'birthday', date:'2026-07-25', label:'ご主人様のお誕生日', person:'中村様'},
+    ],
+    visits:[
+      {date:'2025-08-01', title:'家族写真撮影', note:'兄弟げんかで撮影中断も、最後は仲良く撮れました。次回は個別カットも希望。'},
+    ]
+  },
+  {
+    id:'f5', family:'小林', kana:'こばやし', phone:'〒000-0000-0000',
+    lastVisit:'2025-05-20', lastNote:'結婚10周年の記念撮影をご希望。夏頃にご案内予定。',
+    members:[
+      {name:'小林 健太', nickname:'', role:'ご主人', birthday:''},
+      {name:'小林 由美', nickname:'', role:'奥様', birthday:''},
+    ],
+    anniversary:'2016-07-18',
+    events:[
+      {cat:'anniv', date:'2026-07-18', label:'ご結婚10周年', person:'小林様ご夫妻'},
+    ],
+    visits:[
+      {date:'2025-05-20', title:'ご相談来店', note:'10周年の節目に夫婦二人での撮影をご希望。ロケーション撮影にもご興味あり。'},
+    ]
+  },
+  {
+    id:'f6', family:'加藤', kana:'かとう', phone:'〒000-0000-0000',
+    lastVisit:'2025-11-15', lastNote:'翔太くん、七五三までまだ時間があるため衣装カタログをお渡し済み。',
+    members:[
+      {name:'加藤 翔太', nickname:'しょうくん', role:'長男', birthday:'2020-02-14'},
+    ],
+    anniversary:'2018-10-10',
+    events:[],
+    visits:[
+      {date:'2025-11-15', title:'ご相談来店', note:'翔太くん、乗り物のおもちゃに夢中。待合スペースに置いておくと落ち着く様子。'},
+    ]
+  },
+];
+
+// ───────── ユーティリティ ─────────
+function monthDiff(dateStr){
+  const d = new Date(dateStr);
+  return (d.getFullYear()-today.getFullYear())*12 + (d.getMonth()-today.getMonth());
+}
+function fmtDate(dateStr){
+  if(!dateStr) return '—';
+  const d = new Date(dateStr);
+  return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
+}
+function catLabel(cat){
+  return {shichigosan:'七五三', birthday:'お誕生日', anniv:'結婚記念日'}[cat] || '';
+}
+
+// 「今月・来月」がお知らせ対象。イベントをフラットなリストに展開する。
+const guideItems = [];
+families.forEach(fam=>{
+  fam.events.forEach(ev=>{
+    const diff = monthDiff(ev.date);
+    if(diff===0 || diff===1){
+      guideItems.push({...ev, fam, diff});
+    }
+  });
+});
+guideItems.sort((a,b)=> a.diff-b.diff || new Date(a.date)-new Date(b.date));
+
+// ───────── ご案内リスト描画 ─────────
+let activeCat = 'all';
+function renderGuide(){
+  const list = document.getElementById('guideList');
+  const items = activeCat==='all' ? guideItems : guideItems.filter(i=>i.cat===activeCat);
+  document.getElementById('guideCount').textContent = guideItems.length;
+
+  ['shichigosan','birthday','anniv'].forEach(cat=>{
+    const n = guideItems.filter(i=>i.cat===cat).length;
+    const btn = document.querySelector(`.event-tab[data-cat="${cat}"] .count`);
+    if(btn) btn.textContent = n;
+  });
+
+  if(items.length===0){
+    list.innerHTML = `<div class="empty">この期間にご案内対象のご家族はいらっしゃいません。</div>`;
+    return;
+  }
+
+  list.innerHTML = items.map(it=>{
+    const monthLabel = it.diff===0 ? '今月' : '来月';
+    return `
+    <div class="karte-card" data-cat="${it.cat}">
+      <div>
+        <div class="karte-top">
+          <span class="cat-badge ${it.cat}">${catLabel(it.cat)}</span>
+          <span class="date-chip">${monthLabel}・${fmtDate(it.date)}</span>
+        </div>
+        <div class="fam-name">${it.fam.family}家 <span class="nickname">${it.label}</span></div>
+        <div class="karte-memo"><b>前回のメモ：</b>${it.fam.lastNote}</div>
+      </div>
+      <div class="karte-actions">
+        <button class="btn btn-line" onclick="mockLine('${it.fam.family}','${it.label}')">💬 LINEで案内文を作成</button>
+        <button class="btn btn-ghost" onclick="openDetail('${it.fam.id}')">カルテを見る</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+document.querySelectorAll('.event-tab').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.event-tab').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    activeCat = btn.dataset.cat;
+    renderGuide();
+  });
+});
+
+function mockLine(family, label){
+  alert(`【デモ】LINE下書きを作成しました\n\n宛先：${family}様\n件名：${label}のご案内\n\n「${family}様、いつも大変お世話になっております。〇〇スタジオです。\n${label}が近づいてまいりましたので、記念のお写真はいかがでしょうか…」\n\n※実際の送信はスタッフが最終確認の上おこないます。`);
+}
+
+// ───────── 顧客一覧 描画 ─────────
+function renderRoster(filter=''){
+  const body = document.getElementById('rosterBody');
+  const q = filter.trim().toLowerCase();
+  const rows = families.filter(f=>{
+    if(!q) return true;
+    const hay = (f.family+f.kana+f.members.map(m=>m.name+m.nickname).join('')).toLowerCase();
+    return hay.includes(q);
+  });
+  if(rows.length===0){
+    body.innerHTML = `<tr><td colspan="4" style="padding:32px;text-align:center;color:var(--ink-soft)">該当するご家族が見つかりません</td></tr>`;
+    return;
+  }
+  body.innerHTML = rows.map(f=>`
+    <tr class="rowbtn" onclick="openDetail('${f.id}')">
+      <td><div class="roster-name">${f.family}家</div><div class="roster-sub">${f.kana}</div></td>
+      <td>${f.members.map(m=>`<span class="tag-mini">${m.nickname||m.name}</span>`).join('')||'—'}</td>
+      <td>${fmtDate(f.lastVisit)}</td>
+      <td style="color:var(--ink-soft)">${f.phone}</td>
+    </tr>
+  `).join('');
+}
+document.getElementById('rosterSearch').addEventListener('input', e=>renderRoster(e.target.value));
+
+// ───────── カルテ詳細 描画 ─────────
+function openDetail(id){
+  const f = families.find(x=>x.id===id);
+  if(!f) return;
+  const detailTabBtn = document.getElementById('detailTabBtn');
+  detailTabBtn.style.display = 'inline-block';
+  detailTabBtn.textContent = f.family + '家 カルテ';
+
+  document.getElementById('detailBody').innerHTML = `
+    <div class="back-link" onclick="switchView('roster')">← 顧客一覧に戻る</div>
+    <div class="detail-head">
+      <div>
+        <h2>${f.family}家</h2>
+        <div class="detail-meta">${f.kana}｜${f.phone}｜結婚記念日：${fmtDate(f.anniversary)}</div>
+        <div class="family-members">
+          ${f.members.map(m=>`<span class="member-chip">${m.name}${m.nickname?`（${m.nickname}）`:''} ・ ${m.role}</span>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="eyebrow">来店の記録</div>
+    <div class="visit-timeline">
+      ${f.visits.map(v=>`
+        <div class="visit-item">
+          <div class="visit-date">${fmtDate(v.date)}</div>
+          <div>
+            <div class="visit-title">${v.title}</div>
+            <div class="visit-note"><span class="heart">♥</span> ${v.note}</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  switchView('detail');
+}
+
+// ───────── タブ切り替え ─────────
+function switchView(view){
+  document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
+  document.querySelectorAll('main .view').forEach(v=>v.classList.toggle('active', v.id==='view-'+view));
+}
+document.querySelectorAll('nav.tabs button').forEach(btn=>{
+  btn.addEventListener('click', ()=>switchView(btn.dataset.view));
+});
+
+// ───────── 初期化 ─────────
+renderGuide();
+renderRoster();
+</script>
+</body>
+</html>

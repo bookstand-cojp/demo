@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>運送会社 受注管理システム（全体デモ）</title>
+<style>
+:root{
+  --navy:#16233f;
+  --navy-2:#22345a;
+  --navy-3:#2d4570;
+  --paper:#eef1f6;
+  --card:#ffffff;
+  --line:#d9dfe9;
+  --ink:#1d2433;
+  --sub:#69728a;
+  --seino:#1f8a4c;
+  --kinbutsu:#d97a1a;
+  --jisha:#2563b0;
+  --warn-bg:#fff5d6;
+  --warn-bd:#e6c443;
+  --ok:#1f8a4c;
+  --accent:#e8631c;
+  --accent-2:#f0f4fb;
+  --unbou:#7a3ea8;
+  --r:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",sans-serif;background:var(--paper);color:var(--ink);font-size:14px;line-height:1.5}
+
+/* ── ヘッダー ── */
+header{background:var(--navy);color:#fff;height:56px;display:flex;align-items:center;padding:0 20px;gap:20px;position:sticky;top:0;z-index:100;box-shadow:0 1px 0 rgba(0,0,0,.2)}
+.brand{font-weight:700;font-size:16px;letter-spacing:.04em;white-space:nowrap}
+.brand small{font-weight:400;opacity:.6;font-size:11px;margin-left:8px}
+.hnav{display:flex;gap:0;margin-left:8px;overflow-x:auto}
+.hnav button{background:none;border:none;color:#fff;opacity:.6;padding:18px 15px;font-size:13px;cursor:pointer;border-bottom:3px solid transparent;font-family:inherit;white-space:nowrap}
+.hnav button.active{opacity:1;border-bottom-color:var(--accent);font-weight:600}
+.hnav button:hover{opacity:.95}
+.badge{background:var(--accent);border-radius:10px;padding:1px 7px;font-size:11px;margin-left:5px;font-weight:700}
+.huser{margin-left:auto;font-size:12px;opacity:.7;white-space:nowrap;display:flex;align-items:center;gap:8px}
+.huser .dot{width:8px;height:8px;border-radius:50%;background:#4ade80;display:inline-block}
+
+main{max-width:1240px;margin:0 auto;padding:24px 20px 80px}
+.screen{display:none;animation:fade .25s ease}
+.screen.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.page-head{display:flex;align-items:flex-end;gap:14px;margin-bottom:20px;flex-wrap:wrap}
+h1{font-size:20px;font-weight:700}
+.page-head .desc{color:var(--sub);font-size:12.5px;padding-bottom:2px}
+.demo-note{background:linear-gradient(0deg,#fff,#fbfdff);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:8px;padding:11px 15px;font-size:12.5px;color:var(--sub);margin-bottom:20px}
+.demo-note b{color:var(--ink)}
+
+/* ── ダッシュボード ── */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px}
+.kpi .k-label{font-size:11.5px;color:var(--sub);margin-bottom:6px}
+.kpi .k-val{font-size:30px;font-weight:800;letter-spacing:-.02em;line-height:1}
+.kpi .k-val small{font-size:14px;font-weight:600;color:var(--sub);margin-left:3px}
+.kpi .k-sub{font-size:11px;color:var(--sub);margin-top:6px}
+.kpi.alert{border-color:var(--warn-bd);background:linear-gradient(0deg,#fffdf3,#fff)}
+.kpi.alert .k-val{color:#b8860b}
+
+.dash-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:18px;margin-bottom:18px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.panel-head{padding:13px 18px;border-bottom:1px solid var(--line);font-weight:700;font-size:13.5px;display:flex;align-items:center;gap:8px}
+.panel-head .more{margin-left:auto;font-size:12px;color:var(--jisha);font-weight:400;cursor:pointer}
+.panel-body{padding:6px 0}
+
+/* 便別バー */
+.carrier-stat{padding:16px 18px;display:flex;flex-direction:column;gap:14px}
+.cs-row{display:flex;align-items:center;gap:12px}
+.cs-name{width:64px;font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:6px}
+.cs-dot{width:10px;height:10px;border-radius:3px}
+.cs-track{flex:1;height:22px;background:#eef1f6;border-radius:6px;overflow:hidden}
+.cs-fill{height:100%;border-radius:6px;display:flex;align-items:center;padding-left:10px;color:#fff;font-size:11px;font-weight:700}
+.cs-cnt{width:46px;text-align:right;font-size:13px;font-weight:700}
+
+/* タイムライン（本日の動き） */
+.timeline{padding:6px 18px 14px}
+.tl-item{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid #f0f2f6;font-size:12.5px}
+.tl-item:last-child{border-bottom:none}
+.tl-time{color:var(--sub);width:44px;flex-shrink:0;font-variant-numeric:tabular-nums}
+.tl-body{flex:1}
+.tl-body b{font-weight:700}
+.tl-tag{font-size:10.5px;padding:1px 7px;border-radius:4px;color:#fff;font-weight:700;margin-left:6px}
+
+/* ── 受注一覧 ── */
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.filters input,.filters select{border:1px solid var(--line);border-radius:7px;padding:8px 11px;font-size:13px;background:#fff;font-family:inherit}
+.chip{border:1px solid var(--line);background:#fff;border-radius:20px;padding:7px 15px;font-size:12px;cursor:pointer;font-family:inherit;transition:.12s}
+.chip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.count-tag{margin-left:auto;font-size:12px;color:var(--sub)}
+
+.order-list{display:flex;flex-direction:column;gap:11px}
+.order-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:15px 18px;cursor:pointer;transition:.15s}
+.order-card:hover{box-shadow:0 4px 16px rgba(22,35,63,.13);border-color:#c3ccdb;transform:translateY(-1px)}
+.oc-top{display:flex;align-items:center;gap:11px;flex-wrap:wrap;margin-bottom:9px}
+.carrier{font-size:11px;font-weight:700;color:#fff;border-radius:5px;padding:3px 9px;white-space:nowrap}
+.carrier.seino{background:var(--seino)}.carrier.kinbutsu{background:var(--kinbutsu)}.carrier.jisha{background:var(--jisha)}
+.oc-client{font-weight:700;font-size:15.5px}
+.oc-dest{color:var(--sub);font-size:12px}
+.oc-id{font-size:11px;color:#aab2c2;font-variant-numeric:tabular-nums}
+.oc-date{margin-left:auto;font-size:12px;color:var(--sub);white-space:nowrap}
+.oc-items{font-size:13px;margin-bottom:11px;color:#3a4256}
+.oc-bottom{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.attach{font-size:12px;color:var(--sub)}
+
+.status-bar{display:flex;flex:1;min-width:280px;max-width:440px}
+.step{flex:1;text-align:center;font-size:10.5px;padding:6px 2px;background:#eceff4;color:#9aa2b1;position:relative;white-space:nowrap}
+.step:first-child{border-radius:20px 0 0 20px}
+.step:last-child{border-radius:0 20px 20px 0}
+.step.done{background:var(--navy-3);color:#fff}
+.step.now{background:var(--accent);color:#fff;font-weight:700}
+.step.done::after{content:" ✓"}
+
+/* ── 受注詳細（フロー追跡の主役） ── */
+.detail-wrap{display:grid;grid-template-columns:1.5fr 1fr;gap:18px}
+.dinfo{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.dinfo-head{background:var(--navy);color:#fff;padding:16px 20px}
+.dinfo-head .dh-top{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.dinfo-head h2{font-size:18px;font-weight:700}
+.dinfo-head .dh-sub{font-size:12px;opacity:.75}
+.dsec{padding:16px 20px;border-bottom:1px solid var(--line)}
+.dsec h3{font-size:11.5px;color:var(--sub);font-weight:700;margin-bottom:10px;letter-spacing:.03em}
+.kv{display:grid;grid-template-columns:90px 1fr;gap:6px 12px;font-size:13px}
+.kv dt{color:var(--sub)}
+.kv dd{font-weight:600}
+.mini-table{width:100%;border-collapse:collapse;font-size:13px}
+.mini-table th{text-align:left;font-size:11px;color:var(--sub);padding:6px 8px;border-bottom:1px solid var(--line)}
+.mini-table td{padding:8px;border-bottom:1px solid #f0f2f6}
+
+/* 縦フロー（このアプリの信号→運坊→各社→出荷） */
+.flow-panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;height:fit-content}
+.flow-panel h3{font-size:13.5px;font-weight:700;margin-bottom:4px}
+.flow-panel .fp-desc{font-size:11.5px;color:var(--sub);margin-bottom:16px}
+.vflow{position:relative;padding-left:28px}
+.vflow::before{content:"";position:absolute;left:9px;top:8px;bottom:8px;width:2px;background:var(--line)}
+.vnode{position:relative;padding:0 0 22px}
+.vnode:last-child{padding-bottom:0}
+.vnode .vdot{position:absolute;left:-28px;top:1px;width:20px;height:20px;border-radius:50%;background:#fff;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11px}
+.vnode.done .vdot{background:var(--ok);border-color:var(--ok);color:#fff}
+.vnode.now .vdot{background:var(--accent);border-color:var(--accent);color:#fff;animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(232,99,28,.4)}50%{box-shadow:0 0 0 6px rgba(232,99,28,0)}}
+.vnode .vtitle{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:8px}
+.vnode .vmeta{font-size:11.5px;color:var(--sub);margin-top:2px}
+.vnode.wait .vtitle{color:#aab2c2}
+.sys-tag{font-size:10px;padding:1px 7px;border-radius:4px;font-weight:700;border:1px solid}
+.sys-app{color:var(--jisha);border-color:var(--jisha);background:#eef4fc}
+.sys-unbou{color:var(--unbou);border-color:var(--unbou);background:#f6eefb}
+.sys-ext{color:var(--seino);border-color:var(--seino);background:#eef8f1}
+
+.action-row{display:flex;gap:10px;padding:16px 20px;flex-wrap:wrap}
+
+/* ── 連携（RPA）画面 ── */
+.rpa-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px}
+.rpa-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.rpa-card .rc-head{padding:14px 16px;color:#fff;display:flex;align-items:center;gap:8px}
+.rc-head.unbou{background:var(--unbou)}
+.rc-head.seino{background:var(--seino)}
+.rc-head.kinbutsu{background:var(--kinbutsu)}
+.rc-head .rc-name{font-weight:700;font-size:14px}
+.rc-head .rc-status{margin-left:auto;font-size:10.5px;background:rgba(255,255,255,.25);padding:2px 8px;border-radius:4px}
+.rc-body{padding:14px 16px;font-size:12.5px}
+.rc-body .rc-line{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f2f6}
+.rc-body .rc-line:last-child{border-bottom:none}
+.rc-body .rc-line span:first-child{color:var(--sub)}
+.rc-queue{background:var(--accent-2);border-radius:8px;padding:10px 12px;margin-top:10px;font-size:12px}
+.rc-foot{padding:0 16px 14px}
+.btn-rpa{width:100%;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;color:#fff}
+
+.explain{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px}
+.explain h3{font-size:13.5px;margin-bottom:12px}
+.explain ol{margin-left:18px;font-size:13px;line-height:1.9}
+.explain code{background:#f1f4f9;padding:1px 6px;border-radius:4px;font-size:12px;font-family:"Courier New",monospace}
+
+/* ── FAX突き合わせ ── */
+.queue{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.q-item{background:#fff;border:2px solid var(--line);border-radius:8px;padding:8px 14px;font-size:12px;cursor:pointer}
+.q-item.on{border-color:var(--accent);font-weight:700}
+.q-item .t{color:var(--sub);font-size:10px;display:block}
+.fax-wrap{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.fax-pane{background:#fff;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column}
+.pane-head{background:var(--navy-2);color:#fff;padding:11px 15px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px}
+.pane-head .tools{margin-left:auto;display:flex;gap:6px}
+.pane-head .tools button{background:rgba(255,255,255,.16);border:none;color:#fff;border-radius:5px;width:28px;height:28px;cursor:pointer;font-size:14px}
+.fax-view{overflow:auto;background:#8b8f98;padding:20px;flex:1;min-height:520px;display:flex;justify-content:center;align-items:flex-start}
+.fax-doc{background:#fff;box-shadow:0 4px 16px rgba(0,0,0,.3);transition:transform .2s;transform-origin:top center}
+.ocr-form{padding:16px;display:flex;flex-direction:column;gap:13px;overflow:auto}
+.field label{display:block;font-size:11px;color:var(--sub);margin-bottom:4px;font-weight:600}
+.field .row{display:flex;align-items:center;gap:8px}
+.field input,.field select{flex:1;border:1px solid var(--line);border-radius:7px;padding:9px 11px;font-size:14px;font-family:inherit}
+.field .mark{width:22px;text-align:center;font-size:15px}
+.mark.ok{color:var(--ok)}
+.field.warn input{background:var(--warn-bg);border-color:var(--warn-bd)}
+.warn-note{font-size:11px;color:#a07800;margin-top:3px}
+.conf{font-size:10px;color:var(--sub);margin-left:6px;font-weight:400}
+.dgrid{border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.dgrid table{width:100%;border-collapse:collapse;font-size:13px}
+.dgrid th{background:#f0f2f6;padding:8px;font-size:11px;color:var(--sub);text-align:left}
+.dgrid td{padding:6px 8px;border-top:1px solid var(--line)}
+.dgrid input,.dgrid select{width:100%;border:1px solid transparent;border-radius:4px;padding:6px;font-size:13px;font-family:inherit;background:transparent}
+.dgrid input:focus,.dgrid select:focus{border-color:var(--navy);background:#fff;outline:none}
+.dgrid td.warn input{background:var(--warn-bg);border-color:var(--warn-bd)}
+
+/* ── 受注入力 ── */
+.form-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:22px;max-width:800px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:18px}
+.dhead{display:grid;grid-template-columns:2fr 68px 68px 1fr 1fr 36px;gap:8px;font-size:10.5px;color:var(--sub);margin-bottom:6px;font-weight:600}
+.dline{display:grid;grid-template-columns:2fr 68px 68px 1fr 1fr 36px;gap:8px;margin-bottom:8px;align-items:center}
+.dline input,.dline select{border:1px solid var(--line);border-radius:6px;padding:8px;font-size:13px;font-family:inherit;width:100%}
+.dline .del{background:none;border:1px solid var(--line);border-radius:6px;color:var(--sub);height:34px;cursor:pointer;font-size:15px}
+.add-line{background:none;border:1px dashed var(--navy-3);color:var(--navy-3);border-radius:6px;padding:9px;width:100%;cursor:pointer;font-size:13px;font-family:inherit;margin:4px 0 18px}
+
+/* ── マスタ ── */
+.tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--line)}
+.tabs button{background:none;border:none;padding:10px 16px;font-size:13px;cursor:pointer;color:var(--sub);border-bottom:2px solid transparent;font-family:inherit;font-weight:600}
+.tabs button.on{color:var(--navy);border-bottom-color:var(--accent)}
+.data-table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;font-size:13px}
+.data-table thead th{background:#f5f7fa;padding:11px 14px;text-align:left;font-size:11.5px;color:var(--sub);border-bottom:1px solid var(--line)}
+.data-table td{padding:11px 14px;border-bottom:1px solid #f0f2f6}
+.data-table tbody tr:hover{background:#f8fafc}
+
+/* ── 請求 ── */
+.inv-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+
+/* ── ボタン共通 ── */
+.btn{border:none;border-radius:8px;padding:12px 22px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:.15s}
+.btn:hover{opacity:.88}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-navy{background:var(--navy);color:#fff}
+.btn-ghost{background:#fff;color:var(--sub);border:1px solid var(--line)}
+.btn-full{flex:1}
+
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(90px);background:var(--navy);color:#fff;border-radius:9px;padding:14px 28px;font-size:14px;box-shadow:0 8px 26px rgba(0,0,0,.28);transition:transform .32s;z-index:200;max-width:90vw}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+@media(max-width:900px){
+  .kpi-row{grid-template-columns:1fr 1fr}
+  .dash-grid,.detail-wrap{grid-template-columns:1fr}
+  .rpa-grid{grid-template-columns:1fr}
+  .fax-wrap{grid-template-columns:1fr}
+  .form-grid{grid-template-columns:1fr}
+  .dline,.dhead{grid-template-columns:1.6fr 52px 52px 1fr 30px}
+  .dline .wh,.dhead .wh{display:none}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">運送会社 受注管理<small>全体デモ</small></div>
+  <div class="hnav">
+    <button class="active" onclick="show('dash',this)">ダッシュボード</button>
+    <button onclick="show('list',this)">受注一覧</button>
+    <button onclick="show('fax',this)">FAX取込<span class="badge">2</span></button>
+    <button onclick="show('input',this)">受注入力</button>
+    <button onclick="show('rpa',this)">連携・出力</button>
+    <button onclick="show('master',this)">マスタ</button>
+    <button onclick="show('invoice',this)">請求</button>
+  </div>
+  <div class="huser"><span class="dot"></span>嶋田さん</div>
+</header>
+
+<main>
+
+<!-- ══════════ ダッシュボード ══════════ -->
+<section id="dash" class="screen active">
+  <div class="page-head"><h1>ダッシュボード</h1><span class="desc">2026年6月24日（水）　配送センター</span></div>
+  <div class="demo-note">💡 <b>まずここで全体が見えます。</b>本日の受注量・便別の内訳・処理の進み具合・要対応の件が一目で分かります。各項目はクリックで該当画面へ飛べます。</div>
+
+  <div class="kpi-row">
+    <div class="kpi" onclick="show('list',navBtn(1))" style="cursor:pointer">
+      <div class="k-label">本日の受注</div>
+      <div class="k-val">6<small>件</small></div>
+      <div class="k-sub">前日比 +2件</div>
+    </div>
+    <div class="kpi alert" onclick="show('fax',navBtn(2))" style="cursor:pointer">
+      <div class="k-label">FAX未処理</div>
+      <div class="k-val">2<small>件</small></div>
+      <div class="k-sub">読取済み・確認待ち</div>
+    </div>
+    <div class="kpi">
+      <div class="k-label">配送依頼 未送信</div>
+      <div class="k-val">3<small>件</small></div>
+      <div class="k-sub">CSV生成待ち</div>
+    </div>
+    <div class="kpi">
+      <div class="k-label">本日出荷予定</div>
+      <div class="k-val">4<small>件</small></div>
+      <div class="k-sub">総重量 3,240kg</div>
+    </div>
+  </div>
+
+  <div class="dash-grid">
+    <div class="panel">
+      <div class="panel-head">便別の受注内訳 <span class="more" onclick="show('list',navBtn(1))">受注一覧へ →</span></div>
+      <div class="carrier-stat">
+        <div class="cs-row"><div class="cs-name"><span class="cs-dot" style="background:var(--seino)"></span>西濃</div><div class="cs-track"><div class="cs-fill" style="width:50%;background:var(--seino)">2件</div></div><div class="cs-cnt">33%</div></div>
+        <div class="cs-row"><div class="cs-name"><span class="cs-dot" style="background:var(--kinbutsu)"></span>近物</div><div class="cs-track"><div class="cs-fill" style="width:50%;background:var(--kinbutsu)">2件</div></div><div class="cs-cnt">33%</div></div>
+        <div class="cs-row"><div class="cs-name"><span class="cs-dot" style="background:var(--jisha)"></span>自社便</div><div class="cs-track"><div class="cs-fill" style="width:50%;background:var(--jisha)">2件</div></div><div class="cs-cnt">33%</div></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">🔗 基幹システム連携状況</div>
+      <div class="carrier-stat" style="gap:10px">
+        <div class="cs-row"><div style="width:100px;font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:6px"><span class="cs-dot" style="background:var(--unbou)"></span>運坊（倉庫管理）</div><div style="flex:1;font-size:12px;color:var(--ok)">● 全6件 登録済み</div></div>
+        <div class="cs-row"><div style="width:100px;font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:6px"><span class="cs-dot" style="background:var(--seino)"></span>カンガルーM2</div><div style="flex:1;font-size:12px;color:var(--sub)">○ 西濃便 2件中 1件送信</div></div>
+        <div class="cs-row"><div style="width:100px;font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:6px"><span class="cs-dot" style="background:var(--kinbutsu)"></span>FindIt送り状</div><div style="flex:1;font-size:12px;color:var(--sub)">○ 近物便 2件 未送信</div></div>
+        <div style="font-size:11px;color:var(--sub);padding-top:6px;border-top:1px solid #f0f2f6">連携の詳細・実行は「連携・出力」タブから</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">本日の動き</div>
+    <div class="timeline" id="timeline"></div>
+  </div>
+</section>
+
+<!-- ══════════ 受注一覧 ══════════ -->
+<section id="list" class="screen">
+  <div class="page-head"><h1>受注一覧</h1><span class="desc">行をクリックすると受注の詳細と処理状況が見られます</span></div>
+  <div class="demo-note">💡 便を<b>色ラベル</b>で識別、進捗を<b>バー</b>で表示。現行AppSheetでは色だけで運用していた部分を、誰でも分かる形にしています。（色は仮です・御社の運用に合わせます）</div>
+  <div class="filters">
+    <input type="date" value="2026-06-24">
+    <span class="chip on" onclick="filterCarrier(this,'all')">すべて</span>
+    <span class="chip" onclick="filterCarrier(this,'seino')">西濃</span>
+    <span class="chip" onclick="filterCarrier(this,'kinbutsu')">近物</span>
+    <span class="chip" onclick="filterCarrier(this,'jisha')">自社便</span>
+    <select><option>ステータス：すべて</option><option>受注のみ</option><option>未出荷</option></select>
+    <span class="count-tag" id="listCount">6件</span>
+  </div>
+  <div class="order-list" id="orderList"></div>
+</section>
+
+<!-- ══════════ 受注詳細（フロー追跡） ══════════ -->
+<section id="detail" class="screen">
+  <div class="page-head"><h1>受注詳細</h1><span class="desc">この受注が「今どこまで進んでいるか」を縦の流れで表示します</span></div>
+  <div class="demo-note">💡 <b>この画面がシステムの背骨です。</b>1件の受注が「入力 → 帳票出力 → 運坊登録 → 各社送り状 → 出荷」まで、どの段階にいるか一目で分かります。現行では7個のYes/Noフラグを目で追う必要がありました。</div>
+  <div class="detail-wrap">
+    <div class="dinfo">
+      <div class="dinfo-head">
+        <div class="dh-top"><span class="carrier seino">西濃</span><h2 id="dClient">㈱山田水産</h2></div>
+        <div class="dh-sub" id="dSub">受注 #1462 ・ 6/27発 → 6/28着</div>
+      </div>
+      <div class="dsec">
+        <h3>基本情報</h3>
+        <dl class="kv">
+          <dt>届先</dt><dd>大阪市中央卸売市場 本場 水産棟</dd>
+          <dt>受注日</dt><dd>2026/06/24</dd>
+          <dt>納品日</dt><dd>2026/06/28（午前中着）</dd>
+          <dt>支払区分</dt><dd>元払</dd>
+        </dl>
+      </div>
+      <div class="dsec">
+        <h3>明細</h3>
+        <table class="mini-table">
+          <thead><tr><th>商品</th><th>数量</th><th>ケース</th><th>倉庫</th></tr></thead>
+          <tbody>
+            <tr><td>冷凍エビ 5kg箱</td><td>40</td><td>40</td><td>第1倉庫</td></tr>
+            <tr><td>冷凍イカ ブロック</td><td>15</td><td>15</td><td>第2倉庫</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="dsec" style="border-bottom:none">
+        <h3>帳票・添付</h3>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:12px">
+          <span style="background:#eef4fc;color:var(--jisha);padding:5px 11px;border-radius:6px">📄 FAX原本</span>
+          <span style="background:#eef4fc;color:var(--jisha);padding:5px 11px;border-radius:6px">📊 積込表</span>
+          <span style="background:#eef4fc;color:var(--jisha);padding:5px 11px;border-radius:6px">📋 納品書</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="flow-panel">
+      <h3>処理の流れ</h3>
+      <div class="fp-desc">この受注がどこまで進んでいるか</div>
+      <div class="vflow">
+        <div class="vnode done"><div class="vdot">✓</div><div class="vtitle">受注登録 <span class="sys-tag sys-app">本アプリ</span></div><div class="vmeta">6/24 09:14　FAXから登録</div></div>
+        <div class="vnode done"><div class="vdot">✓</div><div class="vtitle">積込表・納品書 出力 <span class="sys-tag sys-app">本アプリ</span></div><div class="vmeta">6/24 09:20　Excel生成済み</div></div>
+        <div class="vnode now"><div class="vdot">●</div><div class="vtitle">運坊へ登録 <span class="sys-tag sys-unbou">運坊</span></div><div class="vmeta">処理中…　全件必須の倉庫管理登録</div></div>
+        <div class="vnode wait"><div class="vdot"></div><div class="vtitle">西濃 送り状発行 <span class="sys-tag sys-ext">カンガルーM2</span></div><div class="vmeta">運坊登録の完了待ち</div></div>
+        <div class="vnode wait"><div class="vdot"></div><div class="vtitle">出荷 <span class="sys-tag sys-app">本アプリ</span></div><div class="vmeta">未</div></div>
+      </div>
+      <div style="margin-top:18px;display:flex;gap:10px">
+        <button class="btn btn-navy btn-full" onclick="toast('配送依頼CSVを生成しました（デモ）')">配送依頼を送る</button>
+      </div>
+    </div>
+  </div>
+  <div style="margin-top:16px"><button class="btn btn-ghost" onclick="show('list',navBtn(1))">← 一覧に戻る</button></div>
+</section>
+
+<!-- ══════════ FAX取込 ══════════ -->
+<section id="fax" class="screen">
+  <div class="page-head"><h1>FAX取込・突き合わせ</h1><span class="desc">AIの読取結果を、原本と見比べて確定します</span></div>
+  <div class="demo-note">💡 左がFAX原本、右がAI読取結果。<b>黄色い項目はAIの自信が低いので要確認。</b>見比べて直して確定するだけで受注登録が完了します。現行にはこの「並べて確認」画面がありませんでした。</div>
+  <div class="queue">
+    <div class="q-item on">📠 ㈱山田水産<span class="t">6/24 09:12 受信</span></div>
+    <div class="q-item">📠 大和食品㈱<span class="t">6/24 10:47 受信</span></div>
+  </div>
+  <div class="fax-wrap">
+    <div class="fax-pane">
+      <div class="pane-head">📄 FAX原本
+        <div class="tools"><button onclick="zoomFax(1.15)">＋</button><button onclick="zoomFax(0.87)">−</button><button onclick="rotFax()">⟳</button></div>
+      </div>
+      <div class="fax-view">
+        <svg id="faxDoc" class="fax-doc" width="420" height="560" viewBox="0 0 420 560" xmlns="http://www.w3.org/2000/svg">
+          <rect width="420" height="560" fill="#fff"/>
+          <text x="210" y="46" text-anchor="middle" font-size="20" font-weight="bold" fill="#222" font-family="serif">注　文　書</text>
+          <line x1="140" y1="54" x2="280" y2="54" stroke="#222" stroke-width="1.5"/>
+          <text x="30" y="86" font-size="12" fill="#333" font-family="serif">○○運送株式会社　御中</text>
+          <text x="390" y="86" text-anchor="end" font-size="11" fill="#333" font-family="serif">2026年6月24日</text>
+          <text x="390" y="112" text-anchor="end" font-size="13" fill="#333" font-family="serif">株式会社 山田水産</text>
+          <text x="390" y="130" text-anchor="end" font-size="10" fill="#555" font-family="serif">TEL 06-6XXX-XXXX</text>
+          <text x="30" y="160" font-size="11" fill="#333" font-family="serif">下記の通り発注いたします。</text>
+          <rect x="30" y="180" width="360" height="30" fill="#eee" stroke="#555"/>
+          <text x="45" y="200" font-size="11" font-family="serif">品名</text>
+          <text x="215" y="200" font-size="11" font-family="serif">数量</text>
+          <text x="285" y="200" font-size="11" font-family="serif">納品希望日</text>
+          <rect x="30" y="210" width="360" height="34" fill="none" stroke="#555"/>
+          <text x="45" y="232" font-size="12" font-family="serif" fill="#111">冷凍エビ 5kg箱</text>
+          <text x="215" y="232" font-size="12" font-family="serif" fill="#111">40ケース</text>
+          <text x="285" y="232" font-size="12" font-family="serif" fill="#111">6月28日</text>
+          <rect x="30" y="244" width="360" height="34" fill="none" stroke="#555"/>
+          <text x="45" y="266" font-size="13" font-family="cursive" fill="#1a1a6e" transform="rotate(-1 45 266)">イカ 冷凍 ブロック</text>
+          <text x="215" y="266" font-size="13" font-family="cursive" fill="#1a1a6e" transform="rotate(-0.5 215 266)">15ｹｰｽ</text>
+          <text x="285" y="266" font-size="13" font-family="cursive" fill="#1a1a6e">同上</text>
+          <line x1="30" y1="278" x2="390" y2="278" stroke="#555"/>
+          <line x1="200" y1="180" x2="200" y2="278" stroke="#555"/>
+          <line x1="272" y1="180" x2="272" y2="278" stroke="#555"/>
+          <text x="30" y="316" font-size="11" font-family="serif">届け先：</text>
+          <text x="85" y="316" font-size="12" font-family="serif" fill="#111">大阪市中央卸売市場 本場 水産棟</text>
+          <text x="85" y="336" font-size="11" font-family="serif" fill="#333">大阪市福島区野田1-1-86</text>
+          <text x="30" y="374" font-size="11" font-family="serif">備考：</text>
+          <text x="85" y="374" font-size="12" font-family="cursive" fill="#1a1a6e" transform="rotate(-0.6 85 374)">午前中着 厳守でお願いします</text>
+          <line x1="0" y1="452" x2="420" y2="452" stroke="#000" stroke-width="0.6" opacity="0.25"/>
+          <text x="30" y="530" font-size="9" fill="#888" font-family="monospace">FAX RX 2026/06/24 09:12 P.01/01</text>
+        </svg>
+      </div>
+    </div>
+    <div class="fax-pane">
+      <div class="pane-head">🤖 AI読取結果　<span style="font-weight:400;opacity:.75;font-size:11px">修正して「確定」を押してください</span></div>
+      <div class="ocr-form">
+        <div class="field"><label>得意先 <span class="conf">確信度 98%</span></label><div class="row"><select><option>株式会社 山田水産</option></select><span class="mark ok">✓</span></div></div>
+        <div class="field"><label>届先 <span class="conf">確信度 95%</span></label><div class="row"><select><option>大阪市中央卸売市場 本場 水産棟</option></select><span class="mark ok">✓</span></div></div>
+        <div class="field warn"><label>納品日 <span class="conf">確信度 71%</span></label><div class="row"><input type="date" value="2026-06-28"><span class="mark">⚠️</span></div><div class="warn-note">「6月28日」と読取。年の記載がないため要確認</div></div>
+        <div class="field"><label>明細 <span class="conf">2行を検出</span></label>
+          <div class="dgrid"><table>
+            <tr><th>商品</th><th style="width:70px">数量</th><th style="width:90px">単位</th></tr>
+            <tr><td><select><option>冷凍エビ 5kg箱</option></select></td><td><input value="40"></td><td><input value="ケース"></td></tr>
+            <tr><td class="warn"><input value="イカ 冷凍ブロック"><div class="warn-note">手書きのため商品マスタと不一致。選び直してください</div></td><td><input value="15"></td><td><input value="ケース"></td></tr>
+          </table></div>
+        </div>
+        <div class="field"><label>備考 <span class="conf">確信度 88%</span></label><div class="row"><input value="午前中着 厳守"><span class="mark ok">✓</span></div></div>
+        <div class="field"><label>便（AIの提案：届先ルートから）</label><div class="row"><select><option>西濃運輸</option><option>近物レックス</option><option>自社便</option></select><span class="mark ok">✓</span></div></div>
+        <div class="action-row" style="padding:6px 0 0">
+          <button class="btn btn-ghost" onclick="toast('このFAXを破棄しました（デモ）')">破棄</button>
+          <button class="btn btn-primary btn-full" onclick="toast('✓ 受注 #1467 を登録しました')">確定して受注登録</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 受注入力 ══════════ -->
+<section id="input" class="screen">
+  <div class="page-head"><h1>受注入力（手入力）</h1><span class="desc">電話・メール受注はこちらから</span></div>
+  <div class="demo-note">💡 現行72項目のフォーム → <b>入力に必要な項目だけ</b>に厳選。明細も同じ画面で完結します。</div>
+  <div class="form-card">
+    <div class="form-grid">
+      <div class="field"><label>得意先 *</label><select id="custSel" onchange="filterAddr()"><option value="">選択してください</option><option>株式会社 山田水産</option><option>大和食品株式会社</option><option>関西製紙株式会社</option></select></div>
+      <div class="field"><label>届先 *（得意先を選ぶと絞り込み）</label><select id="addrSel"><option value="">先に得意先を選択</option></select></div>
+      <div class="field"><label>受注日 *</label><input type="date" value="2026-06-24"></div>
+      <div class="field"><label>出発日</label><input type="date" value="2026-06-27"></div>
+      <div class="field"><label>納品日 *</label><input type="date" value="2026-06-28"></div>
+      <div class="field"><label>便 *</label><select><option>西濃運輸</option><option>近物レックス</option><option>自社便</option></select></div>
+      <div class="field"><label>支払区分</label><select><option>元払</option><option>着払</option></select></div>
+      <div class="field"><label>時間指定</label><input placeholder="例：午前中"></div>
+    </div>
+    <label style="font-size:11px;color:var(--sub);font-weight:600;display:block;margin-bottom:6px">明細</label>
+    <div class="dhead"><span>商品</span><span>数量</span><span>ケース</span><span class="wh">倉庫</span><span>ロット</span><span></span></div>
+    <div id="dlines">
+      <div class="dline"><select><option>冷凍エビ 5kg箱</option><option>冷凍イカ ブロック</option><option>サーモン フィレ</option></select><input type="number" value="40"><input type="number" value="40"><select class="wh"><option>第1倉庫</option><option>第2倉庫</option></select><input placeholder="ロット"><button class="del" onclick="delLine(this)">×</button></div>
+      <div class="dline"><select><option>冷凍イカ ブロック</option><option>冷凍エビ 5kg箱</option></select><input type="number" value="15"><input type="number" value="15"><select class="wh"><option>第2倉庫</option></select><input placeholder="ロット"><button class="del" onclick="delLine(this)">×</button></div>
+    </div>
+    <button class="add-line" onclick="addLine()">＋ 明細行を追加</button>
+    <div class="field" style="margin-bottom:18px"><label>備考</label><input placeholder="午前中着 厳守 など"></div>
+    <div class="action-row" style="padding:0"><button class="btn btn-ghost">下書き保存</button><button class="btn btn-primary" onclick="toast('✓ 受注 #1468 を登録しました')">受注を登録</button></div>
+  </div>
+</section>
+
+<!-- ══════════ 連携・出力 ══════════ -->
+<section id="rpa" class="screen">
+  <div class="page-head"><h1>連携・出力</h1><span class="desc">基幹システム（運坊）と運送各社への自動連携</span></div>
+  <div class="demo-note">💡 <b>このシステムの心臓部。</b>受注データは運坊（倉庫管理）に全件登録され、西濃便・近物便はさらに各社システムへ。この連携は<b>今のRPAをそのまま活かせます</b>（データも作り方も変えません）。</div>
+  <div class="rpa-grid">
+    <div class="rpa-card">
+      <div class="rc-head unbou">🏢<span class="rc-name">運坊（倉庫管理）</span><span class="rc-status">全件必須</span></div>
+      <div class="rc-body">
+        <div class="rc-line"><span>役割</span><span>会社の在庫・請求の正</span></div>
+        <div class="rc-line"><span>連携方式</span><span>RPA（画面自動入力）</span></div>
+        <div class="rc-line"><span>本日</span><span style="color:var(--ok);font-weight:700">6件 登録済み ✓</span></div>
+        <div class="rc-queue">全ての受注は、便に関わらず運坊へ登録されます。在庫の引き当てと請求はここが基準です。</div>
+      </div>
+      <div class="rc-foot"><button class="btn-rpa" style="background:var(--unbou)" onclick="toast('運坊RPAを実行しました（デモ）')">運坊へ登録を実行</button></div>
+    </div>
+    <div class="rpa-card">
+      <div class="rc-head seino">🚚<span class="rc-name">西濃運輸</span><span class="rc-status">西濃便のみ</span></div>
+      <div class="rc-body">
+        <div class="rc-line"><span>送信先</span><span>カンガルーマジックII</span></div>
+        <div class="rc-line"><span>連携方式</span><span>RPA（Web自動入力）</span></div>
+        <div class="rc-line"><span>本日</span><span>2件中 1件送信</span></div>
+        <div class="rc-queue">送信すると送り状PDFが自動ダウンロードされ、受注に添付されます。</div>
+      </div>
+      <div class="rc-foot"><button class="btn-rpa" style="background:var(--seino)" onclick="toast('西濃：残り1件を送信しました（デモ）')">西濃へ送信（残1件）</button></div>
+    </div>
+    <div class="rpa-card">
+      <div class="rc-head kinbutsu">🚚<span class="rc-name">近物レックス</span><span class="rc-status">近物便のみ</span></div>
+      <div class="rc-body">
+        <div class="rc-line"><span>送信先</span><span>FindIt 送り状ソフト</span></div>
+        <div class="rc-line"><span>連携方式</span><span>RPA（画面自動入力）</span></div>
+        <div class="rc-line"><span>本日</span><span>2件 未送信</span></div>
+        <div class="rc-queue">送り状を自動発行・印刷します。茶伝票にも対応。</div>
+      </div>
+      <div class="rc-foot"><button class="btn-rpa" style="background:var(--kinbutsu)" onclick="toast('近物：2件の送り状を発行しました（デモ）')">近物へ送信（2件）</button></div>
+    </div>
+  </div>
+  <div class="explain">
+    <h3>連携のしくみ（現行のRPAをそのまま活用）</h3>
+    <ol>
+      <li>受注で<b>「配送依頼」</b>を押すと、システムが連携用のCSVを自動生成します（<code>PADSync.csv</code>／<code>unbou.csv</code>）</li>
+      <li><b>運坊RPA</b>がCSVを読み、倉庫管理システムに全件を自動登録します（在庫引き当て・請求の基準）</li>
+      <li>西濃便は<b>西濃RPA</b>がカンガルーマジックIIへ、近物便は<b>近物RPA</b>がFindItへ、それぞれ自動入力します</li>
+      <li>各社の送り状PDF・印刷物が生成され、受注に紐づきます</li>
+    </ol>
+    <div style="margin-top:14px;padding:12px 14px;background:#f6eefb;border-radius:8px;font-size:12.5px;color:var(--sub)">
+      <b style="color:var(--unbou)">連携は据え置きでOK：</b>Webアプリ化してもCSVの中身と作り方は変えないので、既存のRPA 3本は改修なしでそのまま動きます。
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ マスタ ══════════ -->
+<section id="master" class="screen">
+  <div class="page-head"><h1>マスタ管理</h1><span class="desc">得意先・届先・商品の基準データ</span></div>
+  <div class="demo-note">💡 受注入力で使う選択肢の元データです。ここを整えておくと、入力もFAX読取の精度も上がります。</div>
+  <div class="tabs">
+    <button class="on" onclick="masterTab(this,'cust')">得意先</button>
+    <button onclick="masterTab(this,'item')">商品</button>
+    <button onclick="masterTab(this,'addr')">届先</button>
+  </div>
+  <div id="masterBody"></div>
+</section>
+
+<!-- ══════════ 請求 ══════════ -->
+<section id="invoice" class="screen">
+  <div class="page-head"><h1>請求</h1><span class="desc">運賃・ピッキング費・保管料の集計</span></div>
+  <div class="demo-note">💡 受注データから運賃・費用を自動集計します。※請求の一部（在庫連動の保管料など）は運坊が基準のため、運坊と突き合わせる設計になります。</div>
+  <div class="inv-summary">
+    <div class="kpi"><div class="k-label">今月の運賃合計</div><div class="k-val" style="font-size:24px">¥1,284,600</div><div class="k-sub">確定 42件 / 未確定 6件</div></div>
+    <div class="kpi"><div class="k-label">ピッキング費</div><div class="k-val" style="font-size:24px">¥186,400</div><div class="k-sub">1,240ケース</div></div>
+    <div class="kpi"><div class="k-label">保管料</div><div class="k-val" style="font-size:24px">¥312,000</div><div class="k-sub">運坊在庫と突合</div></div>
+  </div>
+  <div class="panel">
+    <div class="panel-head">得意先別 請求サマリー（6月）</div>
+    <table class="data-table" style="border:none;border-radius:0">
+      <thead><tr><th>得意先</th><th>件数</th><th>運賃</th><th>ピッキング</th><th>保管</th><th>合計</th></tr></thead>
+      <tbody>
+        <tr><td>㈱山田水産</td><td>18</td><td>¥486,200</td><td>¥72,400</td><td>¥128,000</td><td style="font-weight:700">¥686,600</td></tr>
+        <tr><td>大和食品㈱</td><td>15</td><td>¥398,400</td><td>¥61,200</td><td>¥96,000</td><td style="font-weight:700">¥555,600</td></tr>
+        <tr><td>関西製紙㈱</td><td>9</td><td>¥400,000</td><td>¥52,800</td><td>¥88,000</td><td style="font-weight:700">¥540,800</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+function show(id, btn){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.hnav button').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  window.scrollTo(0,0);
+}
+function navBtn(i){ return document.querySelectorAll('.hnav button')[i]; }
+
+// 受注データ
+const orders = [
+  {id:1462, client:"㈱山田水産", dest:"大阪市中央卸売市場 本場", items:"冷凍エビ 5kg箱 ×40cs ほか1品", carrier:"seino", cname:"西濃", dep:"6/27発 → 6/28着", step:2, attach:3},
+  {id:1461, client:"大和食品㈱", dest:"神戸市東灘区 六甲アイランド物流C", items:"業務用醤油 18L ×24cs", carrier:"kinbutsu", cname:"近物", dep:"6/26発 → 6/27着", step:2, attach:3},
+  {id:1460, client:"関西製紙㈱", dest:"堺市西区 築港新町 第3倉庫", items:"段ボール原紙ロール ×8本", carrier:"jisha", cname:"自社便", dep:"6/25発 → 6/25着", step:3, attach:4},
+  {id:1459, client:"㈱ナカムラ商店", dest:"京都市伏見区 中央市場", items:"冷凍マグロブロック ×12cs", carrier:"seino", cname:"西濃", dep:"6/26発 → 6/27着", step:1, attach:1},
+  {id:1458, client:"大和食品㈱", dest:"名古屋市港区 金城ふ頭DC", items:"みりん風調味料 ×30cs ほか2品", carrier:"kinbutsu", cname:"近物", dep:"6/27発 → 6/29着", step:1, attach:2},
+  {id:1457, client:"㈱山田水産", dest:"岡山市北区 中央卸売市場", items:"冷凍ホタテ ×20cs", carrier:"jisha", cname:"自社便", dep:"6/28発 → 6/28着", step:0, attach:1},
+];
+const steps = ["受注","積込表","配送依頼","出荷済み"];
+let curFilter = 'all';
+function renderList(){
+  const list = orders.filter(o=>curFilter==='all'||o.carrier===curFilter);
+  document.getElementById('listCount').textContent = list.length+'件';
+  document.getElementById('orderList').innerHTML = list.map(o=>`
+    <div class="order-card" onclick="openDetail(${o.id})">
+      <div class="oc-top">
+        <span class="carrier ${o.carrier}">${o.cname}</span>
+        <span class="oc-client">${o.client}</span>
+        <span class="oc-dest">→ ${o.dest}</span>
+        <span class="oc-id">#${o.id}</span>
+        <span class="oc-date">${o.dep}</span>
+      </div>
+      <div class="oc-items">${o.items}</div>
+      <div class="oc-bottom">
+        <div class="status-bar">${steps.map((s,i)=>`<div class="step ${i<o.step?'done':i===o.step?'now':''}">${s}</div>`).join('')}</div>
+        <span class="attach">📎 ${o.attach}件</span>
+      </div>
+    </div>`).join('');
+}
+function filterCarrier(el, c){
+  document.querySelectorAll('#list .chip').forEach(x=>x.classList.remove('on'));
+  el.classList.add('on'); curFilter=c; renderList();
+}
+function openDetail(id){
+  const o = orders.find(x=>x.id===id);
+  document.getElementById('dClient').textContent = o.client;
+  document.querySelector('#detail .dinfo-head .carrier').className = 'carrier '+o.carrier;
+  document.querySelector('#detail .dinfo-head .carrier').textContent = o.cname;
+  document.getElementById('dSub').textContent = `受注 #${o.id} ・ ${o.dep}`;
+  show('detail', null);
+}
+
+// タイムライン
+const tl = [
+  {t:"10:47", body:"大和食品㈱ からFAX受信", tag:"FAX", col:"var(--accent)"},
+  {t:"10:20", body:"#1460 関西製紙㈱ を<b>出荷</b>", tag:"自社便", col:"var(--jisha)"},
+  {t:"09:38", body:"#1461 大和食品㈱ の送り状を発行", tag:"近物", col:"var(--kinbutsu)"},
+  {t:"09:20", body:"#1462 ㈱山田水産 の積込表・納品書を出力", tag:"本アプリ", col:"var(--navy-3)"},
+  {t:"09:14", body:"#1462 ㈱山田水産 を受注登録（FAX）", tag:"FAX", col:"var(--accent)"},
+  {t:"09:12", body:"㈱山田水産 からFAX受信", tag:"FAX", col:"var(--accent)"},
+];
+document.getElementById('timeline').innerHTML = tl.map(x=>`
+  <div class="tl-item"><span class="tl-time">${x.t}</span><span class="tl-body">${x.body}<span class="tl-tag" style="background:${x.col}">${x.tag}</span></span></div>`).join('');
+
+// FAXズーム
+let faxScale=1, faxRot=0;
+function zoomFax(f){ faxScale=Math.min(2.2,Math.max(0.5,faxScale*f)); applyFax(); }
+function rotFax(){ faxRot=(faxRot+90)%360; applyFax(); }
+function applyFax(){ document.getElementById('faxDoc').style.transform=`scale(${faxScale}) rotate(${faxRot}deg)`; }
+
+// 得意先→届先
+const addrMap={
+  "株式会社 山田水産":["大阪市中央卸売市場 本場 水産棟","岡山市北区 中央卸売市場"],
+  "大和食品株式会社":["神戸市東灘区 六甲アイランド物流C","名古屋市港区 金城ふ頭DC"],
+  "関西製紙株式会社":["堺市西区 築港新町 第3倉庫"],
+};
+function filterAddr(){
+  const c=document.getElementById('custSel').value;
+  document.getElementById('addrSel').innerHTML=(addrMap[c]||[]).map(a=>`<option>${a}</option>`).join('')||'<option value="">先に得意先を選択</option>';
+}
+
+// 明細行
+function addLine(){
+  const d=document.createElement('div'); d.className='dline';
+  d.innerHTML=`<select><option>選択してください</option><option>冷凍エビ 5kg箱</option><option>冷凍イカ ブロック</option></select><input type="number" placeholder="0"><input type="number" placeholder="0"><select class="wh"><option>第1倉庫</option><option>第2倉庫</option></select><input placeholder="ロット"><button class="del" onclick="delLine(this)">×</button>`;
+  document.getElementById('dlines').appendChild(d);
+}
+function delLine(b){ b.closest('.dline').remove(); }
+
+// マスタ
+const masterData={
+  cust:{head:["得意先ID","得意先名","電話番号","ロットルール"],rows:[["1462","㈱山田水産","06-6XXX-XXXX","9桁記入"],["1380","大和食品㈱","03-3XXX-XXXX","標準"],["1205","関西製紙㈱","072-XXX-XXXX","標準"]]},
+  item:{head:["商品ID","商品名","単位","パレット積載"],rows:[["M10002102K","白10Kフロスト(120)","本","120本/PL"],["S0030010001","茶No.10K(140)","本","140本/PL"],["F0050020","冷凍エビ 5kg箱","ケース","48cs/PL"]]},
+  addr:{head:["届先ID","届先名","住所","電話"],rows:[["462","日の出工場第2倉庫","静岡県富士市伝法3178-1","0545-54-1238"],["380","六甲アイランド物流C","神戸市東灘区","078-XXX-XXXX"]]},
+};
+function masterTab(el,key){
+  document.querySelectorAll('#master .tabs button').forEach(x=>x.classList.remove('on'));
+  el.classList.add('on');
+  const d=masterData[key];
+  document.getElementById('masterBody').innerHTML=`<table class="data-table"><thead><tr>${d.head.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${d.rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+}
+
+// トースト
+let tt;
+function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('show'),2600); }
+
+// 初期化
+renderList();
+masterTab(document.querySelector('#master .tabs button'),'cust');
+</script>
+</body>
+</html>

@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>〇〇市 乗務員タブレット（デモ版）</title>
+<style>
+  :root{
+    --sea:#0E2A47;      /* 〇〇湾の紺 */
+    --paper:#F5F7F9;
+    --ink:#13202F;
+    --line:#D3DCE4;
+    --adult:#0E2A47;    /* 大人=紺 */
+    --senior:#1B7F4C;   /* 高齢者=緑 */
+    --child:#1D6FB8;    /* こども=空 */
+    --nurse:#7A4CB8;    /* 看護師=紫 */
+    --ferry:#E07A1F;    /* 船乗継=橙 */
+    --qr:#4A5866;
+    --go:#C6402E;       /* 発車=赤 */
+    --ok:#1B7F4C;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html{font-size:16px}
+  body{
+    font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",sans-serif;
+    background:var(--paper);color:var(--ink);min-height:100vh;
+  }
+  /* ===== ヘッダー ===== */
+  header{
+    background:var(--sea);color:#fff;
+    padding:10px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  }
+  .brand{font-weight:800;font-size:1.05rem;letter-spacing:.06em}
+  .brand small{display:block;font-weight:400;font-size:.62rem;opacity:.75;letter-spacing:.18em}
+  .route-pill{
+    margin-left:auto;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);
+    border-radius:999px;padding:6px 16px;font-weight:700;font-size:.95rem;
+  }
+  #clock{font-variant-numeric:tabular-nums;font-weight:700;font-size:1.15rem}
+  .demo-tag{background:#FFD34D;color:#5A4300;font-size:.68rem;font-weight:800;
+    padding:3px 10px;border-radius:4px;letter-spacing:.1em}
+  /* ===== タブ ===== */
+  nav{display:flex;background:#fff;border-bottom:2px solid var(--line)}
+  nav button{
+    flex:1;padding:13px 4px;font-size:.95rem;font-weight:700;color:#5A6B7B;
+    background:none;border:none;border-bottom:4px solid transparent;cursor:pointer;font-family:inherit;
+  }
+  nav button.on{color:var(--sea);border-bottom-color:var(--sea)}
+  nav button:focus-visible{outline:3px solid var(--child);outline-offset:-3px}
+  main{max-width:880px;margin:0 auto;padding:16px 14px 60px}
+  .view{display:none}.view.on{display:block}
+  /* ===== 停留所プログレス（シグネチャ） ===== */
+  .stops{display:flex;align-items:center;overflow-x:auto;gap:0;padding:18px 4px 10px;}
+  .stop{display:flex;flex-direction:column;align-items:center;min-width:86px;position:relative;flex-shrink:0}
+  .stop::before{content:"";position:absolute;top:11px;left:-50%;width:100%;height:4px;background:var(--line);z-index:0}
+  .stop:first-child::before{display:none}
+  .stop .dot{width:22px;height:22px;border-radius:50%;background:#fff;border:4px solid var(--line);z-index:1}
+  .stop.done .dot{background:var(--sea);border-color:var(--sea)}
+  .stop.done::before{background:var(--sea)}
+  .stop.now .dot{background:#fff;border-color:var(--go);box-shadow:0 0 0 5px rgba(198,64,46,.18)}
+  .stop.now::before{background:var(--sea)}
+  .stop span{margin-top:7px;font-size:.72rem;font-weight:700;color:#5A6B7B;white-space:nowrap}
+  .stop.now span{color:var(--go);font-size:.8rem}
+  /* ===== 現在停留所バー ===== */
+  .nowbar{background:#fff;border:2px solid var(--sea);border-radius:12px;
+    padding:12px 18px;display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+  .nowbar .label{font-size:.72rem;font-weight:800;color:#5A6B7B;letter-spacing:.15em}
+  .nowbar .name{font-size:1.7rem;font-weight:900}
+  .nowbar .sched{margin-left:auto;font-size:.85rem;color:#5A6B7B;font-weight:700}
+  /* ===== 船接続バナー ===== */
+  .ferrybar{background:#FDF1E3;border:2px solid var(--ferry);border-radius:12px;
+    padding:10px 16px;margin-bottom:14px;display:flex;gap:10px;align-items:center;font-size:.9rem}
+  .ferrybar b{color:#9A5510}
+  .ferrybar .ico{font-size:1.4rem}
+  /* ===== 乗車ボタン ===== */
+  .sec-label{font-size:.78rem;font-weight:800;letter-spacing:.15em;color:#5A6B7B;margin:6px 2px 8px}
+  .btn-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  @media(max-width:560px){.btn-grid{grid-template-columns:repeat(2,1fr)}}
+  .bigbtn{
+    position:relative;border:none;border-radius:14px;color:#fff;cursor:pointer;font-family:inherit;
+    min-height:88px;font-size:1.25rem;font-weight:900;letter-spacing:.05em;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+    box-shadow:0 3px 0 rgba(0,0,0,.22);transition:transform .05s;
+  }
+  .bigbtn:active{transform:translateY(3px);box-shadow:none}
+  .bigbtn:focus-visible{outline:4px solid #FFD34D;outline-offset:2px}
+  .bigbtn small{font-size:.68rem;font-weight:700;opacity:.85}
+  .bigbtn .cnt{
+    position:absolute;top:7px;right:9px;background:#fff;min-width:30px;height:30px;border-radius:15px;
+    font-size:1rem;display:flex;align-items:center;justify-content:center;padding:0 6px;
+  }
+  .b-adult{background:var(--adult)}.b-adult .cnt{color:var(--adult)}
+  .b-senior{background:var(--senior)}.b-senior .cnt{color:var(--senior)}
+  .b-child{background:var(--child)}.b-child .cnt{color:var(--child)}
+  .b-nurse{background:var(--nurse)}.b-nurse .cnt{color:var(--nurse)}
+  .b-ferry{background:var(--ferry)}.b-ferry .cnt{color:var(--ferry)}
+  .b-qr{background:var(--qr)}.b-qr .cnt{color:var(--qr)}
+  /* ===== 降車 ===== */
+  .off-row{display:flex;align-items:center;gap:14px;background:#fff;border:2px solid var(--line);
+    border-radius:14px;padding:10px 14px;margin-top:14px}
+  .off-row button{
+    width:76px;height:64px;font-size:2rem;font-weight:900;border:none;border-radius:12px;cursor:pointer;
+    background:var(--sea);color:#fff;font-family:inherit;box-shadow:0 3px 0 rgba(0,0,0,.22)
+  }
+  .off-row button:active{transform:translateY(3px);box-shadow:none}
+  .off-num{flex:1;text-align:center;font-size:2.3rem;font-weight:900;font-variant-numeric:tabular-nums}
+  .off-num small{font-size:.85rem;font-weight:700;color:#5A6B7B}
+  /* ===== 発車 ===== */
+  .go-row{display:flex;gap:10px;margin-top:16px;align-items:center}
+  .go-sum{flex:1;background:#EAF4EC;border-radius:12px;padding:12px 14px;font-weight:800;color:#14532B;font-size:.95rem}
+  .gobtn{
+    background:var(--go);color:#fff;border:none;border-radius:14px;cursor:pointer;font-family:inherit;
+    font-size:1.3rem;font-weight:900;padding:18px 34px;letter-spacing:.2em;box-shadow:0 4px 0 #8F2417;
+  }
+  .gobtn:active{transform:translateY(4px);box-shadow:none}
+  /* ===== 走行中ロック ===== */
+  #lock{position:fixed;inset:0;background:var(--sea);color:#fff;display:none;
+    flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:50;text-align:center;padding:20px}
+  #lock.on{display:flex}
+  #lock .big{font-size:3rem;font-weight:900;font-variant-numeric:tabular-nums}
+  #lock .msg{font-size:1.1rem;font-weight:700;opacity:.85}
+  #lock .next{font-size:1.5rem;font-weight:900;background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.3);border-radius:12px;padding:10px 26px}
+  #lock button{
+    margin-top:18px;background:#fff;color:var(--sea);border:none;border-radius:14px;cursor:pointer;
+    font-family:inherit;font-size:1.15rem;font-weight:900;padding:18px 36px;
+  }
+  #lock .note{font-size:.75rem;opacity:.6;max-width:420px;line-height:1.7}
+  /* ===== テーブル共通 ===== */
+  table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;font-size:.85rem}
+  th,td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+  th{background:var(--sea);color:#fff;font-size:.75rem;letter-spacing:.08em}
+  tr:last-child td{border-bottom:none}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  .empty{padding:34px;text-align:center;color:#8797A5;font-weight:700;background:#fff;border-radius:12px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+  .card h3{font-size:.95rem;margin-bottom:10px;color:var(--sea)}
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+  @media(max-width:560px){.kpis{grid-template-columns:1fr 1fr}}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .kpi .v{font-size:1.7rem;font-weight:900;font-variant-numeric:tabular-nums}
+  .kpi .l{font-size:.72rem;font-weight:700;color:#5A6B7B;margin-top:2px}
+  .auto-note{background:#EAF4EC;color:#14532B;font-size:.8rem;font-weight:700;
+    border-radius:8px;padding:8px 12px;margin-bottom:12px}
+  .warn{color:var(--go);font-weight:800}
+  .foot{margin-top:26px;font-size:.7rem;color:#8797A5;line-height:1.8}
+  /* トースト */
+  #toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);
+    background:var(--ink);color:#fff;font-weight:800;padding:12px 22px;border-radius:999px;
+    font-size:.9rem;transition:transform .25s;z-index:60;pointer-events:none}
+  #toast.on{transform:translateX(-50%) translateY(0)}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">〇〇市 乗務員タブレット<small>SUKUMO TRANSIT LOG</small></div>
+  <span class="demo-tag">デモ版・ダミーデータ</span>
+  <div class="route-pill">まちぐる線　3便</div>
+  <div id="clock">--:--</div>
+</header>
+
+<nav>
+  <button class="on" data-v="rec" onclick="tab(this)">記録</button>
+  <button data-v="ledger" onclick="tab(this)">台帳</button>
+  <button data-v="report" onclick="tab(this)">日報</button>
+  <button data-v="connect" onclick="tab(this)">船×バス乗継</button>
+</nav>
+
+<main>
+  <!-- ========== 記録 ========== -->
+  <section id="v-rec" class="view on">
+    <div class="stops" id="stopbar"></div>
+
+    <div class="nowbar">
+      <span class="label">現在の停留所</span>
+      <span class="name" id="nowname">片島港</span>
+      <span class="sched" id="nowsched">定刻 14:15</span>
+    </div>
+
+    <div class="ferrybar" id="ferrybar">
+      <span class="ico">⛴</span>
+      <span>定期船「おきのしま」<b>14:05 片島港 着</b>（下船32名）／「船から乗継」ボタンが<b>14:35まで有効</b>です</span>
+    </div>
+
+    <div class="sec-label">乗車（人数ぶんタップ）</div>
+    <div class="btn-grid">
+      <button class="bigbtn b-adult"  onclick="ride('大人',this)">大人<small>一般運賃</small><span class="cnt">0</span></button>
+      <button class="bigbtn b-senior" onclick="ride('高齢者',this)">高齢者<small>割引</small><span class="cnt">0</span></button>
+      <button class="bigbtn b-child"  onclick="ride('こども',this)">こども<small>割引</small><span class="cnt">0</span></button>
+      <button class="bigbtn b-nurse"  onclick="ride('看護師割引',this)">看護師割引<small>地域割引</small><span class="cnt">0</span></button>
+      <button class="bigbtn b-ferry" id="ferrybtn" onclick="ride('船から乗継',this)">船から乗継<small>接続割引</small><span class="cnt">0</span></button>
+      <button class="bigbtn b-qr"     onclick="qrScan(this)">回数券QR<small>かざして読取</small><span class="cnt">0</span></button>
+    </div>
+
+    <div class="off-row">
+      <div class="sec-label" style="margin:0">降車</div>
+      <button onclick="off(-1)" aria-label="降車を減らす">−</button>
+      <div class="off-num"><span id="offnum">0</span> <small>人</small></div>
+      <button onclick="off(1)" aria-label="降車を増やす">＋</button>
+    </div>
+
+    <div class="go-row">
+      <div class="go-sum" id="gosum">この停留所：乗車 0 ／ 降車 0</div>
+      <button class="gobtn" onclick="depart()">発 車</button>
+    </div>
+  </section>
+
+  <!-- ========== 台帳 ========== -->
+  <section id="v-ledger" class="view">
+    <div class="auto-note">乗務員のタップが、そのまま1行ずつここに溜まります（＝統合台帳）。船の記録も同じ形式で入ります。</div>
+    <div id="ledgerwrap"><div class="empty">まだ記録がありません。「記録」画面でボタンを押してみてください。</div></div>
+  </section>
+
+  <!-- ========== 日報 ========== -->
+  <section id="v-report" class="view">
+    <div class="auto-note">この日報は台帳から自動生成されています。手書き・電卓・転記は一切ありません。</div>
+    <div class="kpis">
+      <div class="kpi"><div class="v" id="k-total">0</div><div class="l">本日の乗車合計（人）</div></div>
+      <div class="kpi"><div class="v" id="k-fare">¥0</div><div class="l">運賃収入（概算・100円均一）</div></div>
+      <div class="kpi"><div class="v" id="k-senior">0%</div><div class="l">高齢者比率</div></div>
+    </div>
+    <div class="card">
+      <h3>区分別内訳</h3>
+      <table><thead><tr><th>区分</th><th class="num">人数</th></tr></thead><tbody id="rep-kubun"></tbody></table>
+    </div>
+    <div class="card">
+      <h3>停留所別 乗降</h3>
+      <table><thead><tr><th>停留所</th><th class="num">乗車</th><th class="num">降車</th></tr></thead><tbody id="rep-stop"></tbody></table>
+    </div>
+  </section>
+
+  <!-- ========== 乗継 ========== -->
+  <section id="v-connect" class="view">
+    <div class="auto-note">船の到着記録とバスの乗車記録が同じ台帳にあるから、乗り継ぎの実態が数字になります。</div>
+    <div class="kpis">
+      <div class="kpi"><div class="v">32</div><div class="l">おきのしま2便 下船（14:05）</div></div>
+      <div class="kpi"><div class="v" id="c-ride">0</div><div class="l">うちバス乗継（乗継ボタン）</div></div>
+      <div class="kpi"><div class="v" id="c-wait">10分</div><div class="l">接続待ち時間（14:05→14:15）</div></div>
+    </div>
+    <div class="card">
+      <h3>本日の結節記録（片島港）</h3>
+      <table>
+        <thead><tr><th>便</th><th>船 到着</th><th>バス 発車</th><th class="num">待ち</th><th class="num">下船</th><th class="num">乗継</th></tr></thead>
+        <tbody>
+          <tr><td>1便</td><td>8:35</td><td>9:20</td><td class="num warn">45分</td><td class="num">27</td><td class="num">4</td></tr>
+          <tr><td>2便</td><td>14:05</td><td>14:15</td><td class="num">10分</td><td class="num">32</td><td class="num" id="c-row">0</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:.8rem;color:#5A6B7B;margin-top:10px;line-height:1.8">
+        1便の接続待ち<span class="warn">45分</span>が数字で見える——これが「ダイヤを直す根拠」になります。<br>
+        ※この画面の船データはデモ用の固定値です。
+      </p>
+    </div>
+  </section>
+
+  <div class="foot">
+    デモ版につき、停留所名・時刻・船の記録はすべてダミーです。実際の路線・ダイヤは〇〇市様からのデータで設定します。<br>
+    走行中は画面ロック（操作不可）／停留所名はダイヤに沿って自動で進みます／記録はこのブラウザ内のみに保持されます。
+  </div>
+</main>
+
+<!-- 走行中ロック -->
+<div id="lock" role="dialog" aria-label="走行中ロック">
+  <div class="msg">走行中は操作できません</div>
+  <div class="big" id="lockclock">--:--</div>
+  <div class="msg">次の停留所</div>
+  <div class="next" id="locknext">—</div>
+  <button onclick="arrive()">停留所に到着（デモ操作）</button>
+  <div class="note">実運用では走行中の誤操作を防ぐため画面がロックされ、停車後に解除して記録します。</div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ---------- デモデータ ----------
+const STOPS = [
+  {name:"片島港",   time:"14:15"},
+  {name:"〇〇駅前", time:"14:22"},
+  {name:"市役所前", time:"14:27"},
+  {name:"総合病院前",time:"14:33"},
+  {name:"中央通",   time:"14:39"},
+];
+const FARE = 100; // デモ：100円均一
+let idx = 0;
+let here = {}; let offCnt = 0;
+let ledger = [];   // {time, stop, kind, on, off}
+let stopAgg = {};  // name -> {on, off}
+STOPS.forEach(s => stopAgg[s.name] = {on:0, off:0});
+
+// ---------- 時計 ----------
+function pad(n){return String(n).padStart(2,"0")}
+function tick(){
+  const d=new Date(), t=pad(d.getHours())+":"+pad(d.getMinutes());
+  document.getElementById("clock").textContent=t;
+  document.getElementById("lockclock").textContent=t;
+}
+tick(); setInterval(tick,10000);
+
+// ---------- タブ ----------
+function tab(btn){
+  document.querySelectorAll("nav button").forEach(b=>b.classList.remove("on"));
+  btn.classList.add("on");
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("on"));
+  document.getElementById("v-"+btn.dataset.v).classList.add("on");
+  if(btn.dataset.v==="ledger") renderLedger();
+  if(btn.dataset.v==="report") renderReport();
+}
+
+// ---------- 停留所表示 ----------
+function renderStops(){
+  const bar=document.getElementById("stopbar"); bar.innerHTML="";
+  STOPS.forEach((s,i)=>{
+    const d=document.createElement("div");
+    d.className="stop"+(i<idx?" done":i===idx?" now":"");
+    d.innerHTML=`<div class="dot"></div><span>${s.name}</span>`;
+    bar.appendChild(d);
+  });
+  document.getElementById("nowname").textContent=STOPS[idx].name;
+  document.getElementById("nowsched").textContent="定刻 "+STOPS[idx].time;
+  document.getElementById("ferrybar").style.display = idx===0 ? "flex":"none";
+  document.getElementById("ferrybtn").style.opacity = idx===0 ? "1":".35";
+}
+renderStops();
+
+// ---------- 乗車 ----------
+function nowStr(){const d=new Date();return pad(d.getHours())+":"+pad(d.getMinutes())}
+function ride(kind, btn){
+  if(kind==="船から乗継" && idx!==0){toast("乗継ボタンは片島港でのみ有効です");return}
+  here[kind]=(here[kind]||0)+1;
+  btn.querySelector(".cnt").textContent=here[kind];
+  ledger.push({time:nowStr(), stop:STOPS[idx].name, kind:kind, on:1, off:0});
+  stopAgg[STOPS[idx].name].on++;
+  if(kind==="船から乗継"){
+    const c=document.getElementById("c-ride"), r=document.getElementById("c-row");
+    c.textContent=+c.textContent+1; r.textContent=+r.textContent+1;
+  }
+  sum();
+}
+function qrScan(btn){
+  here["回数券"]=(here["回数券"]||0)+1;
+  btn.querySelector(".cnt").textContent=here["回数券"];
+  ledger.push({time:nowStr(), stop:STOPS[idx].name, kind:"回数券QR", on:1, off:0});
+  stopAgg[STOPS[idx].name].on++;
+  toast("QR読取 OK：回数券 No.0" + (140+Math.floor(Math.random()*50)) + " 消込");
+  sum();
+}
+function off(d){
+  offCnt=Math.max(0,offCnt+d);
+  document.getElementById("offnum").textContent=offCnt;
+  sum();
+}
+function sum(){
+  const on=Object.values(here).reduce((a,b)=>a+b,0);
+  document.getElementById("gosum").textContent=`この停留所：乗車 ${on} ／ 降車 ${offCnt}`;
+}
+
+// ---------- 発車・到着 ----------
+function depart(){
+  if(offCnt>0){
+    ledger.push({time:nowStr(), stop:STOPS[idx].name, kind:"降車", on:0, off:offCnt});
+    stopAgg[STOPS[idx].name].off+=offCnt;
+  }
+  here={}; offCnt=0;
+  document.querySelectorAll(".bigbtn .cnt").forEach(c=>c.textContent="0");
+  document.getElementById("offnum").textContent="0"; sum();
+  if(idx>=STOPS.length-1){toast("終点です。日報タブをご覧ください");return}
+  document.getElementById("locknext").textContent=STOPS[idx+1].name;
+  document.getElementById("lock").classList.add("on");
+}
+function arrive(){
+  document.getElementById("lock").classList.remove("on");
+  idx=Math.min(idx+1,STOPS.length-1);
+  renderStops();
+  toast(STOPS[idx].name+" に到着。記録できます");
+}
+
+// ---------- 台帳 ----------
+function renderLedger(){
+  const w=document.getElementById("ledgerwrap");
+  if(!ledger.length){w.innerHTML='<div class="empty">まだ記録がありません。「記録」画面でボタンを押してみてください。</div>';return}
+  let rows=ledger.slice().reverse().map(r=>
+    `<tr><td>${r.time}</td><td>まちぐる線3便</td><td>${r.stop}</td><td>${r.kind}</td><td class="num">${r.on||""}</td><td class="num">${r.off||""}</td></tr>`).join("");
+  w.innerHTML=`<table><thead><tr><th>時刻</th><th>便</th><th>停留所</th><th>区分</th><th class="num">乗車</th><th class="num">降車</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+// ---------- 日報 ----------
+function renderReport(){
+  const kinds={};
+  let total=0;
+  ledger.forEach(r=>{if(r.on){kinds[r.kind]=(kinds[r.kind]||0)+1;total++}});
+  document.getElementById("k-total").textContent=total;
+  document.getElementById("k-fare").textContent="¥"+(total*FARE).toLocaleString();
+  const seniorPct= total? Math.round((kinds["高齢者"]||0)/total*100):0;
+  document.getElementById("k-senior").textContent=seniorPct+"%";
+  document.getElementById("rep-kubun").innerHTML =
+    Object.keys(kinds).length
+    ? Object.entries(kinds).map(([k,v])=>`<tr><td>${k}</td><td class="num">${v}</td></tr>`).join("")
+    : '<tr><td colspan="2" style="color:#8797A5">記録なし</td></tr>';
+  document.getElementById("rep-stop").innerHTML =
+    STOPS.map(s=>`<tr><td>${s.name}</td><td class="num">${stopAgg[s.name].on}</td><td class="num">${stopAgg[s.name].off}</td></tr>`).join("");
+}
+
+// ---------- トースト ----------
+let tt=null;
+function toast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg; t.classList.add("on");
+  clearTimeout(tt); tt=setTimeout(()=>t.classList.remove("on"),2200);
+}
+</script>
+</body>
+</html>

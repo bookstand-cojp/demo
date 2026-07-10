@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MIROC 醸造管理・酒税申告支援システム（デモ）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2B2118;          /* 焙煎麦芽 */
+  --ink-soft:#5C4F41;
+  --paper:#FAF6EE;        /* 泡クリーム */
+  --panel:#FFFFFF;
+  --line:#E5DCC9;
+  --amber:#C98A1B;        /* 琥珀 */
+  --amber-deep:#A97013;
+  --copper:#A9622F;
+  --stainless:#8B939B;
+  --ok:#3E7C4F;
+  --alert:#B03A2E;
+  --beer:#E3A93C;         /* タンクバー: 製品 */
+  --yeast:#C9B98F;        /* タンクバー: 酵母 */
+  --loss:#B8B0A4;         /* タンクバー: 欠減 */
+  --residue:#6E5B45;      /* タンクバー: タンク残9L */
+  --radius:10px;
+  --shadow:0 1px 3px rgba(43,33,24,.08), 0 4px 14px rgba(43,33,24,.06);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:'Zen Kaku Gothic New',sans-serif;
+  background:var(--paper);
+  color:var(--ink);
+  font-size:15px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+.serif{font-family:'Shippori Mincho',serif}
+.num{font-variant-numeric:tabular-nums}
+
+/* ── ヘッダー ── */
+header{
+  background:var(--ink);
+  color:var(--paper);
+  padding:14px 20px 0;
+  position:sticky;top:0;z-index:50;
+}
+.brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.brand h1{font-family:'Shippori Mincho',serif;font-size:20px;font-weight:700;letter-spacing:.06em}
+.brand .sub{font-size:11.5px;color:#C9BFA9;letter-spacing:.04em}
+.brand .demo-badge{
+  margin-left:auto;font-size:11px;background:var(--amber);color:var(--ink);
+  padding:2px 10px;border-radius:20px;font-weight:700;letter-spacing:.08em;
+}
+nav{display:flex;gap:2px;margin-top:12px;overflow-x:auto;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{
+  appearance:none;border:none;background:transparent;color:#C9BFA9;
+  font-family:inherit;font-size:13.5px;font-weight:500;padding:10px 16px;
+  cursor:pointer;border-radius:8px 8px 0 0;white-space:nowrap;
+  transition:color .15s;
+}
+nav button:hover{color:var(--paper)}
+nav button.on{background:var(--paper);color:var(--ink);font-weight:700}
+nav button:focus-visible{outline:2px solid var(--amber);outline-offset:-2px}
+
+/* ── レイアウト ── */
+main{max-width:1100px;margin:0 auto;padding:24px 20px 90px}
+.page{display:none}
+.page.on{display:block}
+.page-title{display:flex;align-items:baseline;gap:12px;margin-bottom:6px;flex-wrap:wrap}
+.page-title h2{font-family:'Shippori Mincho',serif;font-size:22px;font-weight:700}
+.page-title .desc{font-size:12.5px;color:var(--ink-soft)}
+.role-tag{font-size:11px;padding:2px 10px;border-radius:20px;font-weight:700;letter-spacing:.05em}
+.role-front{background:#E8F0E5;color:var(--ok)}
+.role-admin{background:#F5E8D2;color:var(--amber-deep)}
+
+.card{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:20px;margin-top:16px;
+}
+.card h3{font-size:15px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.card h3::before{content:'';width:4px;height:16px;background:var(--amber);border-radius:2px}
+
+/* ── フォーム ── */
+label{display:block;font-size:12px;font-weight:700;color:var(--ink-soft);margin-bottom:4px;letter-spacing:.03em}
+input,select{
+  width:100%;font-family:inherit;font-size:15px;padding:10px 12px;
+  border:1.5px solid var(--line);border-radius:8px;background:#FFFDF8;color:var(--ink);
+}
+input:focus,select:focus{outline:2px solid var(--amber);outline-offset:0;border-color:var(--amber)}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:1fr 1fr 1fr}
+.g4{grid-template-columns:repeat(4,1fr)}
+.btn{
+  appearance:none;font-family:inherit;font-size:14px;font-weight:700;
+  padding:11px 22px;border-radius:8px;cursor:pointer;border:none;
+  transition:transform .1s, box-shadow .15s;
+}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--amber);color:var(--ink)}
+.btn-primary:hover{box-shadow:0 2px 8px rgba(201,138,27,.4)}
+.btn-ghost{background:transparent;border:1.5px dashed var(--stainless);color:var(--ink-soft)}
+.btn-ghost:hover{border-color:var(--amber);color:var(--amber-deep)}
+.btn-sm{padding:6px 12px;font-size:12.5px}
+.btn-danger-ghost{background:transparent;border:none;color:var(--alert);font-size:18px;cursor:pointer;padding:4px 8px}
+.hint{font-size:12px;color:var(--ink-soft);margin-top:6px}
+.auto-val{
+  background:#FBF3E2;border:1.5px solid #EBD9B0;border-radius:8px;
+  padding:10px 12px;font-size:14px;
+}
+.auto-val b{color:var(--amber-deep)}
+.auto-badge{font-size:10px;background:var(--amber);color:var(--ink);padding:1px 7px;border-radius:10px;font-weight:700;margin-left:6px;vertical-align:middle}
+
+/* ── テーブル ── */
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{
+  text-align:left;font-size:11.5px;color:var(--ink-soft);font-weight:700;
+  padding:8px 10px;border-bottom:2px solid var(--line);letter-spacing:.04em;white-space:nowrap;
+}
+td{padding:10px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:hover td{background:#FCF8EF}
+tr.clickable{cursor:pointer}
+.tr-alert td{background:#FBEFEC}
+.tr-alert:hover td{background:#F8E5E0}
+.right{text-align:right}
+.center{text-align:center}
+
+/* ── ステータス ── */
+.status{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:700;white-space:nowrap}
+.st-ferment{background:#E5EDF5;color:#3B6A93}
+.st-done{background:#E8F0E5;color:var(--ok)}
+.st-packed{background:#F5E8D2;color:var(--amber-deep)}
+.check-ok{color:var(--ok);font-weight:700;font-size:13px}
+.check-ng{color:var(--alert);font-weight:700;font-size:13px}
+
+/* ── タンクバー（シグネチャー）── */
+.tankbar{
+  display:flex;height:22px;border-radius:5px;overflow:hidden;
+  border:1px solid #D8CDb5;min-width:180px;background:#F0EBDF;
+}
+.tankbar .seg{height:100%;transition:width .4s ease}
+.seg-beer{background:linear-gradient(180deg,#EBB94F,#D99A2B)}
+.seg-yeast{background:var(--yeast)}
+.seg-loss{background:repeating-linear-gradient(135deg,var(--loss),var(--loss) 4px,#C8C1B6 4px,#C8C1B6 8px)}
+.seg-residue{background:var(--residue)}
+.tanklegend{display:flex;gap:16px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-soft);margin-top:10px}
+.tanklegend span{display:inline-flex;align-items:center;gap:5px}
+.tanklegend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+
+/* ── 詳細タイムライン ── */
+.timeline{position:relative;padding-left:26px}
+.timeline::before{content:'';position:absolute;left:8px;top:6px;bottom:6px;width:2px;background:var(--line)}
+.tl-item{position:relative;padding-bottom:18px}
+.tl-item::before{
+  content:'';position:absolute;left:-24px;top:5px;width:12px;height:12px;
+  border-radius:50%;background:var(--amber);border:2.5px solid var(--paper);
+  box-shadow:0 0 0 1.5px var(--amber);
+}
+.tl-item .tl-date{font-size:11.5px;color:var(--ink-soft);font-weight:700}
+.tl-item .tl-body{font-size:14px;margin-top:2px}
+
+/* ── 月次集計 ── */
+.month-total td{font-weight:700;background:#FBF3E2}
+.adj-input{width:80px;padding:5px 8px;font-size:13px;text-align:right}
+
+/* ── 設定 ── */
+.setting-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.setting-row:last-child{border-bottom:none}
+.setting-label{flex:1;min-width:220px}
+.setting-label b{display:block;font-size:14px}
+.setting-label small{font-size:11.5px;color:var(--ink-soft)}
+.setting-val{width:110px}
+.setting-ref{font-size:10.5px;background:#FBEFEC;color:var(--alert);padding:2px 8px;border-radius:10px;font-weight:700;white-space:nowrap}
+
+/* ── トースト ── */
+#toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--ink);color:var(--paper);padding:12px 24px;border-radius:10px;
+  font-size:14px;font-weight:500;box-shadow:0 6px 24px rgba(0,0,0,.25);
+  transition:transform .3s ease;z-index:100;max-width:90vw;
+}
+#toast.show{transform:translateX(-50%) translateY(0)}
+
+/* ── サブタブ（現場入力）── */
+.subtabs{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.subtabs button{
+  appearance:none;font-family:inherit;font-size:13px;font-weight:700;
+  padding:8px 18px;border-radius:24px;cursor:pointer;
+  border:1.5px solid var(--line);background:var(--panel);color:var(--ink-soft);
+}
+.subtabs button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.subpage{display:none}
+.subpage.on{display:block}
+
+/* ── 検算サマリー ── */
+.kensan-strip{display:flex;gap:14px;flex-wrap:wrap;margin-top:14px}
+.kpi{
+  flex:1;min-width:150px;background:var(--panel);border:1px solid var(--line);
+  border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);
+}
+.kpi .kpi-label{font-size:11px;color:var(--ink-soft);font-weight:700;letter-spacing:.04em}
+.kpi .kpi-val{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;margin-top:2px}
+.kpi .kpi-val small{font-size:13px;font-weight:500}
+.kpi.kpi-alert .kpi-val{color:var(--alert)}
+
+@media(max-width:640px){
+  .g2,.g3,.g4{grid-template-columns:1fr}
+  main{padding:16px 12px 90px}
+  .card{padding:16px 14px}
+  table{font-size:12.5px}
+  td,th{padding:8px 6px}
+  .tankbar{min-width:120px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <h1>MIROC 醸造管理</h1>
+    <span class="sub">酒税申告支援システム</span>
+    <span class="demo-badge">DEMO</span>
+  </div>
+  <nav id="nav">
+    <button data-page="front" class="on">現場入力</button>
+    <button data-page="ledger">バッチ台帳</button>
+    <button data-page="detail">バッチ詳細</button>
+    <button data-page="monthly">月次集計</button>
+    <button data-page="settings">設定</button>
+  </nav>
+</header>
+
+<main>
+
+<!-- ═══════════ 現場入力 ═══════════ -->
+<section class="page on" id="page-front">
+  <div class="page-title">
+    <h2>現場入力</h2>
+    <span class="role-tag role-front">使う人：醸造スタッフ（スマホ想定）</span>
+  </div>
+  <div class="subtabs" id="frontTabs">
+    <button data-sub="shikomi" class="on">仕込</button>
+    <button data-sub="hakkou">発酵記録</button>
+    <button data-sub="tsume">容器詰め</button>
+  </div>
+
+  <!-- 仕込入力 -->
+  <div class="subpage on" id="sub-shikomi">
+    <div class="card">
+      <h3>新規仕込の登録</h3>
+      <div class="grid g2">
+        <div>
+          <label>レシピ（仕込記号）</label>
+          <select id="recipeSel" onchange="prefillRecipe()">
+            <option value="">選択してください</option>
+            <option value="SA1">SA1｜セッションエール（発泡酒）</option>
+            <option value="IPL2">IPL2｜インディアペールラガー（ビール）</option>
+            <option value="RIPA1">RIPA1｜レッドIPA（ビール）</option>
+            <option value="HIPA2">HIPA2｜ヘイジーIPA（ビール）</option>
+          </select>
+        </div>
+        <div>
+          <label>仕込順合（自動採番）</label>
+          <div class="auto-val num"><b>335</b> <span class="auto-badge">自動</span></div>
+        </div>
+        <div>
+          <label>仕込日</label>
+          <input type="date" value="2026-06-25">
+        </div>
+        <div>
+          <label>払出先タンク</label>
+          <select>
+            <option>FV1</option><option>FV2</option><option selected>FV3</option>
+            <option>FV4</option><option>FV5</option><option>FV6</option>
+          </select>
+        </div>
+        <div>
+          <label>麦芽 (kg)</label>
+          <input type="number" id="maltKg" value="" placeholder="例: 120" oninput="calcRatio()">
+        </div>
+        <div>
+          <label>汲み水 (L)</label>
+          <input type="number" id="waterL" value="" placeholder="例: 600" oninput="calcRatio()">
+        </div>
+        <div>
+          <label>初期糖度 (%)</label>
+          <input type="number" step="0.1" placeholder="例: 14.4">
+        </div>
+        <div>
+          <label>課税区分（レシピから自動表示）</label>
+          <div class="auto-val" id="taxClass">レシピを選択すると表示されます</div>
+        </div>
+      </div>
+      <p class="hint" id="ratioHint">麦芽比率（参考値）：麦芽・汲み水を入力すると自動計算されます</p>
+      <div style="margin-top:16px">
+        <button class="btn btn-primary" onclick="toast('仕込 #335 を登録しました（デモ）')">仕込を登録する</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 発酵記録 -->
+  <div class="subpage" id="sub-hakkou">
+    <div class="card">
+      <h3>発酵中バッチの日次記録</h3>
+      <div class="grid g2">
+        <div>
+          <label>バッチ</label>
+          <select>
+            <option>334｜HIPA2（FV2）発酵5日目</option>
+            <option selected>333｜SA1（FV4）発酵3日目</option>
+          </select>
+        </div>
+        <div>
+          <label>記録日</label>
+          <input type="date" value="2026-06-25">
+        </div>
+        <div>
+          <label>品温 (℃)</label>
+          <input type="number" step="0.1" value="18.5">
+        </div>
+        <div>
+          <label>糖度 (%)</label>
+          <input type="number" step="0.1" value="6.2">
+        </div>
+        <div>
+          <label>本日の欠減 (L)</label>
+          <input type="number" value="12">
+        </div>
+        <div>
+          <label>前回記録（参考）</label>
+          <div class="auto-val num">6/24　品温18.2℃／糖度 8.0%／欠減 14L</div>
+        </div>
+      </div>
+      <div style="margin-top:16px">
+        <button class="btn btn-primary" onclick="toast('発酵記録を保存しました（デモ）')">記録を保存する</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 容器詰め -->
+  <div class="subpage" id="sub-tsume">
+    <div class="card">
+      <h3>容器詰めの登録</h3>
+      <div class="grid g2">
+        <div>
+          <label>バッチ</label>
+          <select><option selected>332｜RIPA1（製成済み・詰め可能 466L）</option></select>
+        </div>
+        <div>
+          <label>詰め日</label>
+          <input type="date" value="2026-06-25">
+        </div>
+      </div>
+      <div style="margin-top:16px">
+        <label>容器と本数（行を追加できます）</label>
+        <table id="tsumeTable">
+          <thead><tr><th>容器</th><th style="width:110px">本数</th><th class="right">リッター換算</th><th style="width:40px"></th></tr></thead>
+          <tbody>
+            <tr>
+              <td><select class="tsume-type" onchange="calcTsume()"><option value="15" selected>15Lケグ</option><option value="10">10Lケグ</option><option value="0.33">瓶330ml</option><option value="1.5">ペット1.5L</option></select></td>
+              <td><input type="number" class="tsume-qty" value="25" oninput="calcTsume()"></td>
+              <td class="right num tsume-sub">375.0 L</td>
+              <td><button class="btn-danger-ghost" onclick="delRow(this)">×</button></td>
+            </tr>
+            <tr>
+              <td><select class="tsume-type" onchange="calcTsume()"><option value="15">15Lケグ</option><option value="10">10Lケグ</option><option value="0.33" selected>瓶330ml</option><option value="1.5">ペット1.5L</option></select></td>
+              <td><input type="number" class="tsume-qty" value="180" oninput="calcTsume()"></td>
+              <td class="right num tsume-sub">59.4 L</td>
+              <td><button class="btn-danger-ghost" onclick="delRow(this)">×</button></td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="margin-top:10px">
+          <button class="btn btn-ghost btn-sm" onclick="addRow()">＋ 容器を追加</button>
+        </div>
+      </div>
+      <div class="grid g2" style="margin-top:16px">
+        <div class="auto-val">
+          製品合計：<b class="num" id="tsumeTotal">434.4 L</b> <span class="auto-badge">自動</span>
+        </div>
+        <div class="auto-val">
+          自動計上欠減：<b class="num">詰口前 4L ＋ 充填 5L</b> <span class="auto-badge">設定値</span>
+        </div>
+      </div>
+      <p class="hint">ケグ欠減申告には設定値のタンク底残 9L が自動で上乗せされます（設定画面で変更可能）</p>
+      <div style="margin-top:16px">
+        <button class="btn btn-primary" onclick="toast('容器詰めを登録しました。台帳の検算が更新されます（デモ）')">容器詰めを登録する</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ バッチ台帳 ═══════════ -->
+<section class="page" id="page-ledger">
+  <div class="page-title">
+    <h2>バッチ台帳</h2>
+    <span class="role-tag role-admin">管理する人：全バッチの状態と検算を一覧</span>
+  </div>
+
+  <div class="kensan-strip">
+    <div class="kpi"><div class="kpi-label">発酵中</div><div class="kpi-val num">2<small> 件</small></div></div>
+    <div class="kpi"><div class="kpi-label">今月の製成</div><div class="kpi-val num">1,842<small> L</small></div></div>
+    <div class="kpi kpi-alert"><div class="kpi-label">検算エラー</div><div class="kpi-val num">1<small> 件</small></div></div>
+  </div>
+
+  <div class="card">
+    <h3>バッチ一覧（タンクバー＝タンク量の行方）</h3>
+    <div style="overflow-x:auto">
+    <table>
+      <thead>
+        <tr>
+          <th>順合</th><th>記号</th><th>状態</th>
+          <th class="right">タンク量G</th>
+          <th>タンクバー</th>
+          <th class="right">製品T</th><th class="right">酵母U</th><th class="right">欠減W</th>
+          <th class="center">検算</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="clickable" onclick="goDetail()">
+          <td class="num">332</td><td><b>RIPA1</b></td><td><span class="status st-packed">詰済</span></td>
+          <td class="right num">540</td>
+          <td><div class="tankbar">
+            <div class="seg seg-beer" style="width:80.4%"></div>
+            <div class="seg seg-yeast" style="width:4.3%"></div>
+            <div class="seg seg-loss" style="width:13.6%"></div>
+            <div class="seg seg-residue" style="width:1.7%"></div>
+          </div></td>
+          <td class="right num">434.4</td><td class="right num">23</td><td class="right num">73.6</td>
+          <td class="center"><span class="check-ok">✓ 一致</span></td>
+        </tr>
+        <tr class="clickable" onclick="goDetail()">
+          <td class="num">331</td><td><b>IPL2</b></td><td><span class="status st-packed">詰済</span></td>
+          <td class="right num">535</td>
+          <td><div class="tankbar">
+            <div class="seg seg-beer" style="width:82.2%"></div>
+            <div class="seg seg-yeast" style="width:2.8%"></div>
+            <div class="seg seg-loss" style="width:13.3%"></div>
+            <div class="seg seg-residue" style="width:1.7%"></div>
+          </div></td>
+          <td class="right num">440.0</td><td class="right num">15</td><td class="right num">80.0</td>
+          <td class="center"><span class="check-ok">✓ 一致</span></td>
+        </tr>
+        <tr class="clickable tr-alert" onclick="goDetail()">
+          <td class="num">330</td><td><b>SA1</b></td><td><span class="status st-packed">詰済</span></td>
+          <td class="right num">550</td>
+          <td><div class="tankbar">
+            <div class="seg seg-beer" style="width:74%"></div>
+            <div class="seg seg-yeast" style="width:0%"></div>
+            <div class="seg seg-loss" style="width:18%"></div>
+            <div class="seg seg-residue" style="width:1.6%"></div>
+          </div></td>
+          <td class="right num">407.0</td><td class="right num">0</td><td class="right num">99.0</td>
+          <td class="center"><span class="check-ng">✗ 差異 −35L</span></td>
+        </tr>
+        <tr class="clickable" onclick="goDetail()">
+          <td class="num">334</td><td><b>HIPA2</b></td><td><span class="status st-ferment">発酵中</span></td>
+          <td class="right num">530</td>
+          <td><div class="tankbar"><div class="seg seg-beer" style="width:0%"></div></div></td>
+          <td class="right num">—</td><td class="right num">—</td><td class="right num">—</td>
+          <td class="center" style="color:var(--stainless)">発酵5日目</td>
+        </tr>
+        <tr class="clickable" onclick="goDetail()">
+          <td class="num">333</td><td><b>SA1</b></td><td><span class="status st-ferment">発酵中</span></td>
+          <td class="right num">585</td>
+          <td><div class="tankbar"><div class="seg seg-beer" style="width:0%"></div></div></td>
+          <td class="right num">—</td><td class="right num">—</td><td class="right num">—</td>
+          <td class="center" style="color:var(--stainless)">発酵3日目</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+    <div class="tanklegend">
+      <span><i style="background:var(--beer)"></i>製品（ケグ・瓶・ペット）</span>
+      <span><i style="background:var(--yeast)"></i>酵母回収</span>
+      <span><i style="background:repeating-linear-gradient(135deg,var(--loss),var(--loss) 4px,#C8C1B6 4px,#C8C1B6 8px)"></i>欠減</span>
+      <span><i style="background:var(--residue)"></i>タンク底残 9L</span>
+    </div>
+    <p class="hint">検算：タンク量G ＝ 製品T ＋ 酵母U ＋ 欠減W。差異があるバッチは赤色で表示され、月次確定がブロックされます。</p>
+  </div>
+</section>
+
+<!-- ═══════════ バッチ詳細 ═══════════ -->
+<section class="page" id="page-detail">
+  <div class="page-title">
+    <h2>バッチ詳細　<span class="num serif">#332</span>　RIPA1</h2>
+    <span class="role-tag role-admin">仕込から詰めまでの全記録（転記ゼロ）</span>
+  </div>
+
+  <div class="card">
+    <h3>タンク量の行方（G = 540L）</h3>
+    <div class="tankbar" style="height:34px">
+      <div class="seg seg-beer" style="width:80.4%"></div>
+      <div class="seg seg-yeast" style="width:4.3%"></div>
+      <div class="seg seg-loss" style="width:13.6%"></div>
+      <div class="seg seg-residue" style="width:1.7%"></div>
+    </div>
+    <div class="tanklegend">
+      <span><i style="background:var(--beer)"></i>製品 434.4L（80.4%）</span>
+      <span><i style="background:var(--yeast)"></i>酵母回収 23L</span>
+      <span><i style="background:repeating-linear-gradient(135deg,var(--loss),var(--loss) 4px,#C8C1B6 4px,#C8C1B6 8px)"></i>欠減 73.6L</span>
+      <span><i style="background:var(--residue)"></i>タンク底残 9L</span>
+    </div>
+    <div class="grid g4" style="margin-top:16px">
+      <div class="auto-val">瓶PET欠減 X<br><b class="num">18.6 L</b></div>
+      <div class="auto-val">発酵簿折引き Z<br><b class="num">55.0 L</b> <span class="auto-badge">日々欠減÷2</span></div>
+      <div class="auto-val">ケグ欠減申告 AA<br><b class="num">64.0 L</b> <span class="auto-badge">Z＋9L</span></div>
+      <div class="auto-val">検算<br><b style="color:var(--ok)">✓ G＝T＋U＋W 一致</b></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>記録タイムライン</h3>
+    <div class="timeline">
+      <div class="tl-item"><div class="tl-date num">2026/06/02</div><div class="tl-body"><b>仕込</b>　麦芽142kg／汲み水580L／初期糖度14.8%　→ FV3へ払出（田中）</div></div>
+      <div class="tl-item"><div class="tl-date num">2026/06/03〜06/12</div><div class="tl-body"><b>発酵記録 10件</b>　日々欠減 合計110L（申告値 Z＝55L）</div></div>
+      <div class="tl-item"><div class="tl-date num">2026/06/10</div><div class="tl-body"><b>酵母回収</b>　23L（→ #335 SA1 に再利用予定）</div></div>
+      <div class="tl-item"><div class="tl-date num">2026/06/25</div><div class="tl-body"><b>容器詰め</b>　15Lケグ×25本（375.0L）＋ 瓶330ml×180本（59.4L）＝ 434.4L　詰口前4L・充填5Lを自動計上</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 月次集計 ═══════════ -->
+<section class="page" id="page-monthly">
+  <div class="page-title">
+    <h2>月次集計・申告支援</h2>
+    <span class="role-tag role-admin">申告書転記用の数値を自動集計</span>
+  </div>
+
+  <div class="card">
+    <h3>2026年 月別製成数量（自動集計＋調整）</h3>
+    <div style="overflow-x:auto">
+    <table>
+      <thead>
+        <tr>
+          <th>月</th>
+          <th class="right">ビール（自動）</th><th class="right">調整</th><th class="right">ビール（申告値）</th>
+          <th class="right">発泡酒（自動）</th><th class="right">調整</th><th class="right">発泡酒（申告値）</th>
+          <th class="center">状態</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>4月</td>
+          <td class="right num">902.2</td><td class="right"><input class="adj-input num" value="0" disabled></td><td class="right num"><b>902.2</b></td>
+          <td class="right num">633.0</td><td class="right"><input class="adj-input num" value="0" disabled></td><td class="right num"><b>633.0</b></td>
+          <td class="center"><span class="status st-done">確定済</span></td>
+        </tr>
+        <tr>
+          <td>5月</td>
+          <td class="right num">874.4</td><td class="right"><input class="adj-input num" value="+15" disabled></td><td class="right num"><b>889.4</b></td>
+          <td class="right num">408.0</td><td class="right"><input class="adj-input num" value="0" disabled></td><td class="right num"><b>408.0</b></td>
+          <td class="center"><span class="status st-done">確定済</span></td>
+        </tr>
+        <tr>
+          <td>6月</td>
+          <td class="right num" id="junBeer">874.4</td><td class="right"><input class="adj-input num" value="0" oninput="adjMonth(this)"></td><td class="right num"><b id="junBeerFinal">874.4</b></td>
+          <td class="right num">407.0</td><td class="right"><input class="adj-input num" value="0"></td><td class="right num"><b>407.0</b></td>
+          <td class="center"><button class="btn btn-primary btn-sm" onclick="confirmMonth()">確定する</button></td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="hint" id="monthlyHint" style="color:var(--alert);font-weight:700">⚠ 6月は検算エラーのバッチ（#330 SA1：差異−35L）があるため確定できません。バッチ台帳から修正してください。</p>
+  </div>
+
+  <div class="card">
+    <h3>申告のながれ</h3>
+    <div class="grid g3">
+      <div class="auto-val">① 全バッチの検算が<br><b>✓ 一致</b>になる</div>
+      <div class="auto-val">② 月次を<b>確定</b>する<br>（以後の編集をロック）</div>
+      <div class="auto-val">③ 申告書転記用の<br><b>数値表を出力</b>（PDF/印刷）</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 設定 ═══════════ -->
+<section class="page" id="page-settings">
+  <div class="page-title">
+    <h2>設定</h2>
+    <span class="role-tag role-admin">欠減設定値（MIROCの現行運用値がデフォルト）</span>
+  </div>
+
+  <div class="card">
+    <h3>欠減の設定値（ロジックから分離）</h3>
+    <div class="setting-row">
+      <div class="setting-label"><b>タンク底残</b><small>ケグ欠減申告に毎バッチ自動上乗せ</small></div>
+      <input class="setting-val num" value="9">
+      <span>L</span>
+      <span class="setting-ref">要確認①</span>
+    </div>
+    <div class="setting-row">
+      <div class="setting-label"><b>発酵欠減の申告係数</b><small>日々欠減合計 × 係数 ＝ 申告値Z</small></div>
+      <input class="setting-val num" value="0.5">
+      <span>倍</span>
+      <span class="setting-ref">要確認②</span>
+    </div>
+    <div class="setting-row">
+      <div class="setting-label"><b>詰口前差分</b><small>容器詰め時に自動計上</small></div>
+      <input class="setting-val num" value="4">
+      <span>L</span>
+      <span class="setting-ref">要確認③</span>
+    </div>
+    <div class="setting-row">
+      <div class="setting-label"><b>充填欠減</b><small>容器詰め時に自動計上</small></div>
+      <input class="setting-val num" value="5">
+      <span>L</span>
+      <span class="setting-ref">要確認③</span>
+    </div>
+    <div class="setting-row">
+      <div class="setting-label"><b>課税区分の麦芽比率閾値</b><small>参考表示用（判定式は確認中）</small></div>
+      <input class="setting-val num" value="50">
+      <span>%</span>
+      <span class="setting-ref">要確認⑥</span>
+    </div>
+    <div style="margin-top:16px">
+      <button class="btn btn-primary" onclick="toast('設定を保存しました。以後のバッチに反映されます（デモ）')">設定を保存する</button>
+    </div>
+    <p class="hint">これらの値はMIROC様の現行帳簿237バッチの分析から抽出した運用値です。税務確認後に変更する場合もこの画面の変更だけで、全計算に反映されます。他ブルワリー導入時もこの設定の差し替えで対応します。</p>
+  </div>
+
+  <div class="card">
+    <h3>入力の正規化ルール（自動適用）</h3>
+    <table>
+      <thead><tr><th>項目</th><th>ルール</th><th>現行データの問題（解消済み）</th></tr></thead>
+      <tbody>
+        <tr><td>タンク番号</td><td>半角に統一（FV２→FV2）</td><td class="num">8種類の表記揺れ</td></tr>
+        <tr><td>仕込記号</td><td>大文字に統一（sa1→SA1）</td><td>大文字小文字の混在</td></tr>
+        <tr><td>ケグ番号</td><td>数字のみ・必須入力</td><td>「??」の混入</td></tr>
+        <tr><td>仕込順合</td><td>自動採番（手入力禁止）</td><td class="num">シート名と中身の不一致 9件</td></tr>
+        <tr><td>日付</td><td>西暦のカレンダー入力</td><td>和暦・西暦の混在</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+</main>
+
+<div id="toast">保存しました</div>
+
+<script>
+// ── ナビゲーション ──
+const nav = document.getElementById('nav');
+nav.addEventListener('click', e => {
+  const btn = e.target.closest('button'); if (!btn) return;
+  nav.querySelectorAll('button').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.getElementById('page-' + btn.dataset.page).classList.add('on');
+  window.scrollTo({top: 0});
+});
+function goDetail(){
+  nav.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.page === 'detail'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.getElementById('page-detail').classList.add('on');
+  window.scrollTo({top: 0});
+}
+
+// ── 現場サブタブ ──
+const frontTabs = document.getElementById('frontTabs');
+frontTabs.addEventListener('click', e => {
+  const btn = e.target.closest('button'); if (!btn) return;
+  frontTabs.querySelectorAll('button').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  document.querySelectorAll('.subpage').forEach(p => p.classList.remove('on'));
+  document.getElementById('sub-' + btn.dataset.sub).classList.add('on');
+});
+
+// ── 仕込：レシピプリフィル＆麦芽比率 ──
+const recipes = {
+  SA1:  {tax:'発泡酒', malt:98,  water:610},
+  IPL2: {tax:'ビール', malt:145, water:580},
+  RIPA1:{tax:'ビール', malt:142, water:580},
+  HIPA2:{tax:'ビール', malt:150, water:560},
+};
+function prefillRecipe(){
+  const r = recipes[document.getElementById('recipeSel').value];
+  const tax = document.getElementById('taxClass');
+  if (!r) { tax.textContent = 'レシピを選択すると表示されます'; return; }
+  tax.innerHTML = '<b>' + r.tax + '</b> <span class="auto-badge">レシピから自動</span>';
+  document.getElementById('maltKg').value = r.malt;
+  document.getElementById('waterL').value = r.water;
+  calcRatio();
+}
+function calcRatio(){
+  const m = parseFloat(document.getElementById('maltKg').value);
+  const w = parseFloat(document.getElementById('waterL').value);
+  const el = document.getElementById('ratioHint');
+  if (m > 0 && w > 0) {
+    el.textContent = '麦芽比率（参考値）：' + (m / w * 100).toFixed(1) + '%（判定式は税務確認後に確定します）';
+  } else {
+    el.textContent = '麦芽比率（参考値）：麦芽・汲み水を入力すると自動計算されます';
+  }
+}
+
+// ── 容器詰め：行追加と自動計算 ──
+function calcTsume(){
+  let total = 0;
+  document.querySelectorAll('#tsumeTable tbody tr').forEach(tr => {
+    const size = parseFloat(tr.querySelector('.tsume-type').value);
+    const qty  = parseFloat(tr.querySelector('.tsume-qty').value) || 0;
+    const sub  = size * qty;
+    tr.querySelector('.tsume-sub').textContent = sub.toFixed(1) + ' L';
+    total += sub;
+  });
+  document.getElementById('tsumeTotal').textContent = total.toFixed(1) + ' L';
+}
+function addRow(){
+  const tbody = document.querySelector('#tsumeTable tbody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><select class="tsume-type" onchange="calcTsume()"><option value="15" selected>15Lケグ</option><option value="10">10Lケグ</option><option value="0.33">瓶330ml</option><option value="1.5">ペット1.5L</option></select></td>
+    <td><input type="number" class="tsume-qty" value="0" oninput="calcTsume()"></td>
+    <td class="right num tsume-sub">0.0 L</td>
+    <td><button class="btn-danger-ghost" onclick="delRow(this)">×</button></td>`;
+  tbody.appendChild(tr);
+}
+function delRow(btn){
+  const rows = document.querySelectorAll('#tsumeTable tbody tr');
+  if (rows.length <= 1) { toast('最低1行は必要です'); return; }
+  btn.closest('tr').remove();
+  calcTsume();
+}
+
+// ── 月次集計 ──
+function adjMonth(input){
+  const base = 874.4;
+  const adj = parseFloat(input.value) || 0;
+  document.getElementById('junBeerFinal').textContent = (base + adj).toFixed(1);
+}
+function confirmMonth(){
+  toast('⚠ 検算エラーのバッチがあるため確定できません（申告前ハードストップ）');
+}
+
+// ── トースト ──
+let toastTimer;
+function toast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
+}
+</script>
+</body>
+</html>

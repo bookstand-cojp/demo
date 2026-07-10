@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理画面</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f5f5;
+      padding: 16px;
+      min-height: 100vh;
+    }
+    h1 { font-size: 20px; font-weight: 700; color: #222; margin-bottom: 16px; }
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .btn {
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+      background: #e85d04;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn.secondary { background: #555; }
+    .msg {
+      padding: 12px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .msg.success { background: #e8f5e9; color: #2e7d32; display: block; }
+    .msg.error { background: #ffebee; color: #c62828; display: block; }
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+      font-size: 13px;
+      min-width: 700px;
+    }
+    th {
+      background: #333;
+      color: #fff;
+      padding: 10px 10px;
+      text-align: left;
+      white-space: nowrap;
+    }
+    td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #eee;
+      vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafafa; }
+    select.inline {
+      font-size: 13px;
+      padding: 4px 6px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    input.date-input {
+      font-size: 13px;
+      padding: 4px 6px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      width: 130px;
+    }
+    .btn-sm {
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #fff;
+      background: #e85d04;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .btn-sm:disabled { opacity: 0.5; }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge.issued { background: #e8f5e9; color: #2e7d32; }
+    .badge.pending { background: #fff3e0; color: #e65100; }
+    .loading { text-align: center; padding: 40px; color: #888; }
+  </style>
+</head>
+<body>
+  <h1>管理画面 - 注文一覧</h1>
+
+  <div class="toolbar">
+    <button class="btn" id="btnDelivery" onclick="issueDeliveryNote()">納品書発行</button>
+    <button class="btn secondary" id="btnInvoice" onclick="generateInvoice()">請求書発行</button>
+    <button class="btn secondary" onclick="loadOrders()">更新</button>
+  </div>
+
+  <div class="msg" id="msg"></div>
+
+  <div class="table-wrap">
+    <div class="loading" id="loading">読み込み中...</div>
+    <table id="orderTable" style="display:none">
+      <thead>
+        <tr>
+          <th>注文日</th>
+          <th>顧客名</th>
+          <th>商品名</th>
+          <th>数量</th>
+          <th>ステータス</th>
+          <th>納品日</th>
+          <th>納品書</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="orderBody"></tbody>
+    </table>
+  </div>
+
+  <script>
+    var STATUS_OPTIONS = ['受付', '製作済み', '発送済み', '請求完了', '入金確認'];
+
+    function loadOrders() {
+      document.getElementById('loading').style.display = 'block';
+      document.getElementById('orderTable').style.display = 'none';
+      document.getElementById('msg').className = 'msg';
+
+      google.script.run
+        .withSuccessHandler(function(result) {
+          document.getElementById('loading').style.display = 'none';
+          if (!result.success) {
+            showMsg('error', 'エラー: ' + result.error);
+            return;
+          }
+          renderOrders(result.orders || []);
+          document.getElementById('orderTable').style.display = 'table';
+        })
+        .withFailureHandler(function(err) {
+          document.getElementById('loading').style.display = 'none';
+          showMsg('error', 'データ取得エラー: ' + err.message);
+        })
+        .webappGetOrders();
+    }
+
+    function renderOrders(orders) {
+      var tbody = document.getElementById('orderBody');
+      tbody.innerHTML = '';
+
+      if (orders.length === 0) {
+        var tr = document.createElement('tr');
+        var td = document.createElement('td');
+        td.colSpan = 8;
+        td.textContent = '注文データがありません';
+        td.style.textAlign = 'center';
+        td.style.color = '#888';
+        td.style.padding = '30px';
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+        return;
+      }
+
+      orders.forEach(function(order) {
+        var tr = document.createElement('tr');
+
+        // ステータス選択
+        var statusSel = '<select class="inline" id="status_' + order.rowNum + '">';
+        STATUS_OPTIONS.forEach(function(s) {
+          statusSel += '<option value="' + s + '"' + (order.status === s ? ' selected' : '') + '>' + s + '</option>';
+        });
+        statusSel += '</select>';
+
+        // 納品日
+        var dateSel = '<input type="date" class="date-input" id="date_' + order.rowNum + '" value="' + (order.deliveryDate || '') + '">';
+
+        // 納品書バッジ
+        var badge = order.deliveryNoteIssued
+          ? '<span class="badge issued">発行済 ' + (order.deliveryNoteId ? order.deliveryNoteId : '') + '</span>'
+          : '<span class="badge pending">未発行</span>';
+
+        // 更新ボタン
+        var updateBtn = '<button class="btn-sm" onclick="updateRow(' + order.rowNum + ')">更新</button>';
+
+        tr.innerHTML = [
+          '<td>' + (order.orderDate || '') + '</td>',
+          '<td>' + escHtml(order.customerName) + '</td>',
+          '<td>' + escHtml(order.productName) + '</td>',
+          '<td style="text-align:right">' + order.qty + '</td>',
+          '<td>' + statusSel + '</td>',
+          '<td>' + dateSel + '</td>',
+          '<td>' + badge + '</td>',
+          '<td>' + updateBtn + '</td>',
+        ].join('');
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    function updateRow(rowNum) {
+      var status = document.getElementById('status_' + rowNum).value;
+      var deliveryDate = document.getElementById('date_' + rowNum).value;
+
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result.success) {
+            showMsg('success', '行 ' + rowNum + ' を更新しました');
+          } else {
+            showMsg('error', 'エラー: ' + result.error);
+          }
+        })
+        .withFailureHandler(function(err) {
+          showMsg('error', '更新エラー: ' + err.message);
+        })
+        .webappUpdateStatus({ rowNum: rowNum, status: status, deliveryDate: deliveryDate });
+    }
+
+    function issueDeliveryNote() {
+      var btn = document.getElementById('btnDelivery');
+      btn.disabled = true;
+      btn.textContent = '発行中...';
+      showMsg('', '');
+
+      google.script.run
+        .withSuccessHandler(function(result) {
+          btn.disabled = false;
+          btn.textContent = '納品書発行';
+          if (result.success) {
+            showMsg('success', '納品書発行完了: ' + result.issuedCount + '件発行しました');
+            loadOrders();
+          } else {
+            showMsg('error', 'エラー: ' + result.error);
+          }
+        })
+        .withFailureHandler(function(err) {
+          btn.disabled = false;
+          btn.textContent = '納品書発行';
+          showMsg('error', '発行エラー: ' + err.message);
+        })
+        .webappIssueDeliveryNote();
+    }
+
+    function generateInvoice() {
+      var btn = document.getElementById('btnInvoice');
+      btn.disabled = true;
+      btn.textContent = '発行中...';
+      showMsg('', '');
+
+      google.script.run
+        .withSuccessHandler(function(result) {
+          btn.disabled = false;
+          btn.textContent = '請求書発行';
+          if (result.success) {
+            showMsg('success', '請求書発行完了: ' + result.issuedCount + '件発行しました');
+          } else {
+            showMsg('error', 'エラー: ' + result.error);
+          }
+        })
+        .withFailureHandler(function(err) {
+          btn.disabled = false;
+          btn.textContent = '請求書発行';
+          showMsg('error', '発行エラー: ' + err.message);
+        })
+        .webappGenerateInvoice();
+    }
+
+    function showMsg(type, text) {
+      var el = document.getElementById('msg');
+      el.className = type ? 'msg ' + type : 'msg';
+      el.textContent = text;
+    }
+
+    function escHtml(s) {
+      return String(s || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // 初回ロード
+    loadOrders();
+  </script>
+</body>
+</html>

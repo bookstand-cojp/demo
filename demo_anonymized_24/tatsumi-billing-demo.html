@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>月次請求処理 – 〇〇印刷 DXデモ</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f4f0;
+      --surface: #ffffff;
+      --surface-sub: #f9f8f6;
+      --border: #e2e0da;
+      --border-strong: #ccc9c1;
+      --text-primary: #1a1918;
+      --text-secondary: #6b6860;
+      --text-muted: #a09e99;
+      --accent: #1a6ef5;
+      --accent-light: #e8f0fe;
+      --accent-text: #1450c4;
+      --success: #15803d;
+      --success-light: #dcfce7;
+      --success-border: #86efac;
+      --mono: 'Courier New', Courier, monospace;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Yu Gothic UI', sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    .wrapper {
+      width: 100%;
+      max-width: 560px;
+    }
+
+    .header {
+      margin-bottom: 1.5rem;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+
+    .header-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--accent-light);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .header h1 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .badge {
+      font-size: 11px;
+      background: var(--success-light);
+      color: var(--success);
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+
+    .header p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .card {
+      background: var(--surface);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .card-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 12px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .field label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    select, input[type="month"] {
+      width: 100%;
+      font-size: 13px;
+      padding: 8px 10px;
+      border: 1px solid var(--border-strong);
+      border-radius: 6px;
+      background: var(--surface-sub);
+      color: var(--text-primary);
+      appearance: auto;
+      font-family: inherit;
+    }
+
+    select:focus, input[type="month"]:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(26, 110, 245, 0.12);
+    }
+
+    .field-full {
+      margin-bottom: 12px;
+    }
+
+    .checkbox-row {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 13px;
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    .checkbox-label input[type="checkbox"] {
+      width: 15px;
+      height: 15px;
+      cursor: pointer;
+      accent-color: var(--accent);
+    }
+
+    /* ログエリア */
+    .log-area {
+      display: none;
+      background: var(--surface);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .log-list {
+      font-size: 12px;
+      font-family: var(--mono);
+      color: var(--text-secondary);
+      line-height: 2;
+      min-height: 40px;
+    }
+
+    .log-line {
+      opacity: 0;
+      transition: opacity 0.25s ease;
+      display: flex;
+      gap: 8px;
+    }
+
+    .log-line.visible { opacity: 1; }
+
+    .log-line .log-prompt {
+      color: var(--text-muted);
+      user-select: none;
+    }
+
+    .log-line.done .log-text {
+      color: var(--success);
+    }
+
+    /* 結果エリア */
+    .result-area {
+      display: none;
+      background: var(--success-light);
+      border: 1px solid var(--success-border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .result-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .result-icon {
+      font-size: 18px;
+    }
+
+    .result-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--success);
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .stat-card {
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+      border: 1px solid var(--success-border);
+    }
+
+    .stat-card .stat-label {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    .stat-card .stat-value {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .email-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--success-border);
+      font-size: 12px;
+      color: var(--success);
+    }
+
+    /* ボタン */
+    .run-btn {
+      width: 100%;
+      padding: 13px;
+      font-size: 14px;
+      font-weight: 600;
+      background: var(--accent);
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .run-btn:hover:not(:disabled) { background: #1450c4; }
+    .run-btn:active:not(:disabled) { transform: scale(0.99); }
+    .run-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    .disclaimer {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    /* フッター */
+    .footer {
+      text-align: center;
+      margin-top: 2rem;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .footer strong {
+      color: var(--text-secondary);
+    }
+
+    /* ステッパー（右上） */
+    .flow-steps {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 1.5rem;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .flow-step {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .flow-step .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--border-strong);
+    }
+
+    .flow-step.active .dot { background: var(--accent); }
+    .flow-step.done .dot { background: var(--success); }
+    .flow-step .sep { color: var(--border-strong); margin: 0 2px; }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+
+  <div class="header">
+    <div class="header-top">
+      <div class="header-icon">📄</div>
+      <h1>月次請求処理</h1>
+      <span class="badge">ウェブ版</span>
+    </div>
+    <p>MIクラウドのデータをPCAクラウドへ自動転送し、請求書を作成します</p>
+  </div>
+
+  <div class="flow-steps" id="flowSteps">
+    <span class="flow-step active" id="step1"><span class="dot"></span>条件設定</span>
+    <span class="sep">›</span>
+    <span class="flow-step" id="step2"><span class="dot"></span>データ取込</span>
+    <span class="sep">›</span>
+    <span class="flow-step" id="step3"><span class="dot"></span>請求書発行</span>
+    <span class="sep">›</span>
+    <span class="flow-step" id="step4"><span class="dot"></span>完了</span>
+  </div>
+
+  <div class="card">
+    <p class="card-label">処理条件</p>
+
+    <div class="form-grid">
+      <div class="field">
+        <label>締め区分</label>
+        <select id="closeType">
+          <option value="5">5日締め</option>
+          <option value="15">15日締め</option>
+          <option value="20">20日締め</option>
+          <option value="31" selected>月末締め</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>対象年月</label>
+        <input type="month" id="targetMonth" value="2026-07">
+      </div>
+    </div>
+
+    <div class="field-full">
+      <label style="font-size:12px; color:var(--text-secondary); display:block; margin-bottom:4px;">出力レイアウト</label>
+      <select id="layout">
+        <option value="pca" selected>PCAクラウド商魂DXレイアウト</option>
+        <option value="csv">CSV汎用レイアウト</option>
+      </select>
+    </div>
+
+    <div class="checkbox-row">
+      <label class="checkbox-label">
+        <input type="checkbox" id="autoEmail" checked> Outlookメール下書きも作成
+      </label>
+      <label class="checkbox-label">
+        <input type="checkbox" id="savePdf" checked> PDFを自動保存
+      </label>
+    </div>
+  </div>
+
+  <div class="log-area" id="logArea">
+    <p class="card-label">処理ログ</p>
+    <div class="log-list" id="logList"></div>
+  </div>
+
+  <div class="result-area" id="resultArea">
+    <div class="result-header">
+      <span class="result-icon">✅</span>
+      <span class="result-title">処理完了</span>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card">
+        <p class="stat-label">取込件数</p>
+        <p class="stat-value" id="countImport">—</p>
+      </div>
+      <div class="stat-card">
+        <p class="stat-label">請求書発行数</p>
+        <p class="stat-value" id="countInvoice">—</p>
+      </div>
+      <div class="stat-card">
+        <p class="stat-label">処理時間</p>
+        <p class="stat-value" id="processTime">—</p>
+      </div>
+    </div>
+    <div class="email-row" id="emailRow">
+      📧 Outlookにメール下書きを <span id="emailCount" style="font-weight:600; margin:0 2px;">0</span> 件作成しました
+    </div>
+  </div>
+
+  <button class="run-btn" id="runBtn" onclick="runProcess()">
+    ▶ 処理を開始
+  </button>
+  <p class="disclaimer">※ このデモは画面操作のシミュレーションです。実際のシステムへの接続は行いません</p>
+
+  <div class="footer">
+    <strong>株式会社ブックスタンド</strong> — PAD → ウェブアプリ移植デモ
+  </div>
+
+</div>
+
+<script>
+const ALL_LOGS = [
+  { msg: 'MIクラウドに接続中...', delay: 450, step: 2, tag: 'mi' },
+  { msg: 'ログイン認証完了', delay: 350, step: 2, tag: 'mi' },
+  { msg: '売上データをエクスポート中...', delay: 750, step: 2, tag: 'mi' },
+  { msg: 'CSVファイルを取得: 受注データ 47件', delay: 400, step: 2, tag: 'mi' },
+  { msg: 'PCAクラウド商魂DXに接続中...', delay: 500, step: 3, tag: 'pca' },
+  { msg: 'データをインポート中...', delay: 850, step: 3, tag: 'pca' },
+  { msg: '重複チェック完了（エラー 0件）', delay: 350, step: 3, tag: 'pca' },
+  { msg: '請求書を生成中...', delay: 700, step: 3, tag: 'pca' },
+  { msg: 'PDFをフォルダに保存: /請求書/2026-07/', delay: 400, step: 3, tag: 'pdf' },
+  { msg: 'Outlookにメール下書きを作成中...', delay: 550, step: 3, tag: 'email' },
+  { msg: '全処理が完了しました', delay: 200, step: 4, tag: 'done', done: true },
+];
+
+function setStep(n) {
+  for (let i = 1; i <= 4; i++) {
+    const el = document.getElementById('step' + i);
+    el.className = 'flow-step' + (i < n ? ' done' : i === n ? ' active' : '');
+  }
+}
+
+function runProcess() {
+  const btn = document.getElementById('runBtn');
+  const logArea = document.getElementById('logArea');
+  const resultArea = document.getElementById('resultArea');
+  const logList = document.getElementById('logList');
+
+  const withEmail = document.getElementById('autoEmail').checked;
+  const withPdf = document.getElementById('savePdf').checked;
+
+  const logs = ALL_LOGS.filter(l => {
+    if (l.tag === 'pdf' && !withPdf) return false;
+    if (l.tag === 'email' && !withEmail) return false;
+    return true;
+  });
+
+  btn.disabled = true;
+  btn.innerHTML = '⏳ 処理中...';
+  logArea.style.display = 'block';
+  resultArea.style.display = 'none';
+  logList.innerHTML = '';
+  setStep(2);
+
+  const startTime = Date.now();
+  let i = 0;
+
+  function next() {
+    if (i >= logs.length) {
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+      document.getElementById('countImport').textContent = '47';
+      document.getElementById('countInvoice').textContent = '12';
+      document.getElementById('processTime').textContent = elapsed + 's';
+      document.getElementById('emailCount').textContent = withEmail ? '12' : '0';
+      document.getElementById('emailRow').style.display = withEmail ? 'flex' : 'none';
+      resultArea.style.display = 'block';
+      btn.disabled = false;
+      btn.innerHTML = '🔄 もう一度実行';
+      setStep(4);
+      return;
+    }
+
+    const entry = logs[i];
+    setStep(entry.step);
+
+    const line = document.createElement('div');
+    line.className = 'log-line' + (entry.done ? ' done' : '');
+    line.innerHTML = '<span class="log-prompt">&gt;</span><span class="log-text">' + entry.msg + '</span>';
+    logList.appendChild(line);
+    logList.scrollTop = logList.scrollHeight;
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => { line.classList.add('visible'); });
+    });
+
+    i++;
+    setTimeout(next, entry.delay);
+  }
+
+  next();
+}
+</script>
+</body>
+</html>

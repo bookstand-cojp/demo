@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>在庫管理・受注入力 デモ｜株式会社ブックスタンド</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Noto+Serif+JP:wght@700&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --navy:#0f2140; --navy-mid:#1a3a6c; --blue:#2563a8; --blue-light:#4a8fd4;
+    --amber:#d4860a; --amber-light:#f5a623;
+    --green:#1a7a4a; --green-light:#22a663;
+    --red:#c0392b; --red-light:#e88070;
+    --text:#1c2733; --text-muted:#5c6b7d;
+    --surface:#f4f7fb; --card:#ffffff; --border:#dde5ee;
+  }
+  html{scroll-behavior:smooth;}
+  body{font-family:'Noto Sans JP',sans-serif; background:var(--surface); color:var(--text); line-height:1.6;}
+
+  /* ── TOP BAR ── */
+  .topbar{
+    position:sticky; top:0; z-index:100;
+    background:var(--navy); color:#fff;
+    padding:14px 20px;
+    display:flex; align-items:center; justify-content:space-between;
+    flex-wrap:wrap; gap:10px;
+  }
+  .topbar-left{display:flex; align-items:center; gap:10px;}
+  .topbar-badge{
+    background:var(--amber); color:#fff; font-size:10px; font-weight:700;
+    padding:3px 10px; border-radius:100px; letter-spacing:0.05em;
+  }
+  .topbar-title{font-size:14px; font-weight:700;}
+  .topbar-sub{font-size:11px; color:#9fb4cf;}
+
+  /* ── TABS ── */
+  .tabbar{
+    display:flex; gap:0; background:var(--card);
+    border-bottom:1px solid var(--border);
+    position:sticky; top:52px; z-index:99;
+    overflow-x:auto;
+  }
+  .tab{
+    flex:1; min-width:140px; text-align:center;
+    padding:14px 16px; font-size:13px; font-weight:700; color:var(--text-muted);
+    cursor:pointer; border-bottom:3px solid transparent;
+    transition:all 0.2s;
+    white-space:nowrap;
+    user-select:none;
+  }
+  .tab.active{color:var(--blue); border-bottom-color:var(--blue); background:rgba(37,99,168,0.04);}
+  .tab:hover:not(.active){background:rgba(0,0,0,0.02);}
+
+  .page{display:none; padding:20px; max-width:1100px; margin:0 auto;}
+  .page.active{display:block; animation:fadeIn 0.3s ease;}
+  @keyframes fadeIn{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+
+  .page-head{margin-bottom:20px;}
+  .page-title{font-size:20px; font-weight:700; color:var(--navy); margin-bottom:4px;}
+  .page-desc{font-size:13px; color:var(--text-muted);}
+
+  /* ── CARD ── */
+  .card{
+    background:var(--card); border:1px solid var(--border); border-radius:14px;
+    padding:20px; margin-bottom:16px;
+  }
+  .card-title{font-size:15px; font-weight:700; color:var(--navy); margin-bottom:14px; display:flex; align-items:center; gap:8px;}
+
+  /* ── FORM ── */
+  .form-row{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;}
+  @media (max-width:640px){.form-row{grid-template-columns:1fr;}}
+  .field-label{font-size:12px; font-weight:700; color:var(--text-muted); margin-bottom:6px; display:block;}
+  select, input[type=number], input[type=date], input[type=text]{
+    width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:8px;
+    font-size:14px; font-family:inherit; background:#fff; color:var(--text);
+    transition:border-color 0.2s;
+  }
+  select:focus, input:focus{outline:none; border-color:var(--blue);}
+
+  .autofill-box{
+    background:rgba(37,99,168,0.06); border:1px solid rgba(37,99,168,0.15);
+    border-radius:10px; padding:14px; margin-top:4px;
+    display:none;
+  }
+  .autofill-box.show{display:block; animation:fadeIn 0.3s ease;}
+  .autofill-row{display:flex; justify-content:space-between; font-size:13px; padding:4px 0;}
+  .autofill-row span:first-child{color:var(--text-muted);}
+  .autofill-row span:last-child{font-weight:700; color:var(--navy);}
+
+  .sajest-box{
+    background:rgba(212,134,10,0.08); border:1px solid rgba(212,134,10,0.2);
+    border-radius:10px; padding:12px 14px; margin-top:10px;
+    font-size:12px; color:#8a5e08; display:none;
+  }
+  .sajest-box.show{display:flex; align-items:center; gap:8px; animation:fadeIn 0.3s ease;}
+
+  .btn{
+    border:none; border-radius:10px; padding:12px 24px; font-size:14px; font-weight:700;
+    cursor:pointer; transition:all 0.2s; font-family:inherit;
+  }
+  .btn-primary{background:var(--blue); color:#fff;}
+  .btn-primary:hover{background:var(--navy-mid); transform:translateY(-1px);}
+  .btn-primary:disabled{background:#c5d2e0; cursor:not-allowed; transform:none;}
+  .btn-secondary{background:#fff; color:var(--blue); border:1px solid var(--blue);}
+  .btn-secondary:hover{background:rgba(37,99,168,0.06);}
+  .btn-success{background:var(--green); color:#fff;}
+  .btn-success:hover{background:#155c38;}
+  .btn-full{width:100%;}
+
+  .item-row{
+    display:grid; grid-template-columns:2fr 1fr 1fr auto; gap:10px; align-items:end;
+    padding:12px; background:var(--surface); border-radius:10px; margin-bottom:8px;
+  }
+  @media (max-width:640px){.item-row{grid-template-columns:1fr;}}
+  .item-remove{
+    background:rgba(192,57,43,0.1); color:var(--red); border:none; border-radius:8px;
+    width:36px; height:36px; cursor:pointer; font-size:16px; flex-shrink:0;
+  }
+  .item-remove:hover{background:rgba(192,57,43,0.18);}
+
+  /* ── ALERT ── */
+  .alert{
+    border-radius:10px; padding:12px 16px; font-size:13px; margin-bottom:14px;
+    display:none; align-items:center; gap:10px;
+  }
+  .alert.show{display:flex; animation:fadeIn 0.3s ease;}
+  .alert-error{background:rgba(192,57,43,0.08); border:1px solid rgba(192,57,43,0.25); color:#a02c1f;}
+  .alert-success{background:rgba(26,122,74,0.08); border:1px solid rgba(26,122,74,0.25); color:#155c38;}
+
+  /* ── TABLE ── */
+  .table-wrap{overflow-x:auto; border-radius:12px; border:1px solid var(--border);}
+  table{width:100%; border-collapse:collapse; font-size:13px; background:#fff;}
+  th{
+    background:var(--navy); color:#fff; text-align:left; padding:10px 12px;
+    font-weight:700; font-size:12px; white-space:nowrap;
+  }
+  td{padding:10px 12px; border-bottom:1px solid var(--border); white-space:nowrap;}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:rgba(37,99,168,0.03);}
+
+  .badge{
+    display:inline-block; padding:3px 10px; border-radius:100px; font-size:11px; font-weight:700;
+  }
+  .badge-low{background:rgba(192,57,43,0.1); color:var(--red);}
+  .badge-ok{background:rgba(26,122,74,0.1); color:var(--green);}
+  .badge-mid{background:rgba(212,134,10,0.1); color:var(--amber);}
+
+  .stat-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:16px;}
+  .stat-card{
+    background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px;
+    text-align:center;
+  }
+  .stat-num{font-size:26px; font-weight:700; color:var(--navy); font-family:'Noto Serif JP',serif;}
+  .stat-label{font-size:11px; color:var(--text-muted); margin-top:4px;}
+
+  .toolbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;}
+
+  .reset-link{
+    font-size:11px; color:var(--text-muted); text-decoration:underline; cursor:pointer; background:none; border:none;
+  }
+  .reset-link:hover{color:var(--red);}
+
+  .closing-anim{position:relative; overflow:hidden;}
+  .pulse-ring{
+    position:absolute; inset:0; border-radius:14px; pointer-events:none;
+    box-shadow:0 0 0 0 rgba(26,122,74,0.5);
+    animation:pulseRing 0.8s ease-out;
+  }
+  @keyframes pulseRing{
+    0%{box-shadow:0 0 0 0 rgba(26,122,74,0.5);}
+    100%{box-shadow:0 0 0 16px rgba(26,122,74,0);}
+  }
+
+  /* ── DEMO NOTE ── */
+  .demo-note{
+    background:rgba(212,134,10,0.06); border:1px dashed rgba(212,134,10,0.35);
+    border-radius:12px; padding:14px 18px; font-size:12px; color:#8a5e08; margin-bottom:20px;
+    line-height:1.7;
+  }
+
+  footer{
+    text-align:center; padding:28px 20px; font-size:11px; color:var(--text-muted);
+    border-top:1px solid var(--border); margin-top:20px;
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="topbar-badge">DEMO</span>
+    <div>
+      <div class="topbar-title">在庫管理・受注入力 デモ</div>
+      <div class="topbar-sub">〇〇硝子工業様向け｜株式会社ブックスタンド</div>
+    </div>
+  </div>
+  <button class="reset-link" onclick="resetAll()">デモデータをリセット</button>
+</div>
+
+<div class="tabbar">
+  <div class="tab active" data-page="order">📝 受注入力</div>
+  <div class="tab" data-page="orderlist">📋 受注一覧</div>
+  <div class="tab" data-page="stock">📦 在庫管理</div>
+</div>
+
+<!-- ============ 受注入力ページ ============ -->
+<div class="page active" id="page-order">
+  <div class="page-head">
+    <div class="page-title">受注入力</div>
+    <div class="page-desc">顧客を選ぶと、コード・運賃区分・過去単価が自動で表示されます</div>
+  </div>
+
+  <div class="demo-note">
+    💡 これはデモ版です。実際の〇〇硝子工業様のデータではなく、サンプルの取引先・商品で動作を確認いただけます。<br>
+    本番では貴社の顧客マスタ・商品マスタ（約700アイテム）と連携します。
+  </div>
+
+  <div class="alert alert-error" id="order-error"></div>
+  <div class="alert alert-success" id="order-success"></div>
+
+  <div class="card">
+    <div class="card-title">① 取引先を選ぶ</div>
+    <div class="form-row">
+      <div>
+        <label class="field-label">取引先</label>
+        <select id="customer-select" onchange="onCustomerChange()">
+          <option value="">— 選択してください —</option>
+        </select>
+      </div>
+      <div>
+        <label class="field-label">納品日</label>
+        <input type="date" id="delivery-date">
+      </div>
+    </div>
+    <div class="autofill-box" id="customer-autofill">
+      <div class="autofill-row"><span>取引先コード</span><span id="af-code">—</span></div>
+      <div class="autofill-row"><span>運賃区分</span><span id="af-freight">—</span></div>
+      <div class="autofill-row"><span>輸送タイプ</span><span id="af-transport">—</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">② 商品を選ぶ</div>
+    <div id="item-rows"></div>
+    <button class="btn btn-secondary" onclick="addItemRow()">＋ 商品を追加</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">③ 内容を確認して送信</div>
+    <div class="table-wrap" id="confirm-table-wrap" style="display:none;">
+      <table>
+        <thead><tr><th>商品</th><th>色</th><th>ケース数</th><th>本数</th><th>単価目安</th></tr></thead>
+        <tbody id="confirm-tbody"></tbody>
+      </table>
+    </div>
+    <div style="margin-top:16px;">
+      <button class="btn btn-primary btn-full" id="submit-order-btn" onclick="submitOrder()">受注を確定する</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 受注一覧ページ ============ -->
+<div class="page" id="page-orderlist">
+  <div class="page-head">
+    <div class="page-title">受注一覧</div>
+    <div class="page-desc">確定した受注の一覧です。ステータスがリアルタイムで反映されます</div>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card"><div class="stat-num" id="stat-order-count">0</div><div class="stat-label">受注件数</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-order-cases">0</div><div class="stat-label">合計ケース数</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-order-customers">0</div><div class="stat-label">取引先数</div></div>
+  </div>
+
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>受注日</th><th>取引先</th><th>商品</th><th>ケース数</th><th>納品日</th><th>ステータス</th></tr>
+        </thead>
+        <tbody id="orderlist-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 在庫管理ページ ============ -->
+<div class="page" id="page-stock">
+  <div class="page-head">
+    <div class="page-title">在庫管理</div>
+    <div class="page-desc">商品ごとの在庫数をリアルタイムで確認できます</div>
+  </div>
+
+  <div class="demo-note">
+    💡 受注を確定すると、対応する商品の在庫が自動で引き当てられます。「受注入力」タブで受注を入れてから、このページの数量変化を確認してみてください。
+  </div>
+
+  <div class="toolbar">
+    <div class="stat-grid" style="flex:1; margin-bottom:0;">
+      <div class="stat-card"><div class="stat-num" id="stat-total-items">0</div><div class="stat-label">登録アイテム数</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-low-stock">0</div><div class="stat-label">在庫少アイテム</div></div>
+    </div>
+  </div>
+
+  <div class="card closing-anim" id="closing-card">
+    <div class="card-title">📅 月末繰り越し</div>
+    <p style="font-size:13px; color:var(--text-muted); margin-bottom:14px;">
+      ボタン1つで全アイテムの期首在庫を自動生成・確定します（本番では約700アイテム）
+    </p>
+    <button class="btn btn-success" onclick="runClosing()">月末繰り越しを実行する</button>
+    <span id="closing-result" style="margin-left:12px; font-size:13px; color:var(--green); font-weight:700;"></span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">在庫一覧</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>商品コード</th><th>商品名</th><th>色</th><th>入数</th><th>在庫ケース数</th><th>状態</th></tr>
+        </thead>
+        <tbody id="stock-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<footer>
+  © 2026 株式会社ブックスタンド ｜ 本デモはサンプルデータで動作します。実際のシステムでは貴社のデータと連携します。
+</footer>
+
+<script>
+// ============================================================
+// マスタデータ（サンプル）
+// ============================================================
+const CUSTOMERS = [
+  { id:'c1', name:'A製薬株式会社', code:'1001', freight:'込み', transport:'路線便' },
+  { id:'c2', name:'B飲料株式会社', code:'1002', freight:'別途', transport:'路線便' },
+  { id:'c3', name:'C化粧品工業', code:'2001', freight:'込み', transport:'専属車' },
+  { id:'c4', name:'D食品株式会社', code:'1003', freight:'別途', transport:'路線便' },
+  { id:'c5', name:'E調味料合同会社', code:'2002', freight:'込み', transport:'専属車' },
+];
+
+const ITEMS = [
+  { id:'i1', code:'K-100', name:'丸瓶100ml', color:'白', iri:100, stock:480 },
+  { id:'i2', code:'K-200', name:'丸瓶200ml', color:'茶', iri:100, stock:32 },
+  { id:'i3', code:'K-300', name:'角瓶300ml', color:'白', iri:100, stock:210 },
+  { id:'i4', code:'K-400', name:'角瓶400ml', color:'茶', iri:50, stock:18 },
+  { id:'i5', code:'K-500', name:'広口瓶500ml', color:'白', iri:50, stock:95 },
+  { id:'i6', code:'K-600', name:'広口瓶600ml', color:'茶', iri:50, stock:140 },
+];
+
+// 過去単価のサンプル（customerId-itemId をキーに）
+const PRICE_HISTORY = {
+  'c1-i1':45, 'c1-i2':52, 'c2-i3':38, 'c2-i4':41,
+  'c3-i5':60, 'c3-i6':65, 'c4-i1':44, 'c4-i2':50,
+  'c5-i3':37, 'c5-i4':40,
+};
+
+// ============================================================
+// state（ローカルストレージで永続化）
+// ============================================================
+let orders = JSON.parse(localStorage.getItem('isoya_demo_orders') || '[]');
+let stock = JSON.parse(localStorage.getItem('isoya_demo_stock') || 'null') || ITEMS.map(i => ({...i}));
+
+function saveState(){
+  localStorage.setItem('isoya_demo_orders', JSON.stringify(orders));
+  localStorage.setItem('isoya_demo_stock', JSON.stringify(stock));
+}
+
+function resetAll(){
+  if(!confirm('デモデータをリセットしますか？')) return;
+  orders = [];
+  stock = ITEMS.map(i => ({...i}));
+  saveState();
+  renderAll();
+}
+
+// ============================================================
+// タブ切り替え
+// ============================================================
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('page-'+tab.dataset.page).classList.add('active');
+  });
+});
+
+// ============================================================
+// 受注入力ページ
+// ============================================================
+let itemRowCount = 0;
+
+function initCustomerSelect(){
+  const sel = document.getElementById('customer-select');
+  CUSTOMERS.forEach(c=>{
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = c.name;
+    sel.appendChild(opt);
+  });
+}
+
+function onCustomerChange(){
+  const id = document.getElementById('customer-select').value;
+  const box = document.getElementById('customer-autofill');
+  if(!id){ box.classList.remove('show'); return; }
+  const c = CUSTOMERS.find(x=>x.id===id);
+  document.getElementById('af-code').textContent = c.code;
+  document.getElementById('af-freight').textContent = c.freight;
+  document.getElementById('af-transport').textContent = c.transport;
+  box.classList.add('show');
+  document.querySelectorAll('.item-row').forEach(row=>updateSajest(row));
+}
+
+function addItemRow(){
+  itemRowCount++;
+  const id = 'row-' + itemRowCount;
+  const wrap = document.createElement('div');
+  wrap.className = 'item-row';
+  wrap.id = id;
+  wrap.innerHTML = `
+    <div>
+      <label class="field-label">商品</label>
+      <select class="item-select" onchange="onItemChange('${id}')">
+        <option value="">— 選択 —</option>
+        ${ITEMS.map(i=>`<option value="${i.id}">${i.name}（${i.color}）</option>`).join('')}
+      </select>
+      <div class="sajest-box" id="sajest-${id}"></div>
+    </div>
+    <div>
+      <label class="field-label">ケース数</label>
+      <input type="number" class="item-cases" min="1" value="1" oninput="updateConfirm()">
+    </div>
+    <div>
+      <label class="field-label">本数（自動計算）</label>
+      <input type="text" class="item-honsu" value="—" disabled>
+    </div>
+    <button class="item-remove" onclick="removeItemRow('${id}')">×</button>
+  `;
+  document.getElementById('item-rows').appendChild(wrap);
+  updateConfirm();
+}
+
+function removeItemRow(id){
+  document.getElementById(id).remove();
+  updateConfirm();
+}
+
+function onItemChange(rowId){
+  const row = document.getElementById(rowId);
+  updateSajest(row);
+  updateConfirm();
+}
+
+function updateSajest(row){
+  const customerId = document.getElementById('customer-select').value;
+  const itemId = row.querySelector('.item-select').value;
+  const box = row.querySelector('.sajest-box');
+  if(!customerId || !itemId){ box.classList.remove('show'); return; }
+  const key = customerId + '-' + itemId;
+  const price = PRICE_HISTORY[key];
+  if(price){
+    box.innerHTML = `💡 過去実績：この組み合わせの単価は <strong>${price}円</strong> でした`;
+    box.classList.add('show');
+  } else {
+    box.innerHTML = `ℹ️ この組み合わせの取引実績はありません（新規単価の設定が必要です）`;
+    box.classList.add('show');
+  }
+}
+
+function updateConfirm(){
+  document.querySelectorAll('.item-row').forEach(row=>{
+    const itemId = row.querySelector('.item-select').value;
+    const cases = parseInt(row.querySelector('.item-cases').value) || 0;
+    const honsuField = row.querySelector('.item-honsu');
+    const item = ITEMS.find(i=>i.id===itemId);
+    if(item){
+      honsuField.value = (cases * item.iri).toLocaleString() + ' 本';
+    } else {
+      honsuField.value = '—';
+    }
+  });
+  buildConfirmTable();
+}
+
+function buildConfirmTable(){
+  const tbody = document.getElementById('confirm-tbody');
+  const wrap = document.getElementById('confirm-table-wrap');
+  tbody.innerHTML = '';
+  let hasValid = false;
+  document.querySelectorAll('.item-row').forEach(row=>{
+    const itemId = row.querySelector('.item-select').value;
+    const cases = parseInt(row.querySelector('.item-cases').value) || 0;
+    const item = ITEMS.find(i=>i.id===itemId);
+    if(!item || cases<=0) return;
+    hasValid = true;
+    const customerId = document.getElementById('customer-select').value;
+    const price = PRICE_HISTORY[customerId+'-'+itemId];
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${item.name}</td><td>${item.color}</td><td>${cases}</td><td>${(cases*item.iri).toLocaleString()}本</td><td>${price?price+'円（自動提案）':'—'}</td>`;
+    tbody.appendChild(tr);
+  });
+  wrap.style.display = hasValid ? 'block' : 'none';
+}
+
+function submitOrder(){
+  const errorBox = document.getElementById('order-error');
+  const successBox = document.getElementById('order-success');
+  errorBox.classList.remove('show'); successBox.classList.remove('show');
+
+  const customerId = document.getElementById('customer-select').value;
+  const deliveryDate = document.getElementById('delivery-date').value;
+  if(!customerId){
+    errorBox.textContent = '⚠️ 取引先を選択してください';
+    errorBox.classList.add('show');
+    return;
+  }
+  const rows = Array.from(document.querySelectorAll('.item-row')).map(row=>{
+    const itemId = row.querySelector('.item-select').value;
+    const cases = parseInt(row.querySelector('.item-cases').value) || 0;
+    return { itemId, cases };
+  }).filter(r=>r.itemId && r.cases>0);
+
+  if(rows.length===0){
+    errorBox.textContent = '⚠️ 商品を1つ以上入力してください';
+    errorBox.classList.add('show');
+    return;
+  }
+
+  // 在庫チェック（ハードストップ）
+  for(const r of rows){
+    const stockItem = stock.find(s=>s.id===r.itemId);
+    if(stockItem.stock < r.cases){
+      errorBox.innerHTML = `⚠️ <strong>${stockItem.name}</strong> の在庫が不足しています（在庫：${stockItem.stock}ケース／必要：${r.cases}ケース）。処理を中止しました。`;
+      errorBox.classList.add('show');
+      return;
+    }
+  }
+
+  const customer = CUSTOMERS.find(c=>c.id===customerId);
+  const orderDate = new Date().toISOString().slice(0,10);
+
+  rows.forEach(r=>{
+    const item = ITEMS.find(i=>i.id===r.itemId);
+    // 在庫引き当て
+    const stockItem = stock.find(s=>s.id===r.itemId);
+    stockItem.stock -= r.cases;
+    orders.unshift({
+      orderDate, customerName: customer.name, itemName: item.name,
+      cases: r.cases, deliveryDate: deliveryDate || '未定',
+      status: '連携済'
+    });
+  });
+
+  saveState();
+  renderOrderList();
+  renderStock();
+
+  successBox.textContent = `✅ 受注を確定しました（${customer.name} ／ ${rows.length}件の商品）。在庫が自動で更新されました。`;
+  successBox.classList.add('show');
+
+  // フォームリセット
+  document.getElementById('customer-select').value = '';
+  document.getElementById('customer-autofill').classList.remove('show');
+  document.getElementById('item-rows').innerHTML = '';
+  itemRowCount = 0;
+  addItemRow();
+  buildConfirmTable();
+}
+
+// ============================================================
+// 受注一覧ページ
+// ============================================================
+function renderOrderList(){
+  const tbody = document.getElementById('orderlist-tbody');
+  tbody.innerHTML = '';
+  if(orders.length===0){
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:24px;">まだ受注がありません。「受注入力」タブから登録してください</td></tr>`;
+  } else {
+    orders.forEach(o=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${o.orderDate}</td><td>${o.customerName}</td><td>${o.itemName}</td><td>${o.cases}ケース</td><td>${o.deliveryDate}</td><td><span class="badge badge-ok">${o.status}</span></td>`;
+      tbody.appendChild(tr);
+    });
+  }
+  document.getElementById('stat-order-count').textContent = orders.length;
+  document.getElementById('stat-order-cases').textContent = orders.reduce((s,o)=>s+o.cases,0);
+  document.getElementById('stat-order-customers').textContent = new Set(orders.map(o=>o.customerName)).size;
+}
+
+// ============================================================
+// 在庫管理ページ
+// ============================================================
+function renderStock(){
+  const tbody = document.getElementById('stock-tbody');
+  tbody.innerHTML = '';
+  let lowCount = 0;
+  stock.forEach(s=>{
+    let badge = '<span class="badge badge-ok">十分</span>';
+    if(s.stock < 30){ badge = '<span class="badge badge-low">在庫少</span>'; lowCount++; }
+    else if(s.stock < 100){ badge = '<span class="badge badge-mid">注意</span>'; }
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${s.code}</td><td>${s.name}</td><td>${s.color}</td><td>${s.iri}</td><td>${s.stock.toLocaleString()}</td><td>${badge}</td>`;
+    tbody.appendChild(tr);
+  });
+  document.getElementById('stat-total-items').textContent = stock.length;
+  document.getElementById('stat-low-stock').textContent = lowCount;
+}
+
+function runClosing(){
+  const btn = event.target;
+  btn.disabled = true;
+  btn.textContent = '処理中…';
+  const card = document.getElementById('closing-card');
+  setTimeout(()=>{
+    btn.disabled = false;
+    btn.textContent = '月末繰り越しを実行する';
+    document.getElementById('closing-result').textContent = `✅ ${stock.length}アイテムの繰り越しが完了しました（実際は約700アイテムが数分で完了します）`;
+    card.classList.remove('closing-anim');
+    void card.offsetWidth;
+    card.classList.add('closing-anim');
+  }, 900);
+}
+
+// ============================================================
+// 初期化
+// ============================================================
+function renderAll(){
+  renderOrderList();
+  renderStock();
+}
+
+initCustomerSelect();
+addItemRow();
+renderAll();
+document.getElementById('delivery-date').valueAsDate = new Date();
+</script>
+</body>
+</html>
