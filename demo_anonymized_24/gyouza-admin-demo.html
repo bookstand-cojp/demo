@@ -3,15 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>管理画面</title>
+  <title>管理画面（デモ）</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: #f5f5f5;
-      padding: 16px;
+      padding: 0 16px 16px;
       min-height: 100vh;
     }
+    .demo-bar {
+      background: #333;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .03em;
+      padding: 8px 12px;
+      margin: 0 -16px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .demo-bar .reset {
+      background: transparent;
+      border: 1px solid #666;
+      color: #ccc;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .demo-bar .reset:hover { color: #fff; border-color: #999; }
     h1 { font-size: 20px; font-weight: 700; color: #222; margin-bottom: 16px; }
     .toolbar {
       display: flex;
@@ -101,45 +124,13 @@
     .badge.pending { background: #fff3e0; color: #e65100; }
     .loading { text-align: center; padding: 40px; color: #888; }
   </style>
-<script>
-/* ====== デモ用モック（google.script.run 代替）======
-   これは本番のGAS/スプレッドシートには接続していません。
-   ボタン操作・画面遷移の確認用に、ダミーデータをその場で返しています。 */
-(function(){
-  function delay(fn, ms){ setTimeout(fn, ms || 350); }
-  function pad(n){ return (n<10?'0':'')+n; }
-  var _s=null,_f=null;
-  var api = {
-    withSuccessHandler:function(cb){_s=cb;return api;},
-    withFailureHandler:function(cb){_f=cb;return api;},
-
-    webappGetOrders: function(){
-      delay(function(){
-        _s && _s({ success:true, orders: [
-          {rowNum:2, orderDate:'2026-07-01', customerName:'サンプル飲食店', productName:'冷凍餃子(国産野菜使用)60個入', qty:2, status:'受付', deliveryDate:'', deliveryNoteIssued:false},
-          {rowNum:3, orderDate:'2026-07-03', customerName:'テスト居酒屋', productName:'冷凍餃子(にんにく増量)60個入', qty:1, status:'製作済み', deliveryDate:'', deliveryNoteIssued:false},
-          {rowNum:4, orderDate:'2026-07-05', customerName:'デモ食堂', productName:'冷凍餃子(国産野菜使用)60個入', qty:3, status:'発送済み', deliveryDate:'2026-07-06', deliveryNoteIssued:true, deliveryNoteId:'DN-0004'}
-        ]});
-      });
-    },
-    webappUpdateStatus: function(){
-      delay(function(){ _s && _s({ success:true }); });
-    },
-    webappIssueDeliveryNote: function(){
-      delay(function(){ _s && _s({ success:true, issuedCount:2 }); });
-    },
-    webappGenerateInvoice: function(){
-      delay(function(){ _s && _s({ success:true, issuedCount:1 }); });
-    }
-
-  };
-  window.google = window.google || {};
-  window.google.script = window.google.script || {};
-  window.google.script.run = api;
-})();
-</script>
 </head>
 <body>
+  <div class="demo-bar">
+    <span>🎭 DEMO｜架空のデータです（ブラウザ内のみ保存）</span>
+    <button class="reset" onclick="resetDemo()">デモデータをリセット</button>
+  </div>
+
   <h1>管理画面 - 注文一覧</h1>
 
   <div class="toolbar">
@@ -170,28 +161,167 @@
   </div>
 
   <script>
+    /**
+     * デモ用モックAPI（このファイル単体で完結）
+     * すべて架空のデータで、ブラウザのlocalStorageにのみ保存される。
+     * 実際のスプレッドシート・メール送信には一切接続しない。
+     */
+    var STORAGE_KEY = 'gyoza_demo_orders_anon_v1';
+    var LATENCY_MS = 450;
     var STATUS_OPTIONS = ['受付', '製作済み', '発送済み', '請求完了', '入金確認'];
+
+    function todayStr(offsetDays) {
+      var d = new Date();
+      d.setDate(d.getDate() + (offsetDays || 0));
+      return d.toISOString().slice(0, 10);
+    }
+
+    function seedOrders() {
+      return [
+        {
+          rowNum: 3,
+          orderId: 'ORD-0000000101',
+          status: '入金確認',
+          orderDate: todayStr(-9),
+          customerName: 'お客様A（麺類）',
+          productName: '冷凍餃子100個入',
+          qty: 3,
+          deliveryDate: todayStr(-6),
+          deliveryNoteIssued: true,
+          deliveryNoteId: 'DEL-0000000101',
+        },
+        {
+          rowNum: 4,
+          orderId: 'ORD-0000000101',
+          status: '入金確認',
+          orderDate: todayStr(-9),
+          customerName: 'お客様A（麺類）',
+          productName: '送料',
+          qty: 1,
+          deliveryDate: todayStr(-6),
+          deliveryNoteIssued: true,
+          deliveryNoteId: 'DEL-0000000101',
+        },
+        {
+          rowNum: 5,
+          orderId: 'ORD-0000000102',
+          status: '発送済み',
+          orderDate: todayStr(-2),
+          customerName: 'お客様B（焼肉）',
+          productName: '冷凍餃子50個入',
+          qty: 5,
+          deliveryDate: todayStr(-1),
+          deliveryNoteIssued: false,
+          deliveryNoteId: '',
+        },
+        {
+          rowNum: 6,
+          orderId: 'ORD-0000000103',
+          status: '受付',
+          orderDate: todayStr(0),
+          customerName: 'お客様C（居酒屋）',
+          productName: '冷凍餃子100個入',
+          qty: 2,
+          deliveryDate: '',
+          deliveryNoteIssued: false,
+          deliveryNoteId: '',
+        },
+      ];
+    }
+
+    function loadData() {
+      try {
+        var raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+          var seeded = seedOrders();
+          saveData(seeded);
+          return seeded;
+        }
+        return JSON.parse(raw);
+      } catch (e) {
+        var fallback = seedOrders();
+        saveData(fallback);
+        return fallback;
+      }
+    }
+
+    function saveData(orders) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
+    }
+
+    var DemoAPI = {
+      getOrders: function (onSuccess) {
+        setTimeout(function () {
+          var orders = loadData().slice().sort(function (a, b) { return b.rowNum - a.rowNum; });
+          onSuccess({ success: true, orders: orders });
+        }, LATENCY_MS);
+      },
+      updateStatus: function (params, onSuccess) {
+        setTimeout(function () {
+          var orders = loadData();
+          var target = orders.filter(function (o) { return o.rowNum === params.rowNum; });
+          if (!target.length) {
+            onSuccess({ success: false, error: '対象の行が見つかりません' });
+            return;
+          }
+          target.forEach(function (o) {
+            o.status = params.status;
+            o.deliveryDate = params.deliveryDate;
+          });
+          saveData(orders);
+          onSuccess({ success: true });
+        }, LATENCY_MS);
+      },
+      issueDeliveryNote: function (onSuccess) {
+        setTimeout(function () {
+          var orders = loadData();
+          var target = orders.filter(function (o) {
+            return o.status === '発送済み' && o.deliveryDate && !o.deliveryNoteIssued;
+          });
+          var byKey = {};
+          target.forEach(function (o) {
+            var key = o.customerName + '|' + o.deliveryDate;
+            if (!byKey[key]) byKey[key] = [];
+            byKey[key].push(o);
+          });
+          var counter = 110 + Math.floor(Math.random() * 50);
+          Object.keys(byKey).forEach(function (key) {
+            var delId = 'DEL-' + String(counter++).padStart(10, '0');
+            byKey[key].forEach(function (o) {
+              o.deliveryNoteIssued = true;
+              o.deliveryNoteId = delId;
+            });
+          });
+          saveData(orders);
+          onSuccess({ success: true, issuedCount: target.length });
+        }, LATENCY_MS);
+      },
+      generateInvoice: function (onSuccess) {
+        setTimeout(function () {
+          var orders = loadData();
+          var target = orders.filter(function (o) { return o.status === '発送済み' || o.status === '製作済み'; });
+          onSuccess({ success: true, issuedCount: target.length });
+        }, LATENCY_MS);
+      },
+      reset: function () {
+        saveData(seedOrders());
+      },
+    };
 
     function loadOrders() {
       document.getElementById('loading').style.display = 'block';
       document.getElementById('orderTable').style.display = 'none';
       document.getElementById('msg').className = 'msg';
 
-      google.script.run
-        .withSuccessHandler(function(result) {
-          document.getElementById('loading').style.display = 'none';
-          if (!result.success) {
-            showMsg('error', 'エラー: ' + result.error);
-            return;
-          }
-          renderOrders(result.orders || []);
-          document.getElementById('orderTable').style.display = 'table';
-        })
-        .withFailureHandler(function(err) {
-          document.getElementById('loading').style.display = 'none';
-          showMsg('error', 'データ取得エラー: ' + err.message);
-        })
-        .webappGetOrders();
+      DemoAPI.getOrders(function (result) {
+        document.getElementById('loading').style.display = 'none';
+        if (!result.success) {
+          showMsg('error', 'エラー: ' + result.error);
+          return;
+        }
+        renderOrders(result.orders || []);
+        document.getElementById('orderTable').style.display = 'table';
+      });
     }
 
     function renderOrders(orders) {
@@ -214,22 +344,18 @@
       orders.forEach(function(order) {
         var tr = document.createElement('tr');
 
-        // ステータス選択
         var statusSel = '<select class="inline" id="status_' + order.rowNum + '">';
         STATUS_OPTIONS.forEach(function(s) {
           statusSel += '<option value="' + s + '"' + (order.status === s ? ' selected' : '') + '>' + s + '</option>';
         });
         statusSel += '</select>';
 
-        // 納品日
         var dateSel = '<input type="date" class="date-input" id="date_' + order.rowNum + '" value="' + (order.deliveryDate || '') + '">';
 
-        // 納品書バッジ
         var badge = order.deliveryNoteIssued
           ? '<span class="badge issued">発行済 ' + (order.deliveryNoteId ? order.deliveryNoteId : '') + '</span>'
           : '<span class="badge pending">未発行</span>';
 
-        // 更新ボタン
         var updateBtn = '<button class="btn-sm" onclick="updateRow(' + order.rowNum + ')">更新</button>';
 
         tr.innerHTML = [
@@ -251,18 +377,13 @@
       var status = document.getElementById('status_' + rowNum).value;
       var deliveryDate = document.getElementById('date_' + rowNum).value;
 
-      google.script.run
-        .withSuccessHandler(function(result) {
-          if (result.success) {
-            showMsg('success', '行 ' + rowNum + ' を更新しました');
-          } else {
-            showMsg('error', 'エラー: ' + result.error);
-          }
-        })
-        .withFailureHandler(function(err) {
-          showMsg('error', '更新エラー: ' + err.message);
-        })
-        .webappUpdateStatus({ rowNum: rowNum, status: status, deliveryDate: deliveryDate });
+      DemoAPI.updateStatus({ rowNum: rowNum, status: status, deliveryDate: deliveryDate }, function (result) {
+        if (result.success) {
+          showMsg('success', '行 ' + rowNum + ' を更新しました');
+        } else {
+          showMsg('error', 'エラー: ' + result.error);
+        }
+      });
     }
 
     function issueDeliveryNote() {
@@ -271,23 +392,16 @@
       btn.textContent = '発行中...';
       showMsg('', '');
 
-      google.script.run
-        .withSuccessHandler(function(result) {
-          btn.disabled = false;
-          btn.textContent = '納品書発行';
-          if (result.success) {
-            showMsg('success', '納品書発行完了: ' + result.issuedCount + '件発行しました');
-            loadOrders();
-          } else {
-            showMsg('error', 'エラー: ' + result.error);
-          }
-        })
-        .withFailureHandler(function(err) {
-          btn.disabled = false;
-          btn.textContent = '納品書発行';
-          showMsg('error', '発行エラー: ' + err.message);
-        })
-        .webappIssueDeliveryNote();
+      DemoAPI.issueDeliveryNote(function (result) {
+        btn.disabled = false;
+        btn.textContent = '納品書発行';
+        if (result.success) {
+          showMsg('success', '納品書発行完了: ' + result.issuedCount + '件発行しました');
+          loadOrders();
+        } else {
+          showMsg('error', 'エラー: ' + result.error);
+        }
+      });
     }
 
     function generateInvoice() {
@@ -296,22 +410,21 @@
       btn.textContent = '発行中...';
       showMsg('', '');
 
-      google.script.run
-        .withSuccessHandler(function(result) {
-          btn.disabled = false;
-          btn.textContent = '請求書発行';
-          if (result.success) {
-            showMsg('success', '請求書発行完了: ' + result.issuedCount + '件発行しました');
-          } else {
-            showMsg('error', 'エラー: ' + result.error);
-          }
-        })
-        .withFailureHandler(function(err) {
-          btn.disabled = false;
-          btn.textContent = '請求書発行';
-          showMsg('error', '発行エラー: ' + err.message);
-        })
-        .webappGenerateInvoice();
+      DemoAPI.generateInvoice(function (result) {
+        btn.disabled = false;
+        btn.textContent = '請求書発行';
+        if (result.success) {
+          showMsg('success', '請求書発行完了: ' + result.issuedCount + '件発行しました');
+        } else {
+          showMsg('error', 'エラー: ' + result.error);
+        }
+      });
+    }
+
+    function resetDemo() {
+      DemoAPI.reset();
+      showMsg('success', 'デモデータを初期状態に戻しました');
+      loadOrders();
     }
 
     function showMsg(type, text) {
