@@ -198,6 +198,48 @@
       color: #1a56db;
     }
   </style>
+<script>
+/* ====== デモ用モック（google.script.run 代替）======
+   これは本番のGAS/スプレッドシートには接続していません。
+   ボタン操作・画面遷移の確認用に、ダミーデータをその場で返しています。 */
+(function(){
+  function delay(fn, ms){ setTimeout(fn, ms || 350); }
+  function pad(n){ return (n<10?'0':'')+n; }
+  var _s=null,_f=null;
+  var api = {
+    withSuccessHandler:function(cb){_s=cb;return api;},
+    withFailureHandler:function(cb){_f=cb;return api;},
+
+    getImageList: function(){
+      delay(function(){
+        _s && _s([
+          {id:'demo1', name:'2026-07-10_タイムカード_1.jpg'},
+          {id:'demo2', name:'2026-07-10_タイムカード_2.jpg'}
+        ]);
+      });
+    },
+    processImage: function(fileId){
+      delay(function(){
+        _s && _s({
+          fileName: 'サンプルタイムカード.jpg',
+          rows: [
+            {date:'7/1', '出社':'09:00','退社':'18:00', confidence:'high'},
+            {date:'7/2', '出社':'09:03','退社':'18:10', confidence:'high'},
+            {date:'7/3', '出社':'','退社':'', confidence:'low'}
+          ]
+        });
+      }, 800);
+    },
+    saveConfirmed: function(data){
+      delay(function(){ _s && _s({ saved: data.rows.length }); });
+    }
+
+  };
+  window.google = window.google || {};
+  window.google.script = window.google.script || {};
+  window.google.script.run = api;
+})();
+</script>
 </head>
 <body>
 
@@ -307,8 +349,15 @@
   function displayResult(result, fileId) {
     // 画像：Drive の thumbnail URL で表示（HEIC も Drive 側が変換）
     // ブラウザで Google アカウントにサインイン済みであれば表示される
+    // デモのため実際のDrive画像は存在しない。プレースホルダーを表示。
     document.getElementById('cardImage').src =
-      'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w1200-h1600';
+      'data:image/svg+xml;utf8,' + encodeURIComponent(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800">' +
+        '<rect width="100%" height="100%" fill="#e5e7eb"/>' +
+        '<text x="50%" y="48%" font-size="26" text-anchor="middle" fill="#6b7280" font-family="sans-serif">タイムカード画像</text>' +
+        '<text x="50%" y="56%" font-size="18" text-anchor="middle" fill="#9ca3af" font-family="sans-serif">（デモ用プレースホルダー）</text>' +
+        '</svg>'
+      );
     document.getElementById('imgLabel').textContent = result.fileName;
     document.getElementById('currentFileId').value = fileId;
 

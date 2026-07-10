@@ -114,6 +114,52 @@
     .spinner-dark { display: inline-block; width: 16px; height: 16px; border: 3px solid rgba(0,0,0,0.12); border-top-color: #3b7dd8; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
+<script>
+/* ====== デモ用モック（google.script.run 代替）======
+   これは本番のGAS/スプレッドシートには接続していません。
+   ボタン操作・画面遷移の確認用に、ダミーデータをその場で返しています。 */
+(function(){
+  function delay(fn, ms){ setTimeout(fn, ms || 350); }
+  function pad(n){ return (n<10?'0':'')+n; }
+  var _s=null,_f=null;
+  var api = {
+    withSuccessHandler:function(cb){_s=cb;return api;},
+    withFailureHandler:function(cb){_f=cb;return api;},
+
+    checkLogin: function(empNo){
+      delay(function(){ _s && _s({ success:true, name:'デモ太郎', dept:'総務課' }); });
+    },
+    nfcPunch: function(empNo,empName,empDept,action){
+      delay(function(){ _s && _s({ success:true, message:'【'+action+'】を記録しました' }); });
+    },
+    savePunch: function(payload){
+      delay(function(){ _s && _s({ success:true, message:'【'+payload.punchType+'】を記録しました' }); });
+    },
+    getEmpHistory: function(empNo, ym){
+      delay(function(){
+        var parts = ym.split('-'); var y = +parts[0], m = +parts[1];
+        var records = [
+          {date:y+'-'+pad(m)+'-05', checkInAuto:'08:58', checkOutAuto:'18:02'},
+          {date:y+'-'+pad(m)+'-06', checkInAuto:'09:01', leaveAuto:'12:00', returnAuto:'13:00', checkOutAuto:'17:55'},
+          {date:y+'-'+pad(m)+'-07', checkInMan:'09:00', memo:'打刻漏れのため手動修正'}
+        ];
+        _s && _s({ success:true, records: records });
+      });
+    },
+    saveManualCorrection: function(){
+      delay(function(){ _s && _s({ success:true, message:'修正を保存しました' }); });
+    },
+    generatePdf: function(){
+      delay(function(){ _s && _s({ success:true, message:'PDFを生成しました（デモのためダウンロードは行われません）' }); });
+    }
+
+  };
+  window.google = window.google || {};
+  window.google.script = window.google.script || {};
+  window.google.script.run = api;
+  window.google.script.url = { getLocation: function(cb){ delay(function(){ cb({ parameter:{} }); }); } };
+})();
+</script>
 </head>
 <body>
 

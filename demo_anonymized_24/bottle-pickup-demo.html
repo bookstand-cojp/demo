@@ -9,6 +9,48 @@
     body { -webkit-tap-highlight-color: transparent; }
     input, select, textarea { font-size: 16px !important; }
   </style>
+<script>
+/* ====== デモ用モック（google.script.run 代替）======
+   これは本番のGAS/スプレッドシートには接続していません。
+   ボタン操作・画面遷移の確認用に、ダミーデータをその場で返しています。 */
+(function(){
+  function delay(fn, ms){ setTimeout(fn, ms || 350); }
+  function pad(n){ return (n<10?'0':'')+n; }
+  var _s=null,_f=null;
+  var api = {
+    withSuccessHandler:function(cb){_s=cb;return api;},
+    withFailureHandler:function(cb){_f=cb;return api;},
+
+    getMasterData: function(){
+      delay(function(){
+        _s && _s({
+          customers: [
+            {id:'c1', name:'サンプル酒店'},
+            {id:'c2', name:'デモ商事'},
+            {id:'c3', name:'テスト飲食店'}
+          ],
+          staff: [
+            {id:'s1', name:'山田'},
+            {id:'s2', name:'佐藤'}
+          ],
+          bottleTypes: [
+            {id:'b1', name:'一升瓶'},
+            {id:'b2', name:'ビール瓶'},
+            {id:'b3', name:'一升瓶（デポジット無）'}
+          ]
+        });
+      });
+    },
+    saveCollection: function(data){
+      delay(function(){ _s && _s(); });
+    }
+
+  };
+  window.google = window.google || {};
+  window.google.script = window.google.script || {};
+  window.google.script.run = api;
+})();
+</script>
 </head>
 <body class="bg-gray-100 min-h-screen">
 

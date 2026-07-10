@@ -101,6 +101,43 @@
     .badge.pending { background: #fff3e0; color: #e65100; }
     .loading { text-align: center; padding: 40px; color: #888; }
   </style>
+<script>
+/* ====== デモ用モック（google.script.run 代替）======
+   これは本番のGAS/スプレッドシートには接続していません。
+   ボタン操作・画面遷移の確認用に、ダミーデータをその場で返しています。 */
+(function(){
+  function delay(fn, ms){ setTimeout(fn, ms || 350); }
+  function pad(n){ return (n<10?'0':'')+n; }
+  var _s=null,_f=null;
+  var api = {
+    withSuccessHandler:function(cb){_s=cb;return api;},
+    withFailureHandler:function(cb){_f=cb;return api;},
+
+    webappGetOrders: function(){
+      delay(function(){
+        _s && _s({ success:true, orders: [
+          {rowNum:2, orderDate:'2026-07-01', customerName:'サンプル飲食店', productName:'冷凍餃子(国産野菜使用)60個入', qty:2, status:'受付', deliveryDate:'', deliveryNoteIssued:false},
+          {rowNum:3, orderDate:'2026-07-03', customerName:'テスト居酒屋', productName:'冷凍餃子(にんにく増量)60個入', qty:1, status:'製作済み', deliveryDate:'', deliveryNoteIssued:false},
+          {rowNum:4, orderDate:'2026-07-05', customerName:'デモ食堂', productName:'冷凍餃子(国産野菜使用)60個入', qty:3, status:'発送済み', deliveryDate:'2026-07-06', deliveryNoteIssued:true, deliveryNoteId:'DN-0004'}
+        ]});
+      });
+    },
+    webappUpdateStatus: function(){
+      delay(function(){ _s && _s({ success:true }); });
+    },
+    webappIssueDeliveryNote: function(){
+      delay(function(){ _s && _s({ success:true, issuedCount:2 }); });
+    },
+    webappGenerateInvoice: function(){
+      delay(function(){ _s && _s({ success:true, issuedCount:1 }); });
+    }
+
+  };
+  window.google = window.google || {};
+  window.google.script = window.google.script || {};
+  window.google.script.run = api;
+})();
+</script>
 </head>
 <body>
   <h1>管理画面 - 注文一覧</h1>

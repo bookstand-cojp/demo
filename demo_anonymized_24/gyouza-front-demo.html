@@ -126,12 +126,39 @@
     .msg.success { background: #e8f5e9; color: #2e7d32; display: block; }
     .msg.error   { background: #ffebee; color: #c62828; display: block; }
   </style>
+<script>
+/* ====== デモ用モック（google.script.run 代替）======
+   これは本番のGAS/スプレッドシートには接続していません。
+   ボタン操作・画面遷移の確認用に、ダミーデータをその場で返しています。 */
+(function(){
+  function delay(fn, ms){ setTimeout(fn, ms || 350); }
+  function pad(n){ return (n<10?'0':'')+n; }
+  var _s=null,_f=null;
+  var api = {
+    withSuccessHandler:function(cb){_s=cb;return api;},
+    withFailureHandler:function(cb){_f=cb;return api;},
+
+    webappGetProducts: function(){
+      delay(function(){
+        _s && _s({ success:true, products: ['冷凍餃子(国産野菜使用)60個入','冷凍餃子(にんにく増量)60個入','冷凍餃子(小粒)80個入'] });
+      });
+    },
+    webappSubmitOrders: function(){
+      delay(function(){ _s && _s({ success:true }); });
+    }
+
+  };
+  window.google = window.google || {};
+  window.google.script = window.google.script || {};
+  window.google.script.run = api;
+})();
+</script>
 </head>
 <body>
   <div class="card">
     <h1>注文入力</h1>
 
-    <input type="hidden" id="__customer__" value="<?= customer ?>">
+    <input type="hidden" id="__customer__" value="デモ商店">
 
     <div class="field">
       <label>お客様名</label>
