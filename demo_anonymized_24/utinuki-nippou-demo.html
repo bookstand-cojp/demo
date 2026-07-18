@@ -3,410 +3,300 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>日報入力システム｜機能アップデートのご案内</title>
+<title>日報入力システム｜デモ版</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
-
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --navy:   #1A3A5C;
-    --blue:   #1A56A0;
-    --sky:    #4A90D9;
-    --mint:   #E8F4FD;
-    --green:  #1A7A4A;
-    --lgreen: #E8F5EE;
-    --gray:   #F7F8FA;
-    --border: #E2E8F0;
-    --text:   #1A2A3A;
-    --muted:  #64748B;
-  }
-
-  html { scroll-behavior: smooth; }
-
   body {
-    font-family: 'Noto Sans JP', -apple-system, sans-serif;
-    background: #F0F4F9;
-    color: var(--text);
-    font-size: 15px;
-    line-height: 1.75;
+    font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+    background: #f0f2f5; color: #333;
   }
-
-  /* ── ヘッダー ── */
-  header {
-    background: var(--navy);
-    color: #fff;
-    padding: 56px 24px 48px;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
+  .demo-banner {
+    background: linear-gradient(90deg, #FF9800, #F57C00); color: #fff;
+    text-align: center; padding: 8px 16px; font-size: 13px; font-weight: bold;
   }
-  header::before {
-    content: '';
-    position: absolute; inset: 0;
-    background: linear-gradient(135deg, #1A3A5C 0%, #1A56A0 60%, #4A90D9 100%);
-    opacity: .7;
+  .account-bar {
+    background: #fff; border-bottom: 1px solid #e0e0e0; padding: 8px 16px;
+    text-align: center; font-size: 13px; color: #555;
   }
-  header > * { position: relative; z-index: 1; }
-  .header-label {
-    display: inline-block;
-    background: rgba(255,255,255,.15);
-    color: rgba(255,255,255,.9);
-    font-size: 12px;
-    font-weight: 500;
-    letter-spacing: .1em;
-    padding: 4px 14px;
-    border-radius: 20px;
-    margin-bottom: 20px;
-    border: 1px solid rgba(255,255,255,.2);
+  .account-bar .email { font-weight: bold; color: #1A56A0; }
+  .account-bar .switch-link {
+    margin-left: 10px; font-size: 12px; color: #1A56A0; text-decoration: underline;
+    cursor: pointer; background: none; border: none; font-family: inherit;
   }
-  header h1 {
-    font-size: clamp(22px, 5vw, 34px);
-    font-weight: 700;
-    line-height: 1.35;
-    margin-bottom: 12px;
-    letter-spacing: -.01em;
+  .tabs {
+    display: flex; background: #fff; border-bottom: 2px solid #1A56A0;
+    position: sticky; top: 0; z-index: 10;
   }
-  header p {
-    color: rgba(255,255,255,.75);
-    font-size: 14px;
+  .tab-btn {
+    flex: 1; padding: 12px 4px; border: none; background: none; font-size: 12px;
+    font-weight: bold; color: #888; cursor: pointer; transition: background .15s, color .15s;
   }
-
-  /* ── ナビ ── */
-  nav {
-    background: #fff;
-    border-bottom: 1px solid var(--border);
-    padding: 0 24px;
-    display: flex;
-    gap: 0;
-    overflow-x: auto;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  .tab-btn.active { background: #1A56A0; color: #fff; }
+  .tab-btn:hover:not(.active) { background: #f0f4fa; }
+  .container { max-width: 600px; margin: 20px auto; padding: 0 16px 40px; }
+  .card { background: #fff; border-radius: 10px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,.08); }
+  .card-title { text-align: center; color: #1A56A0; font-size: 18px; font-weight: bold; margin-bottom: 20px; }
+  .form-group { margin-bottom: 16px; }
+  .form-label { display: block; font-size: 13px; font-weight: bold; color: #444; margin-bottom: 6px; }
+  input[type="date"], select, input[type="text"], textarea {
+    width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 7px;
+    font-size: 14px; font-family: inherit; background: #fafafa;
   }
-  nav a {
-    display: block;
-    padding: 14px 20px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--muted);
-    text-decoration: none;
-    white-space: nowrap;
-    border-bottom: 2px solid transparent;
-    transition: color .2s, border-color .2s;
+  input:focus, select:focus, textarea:focus { outline: none; border-color: #1A56A0; background: #fff; }
+  textarea { height: 110px; resize: vertical; }
+  .btn-save {
+    width: 100%; padding: 14px; background: #1A56A0; color: #fff; border: none;
+    border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;
+    margin-top: 6px; transition: background .2s;
   }
-  nav a:hover { color: var(--blue); border-bottom-color: var(--blue); }
-
-  /* ── レイアウト ── */
-  main { max-width: 760px; margin: 0 auto; padding: 40px 20px 80px; }
-
-  /* ── セクション ── */
-  section { margin-bottom: 48px; }
-
-  .section-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: .12em;
-    color: var(--blue);
-    text-transform: uppercase;
-    margin-bottom: 16px;
+  .btn-save:hover:not(:disabled) { background: #1345a0; }
+  .btn-save:disabled { background: #aaa; cursor: not-allowed; }
+  .msg { text-align: center; padding: 10px 14px; border-radius: 7px; margin-bottom: 14px; font-size: 14px; display: none; }
+  .msg.success { background: #d4edda; color: #155724; }
+  .msg.error   { background: #f8d7da; color: #721c24; }
+  .msg.info    { background: #d1ecf1; color: #0c5460; }
+  .date-filter { display: flex; gap: 6px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+  .date-filter input { flex: 1; min-width: 120px; }
+  .date-filter .sep { color: #888; font-size: 13px; }
+  .btn-filter {
+    padding: 9px 16px; background: #1A56A0; color: #fff; border: none; border-radius: 7px;
+    font-size: 13px; font-weight: bold; cursor: pointer; white-space: nowrap;
   }
-  .section-label::before {
-    content: '';
-    display: block;
-    width: 20px; height: 2px;
-    background: var(--blue);
-    border-radius: 1px;
+  .report-item { border: 1px solid #e8e8e8; border-radius: 8px; padding: 14px 16px; margin-bottom: 10px; background: #fafafa; }
+  .report-date { font-weight: bold; color: #1A56A0; font-size: 14px; margin-bottom: 2px; }
+  .report-meta { font-size: 12px; color: #777; margin-bottom: 8px; }
+  .report-content { font-size: 14px; white-space: pre-wrap; color: #333; }
+  .empty-msg { text-align: center; color: #aaa; padding: 30px 0; font-size: 14px; }
+  .sync-desc { background: #f0f4fa; border-radius: 8px; padding: 14px 16px; font-size: 13px; color: #444; margin-bottom: 20px; line-height: 1.7; }
+  .sync-result { display: none; background: #f8f9fa; border-radius: 8px; padding: 16px; margin-top: 16px; }
+  .sync-result-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee; font-size: 14px; }
+  .sync-result-item:last-child { border-bottom: none; }
+  .sync-result-item .label { color: #666; }
+  .sync-result-item .value { font-weight: bold; color: #1A56A0; }
+  .spinner {
+    display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.4);
+    border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite;
+    vertical-align: middle; margin-right: 6px;
   }
-
-  h2 {
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--navy);
-    margin-bottom: 20px;
-    line-height: 1.4;
-  }
-
-  /* ── 機能カード ── */
-  .feature-grid { display: flex; flex-direction: column; gap: 16px; }
-  .feature-card {
-    background: #fff;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 24px;
-    display: flex;
-    gap: 20px;
-    align-items: flex-start;
-    transition: box-shadow .2s, transform .2s;
-  }
-  .feature-card:hover {
-    box-shadow: 0 4px 16px rgba(26,86,160,.1);
-    transform: translateY(-1px);
-  }
-  .feature-num {
-    flex-shrink: 0;
-    width: 40px; height: 40px;
-    background: var(--blue);
-    color: #fff;
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px; font-weight: 700;
-  }
-  .feature-body h3 {
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--navy);
-    margin-bottom: 8px;
-  }
-  .feature-body p { color: var(--muted); font-size: 14px; line-height: 1.7; }
-
-  /* ── 同期説明 ── */
-  .sync-section { background: #fff; border-radius: 16px; padding: 32px; border: 1px solid var(--border); }
-  .sync-section h2 { margin-bottom: 8px; }
-  .sync-section > p { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
-
-  .match-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 28px; }
-  @media (max-width: 520px) { .match-cards { grid-template-columns: 1fr; } }
-  .match-card {
-    background: var(--mint);
-    border: 1px solid #BFD9F0;
-    border-radius: 10px;
-    padding: 18px 20px;
-  }
-  .match-card-label {
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--blue);
-    letter-spacing: .08em;
-    margin-bottom: 6px;
-  }
-  .match-card-title { font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
-  .match-card-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
-
-  .or-divider {
-    text-align: center;
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--blue);
-    margin: -2px 0 16px;
-    display: none;
-  }
-
-  .result-title { font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 12px; }
-
-  .result-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  .result-table th {
-    background: var(--navy);
-    color: #fff;
-    padding: 10px 14px;
-    text-align: left;
-    font-weight: 600;
-    font-size: 12px;
-  }
-  .result-table th:first-child { border-radius: 8px 0 0 0; }
-  .result-table th:last-child  { border-radius: 0 8px 0 0; }
-  .result-table td {
-    padding: 11px 14px;
-    border-bottom: 1px solid var(--border);
-    vertical-align: top;
-    line-height: 1.6;
-  }
-  .result-table tr:nth-child(even) td { background: var(--gray); }
-  .result-table .mark { font-size: 16px; text-align: center; }
-
-  .not-lost {
-    background: var(--lgreen);
-    border: 1px solid #A8D5BC;
-    border-radius: 10px;
-    padding: 16px 20px;
-    margin-top: 20px;
-    font-size: 14px;
-    color: var(--green);
-    font-weight: 500;
-    line-height: 1.65;
-  }
-  .not-lost strong { display: block; margin-bottom: 4px; font-size: 15px; }
-
-  /* ── プライバシー ── */
-  .privacy-section { background: #fff; border-radius: 16px; padding: 32px; border: 1px solid var(--border); }
-  .privacy-section h2 { margin-bottom: 24px; }
-  .privacy-cards { display: flex; flex-direction: column; gap: 14px; }
-  .privacy-card {
-    display: flex;
-    gap: 16px;
-    padding: 18px 20px;
-    background: var(--lgreen);
-    border: 1px solid #A8D5BC;
-    border-radius: 10px;
-    align-items: flex-start;
-  }
-  .privacy-icon { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
-  .privacy-card h3 { font-size: 14px; font-weight: 700; color: var(--green); margin-bottom: 6px; }
-  .privacy-card p  { font-size: 13px; color: #2D6A4A; line-height: 1.65; }
-
-  /* ── フッター ── */
-  footer {
-    background: var(--navy);
-    color: rgba(255,255,255,.6);
-    text-align: center;
-    padding: 32px 24px;
-    font-size: 13px;
-    line-height: 1.8;
-  }
-  footer strong { color: #fff; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 
-<header>
-  <div class="header-label">株式会社ブックスタンド　2026年6月</div>
-  <h1>日報入力システム<br>機能アップデートのご案内</h1>
-  <p>ウチヌキ様向け　システム改善のお知らせ</p>
-</header>
+<div class="demo-banner">🔸 これはデモ版です。実際のカレンダーやデータには接続されません 🔸</div>
 
-<nav>
-  <a href="#features">追加機能</a>
-  <a href="#sync">カレンダー同期</a>
-  <a href="#privacy">プライバシー</a>
-</nav>
+<div class="account-bar">
+  ログイン中:
+  <span class="email" id="accountEmail">tanaka@example.co.jp</span>
+  <button class="switch-link" onclick="alert('デモ版では切り替えできません。\n\n本番では、Chromeの別プロフィールで新しいウィンドウを開くと別アカウントで使えます。')">別アカウントで開き直す</button>
+</div>
 
-<main>
+<div class="tabs">
+  <button class="tab-btn active" id="tab-btn-input" onclick="switchTab('input')">✏️ 日報入力</button>
+  <button class="tab-btn"        id="tab-btn-list"  onclick="switchTab('list')">📋 日報一覧</button>
+  <button class="tab-btn"        id="tab-btn-sync"  onclick="switchTab('sync')">🔄 カレンダー同期</button>
+</div>
 
-  <!-- 追加機能 -->
-  <section id="features">
-    <div class="section-label">New Features</div>
-    <h2>今回追加・改善した機能</h2>
-    <div class="feature-grid">
-
-      <div class="feature-card">
-        <div class="feature-num">1</div>
-        <div class="feature-body">
-          <h3>ログイン中のアカウント確認</h3>
-          <p>画面の上部に「ログイン中：〇〇@〇〇.com」が常時表示されるようになりました。保存ボタンを押すと「このアカウントで保存します。よろしいですか？」の確認が出るので、誤ったアカウントで保存してしまう事故を防ぎます。</p>
-        </div>
+<div id="tab-input">
+  <div class="container">
+    <div class="card">
+      <div class="card-title">📝 日報作成</div>
+      <div class="msg" id="msg"></div>
+      <div class="form-group">
+        <label class="form-label">📅 実施日</label>
+        <input type="date" id="date" onchange="onDateChange()">
       </div>
-
-      <div class="feature-card">
-        <div class="feature-num">2</div>
-        <div class="feature-body">
-          <h3>過去データ（kintone）の引き継ぎ</h3>
-          <p>これまでkintoneに記録してきた日報データをこのシステムに一括で引き継げるようになりました。取り込み後は、社員の皆さんが「📋 日報一覧」タブを開くだけで過去の日報が自動で表示されます。</p>
-        </div>
+      <div class="form-group">
+        <label class="form-label">🔍 予定を選択</label>
+        <select id="eventSelect"></select>
       </div>
-
-      <div class="feature-card">
-        <div class="feature-num">3</div>
-        <div class="feature-body">
-          <h3>🔄 カレンダー同期タブの追加</h3>
-          <p>過去のkintoneデータをGoogleカレンダーに同期する新しいタブが追加されました。期間を指定してボタンを押すと、カレンダーの予定のメモ欄に日報内容が自動で書き込まれます。社長が「カレンダーを見れば日報もわかる」という状態を過去データでも実現できます。</p>
-        </div>
+      <div class="form-group">
+        <label class="form-label">▶️ 活動項目</label>
+        <select id="activity">
+          <option value="来社">来社</option>
+          <option value="訪問">訪問</option>
+          <option value="リモート">リモート</option>
+          <option value="電話">電話</option>
+          <option value="社内">社内</option>
+          <option value="メール">メール</option>
+          <option value="その他">その他</option>
+        </select>
       </div>
-
+      <div class="form-group">
+        <label class="form-label">👥 同行者</label>
+        <input type="text" id="companion" placeholder="同行者の名前（任意）">
+      </div>
+      <div class="form-group">
+        <label class="form-label">📝 内容</label>
+        <textarea id="content" placeholder="活動内容を入力してください"></textarea>
+      </div>
+      <button class="btn-save" id="saveBtn" onclick="onSave()">日報を保存する</button>
     </div>
-  </section>
+  </div>
+</div>
 
-  <!-- カレンダー同期 -->
-  <section id="sync">
-    <div class="sync-section">
-      <div class="section-label">Calendar Sync</div>
-      <h2>カレンダー同期について</h2>
-      <p>以下の<strong>どちらかの条件</strong>でGoogleカレンダーの予定を探して書き込みます。</p>
+<div id="tab-list" style="display:none">
+  <div class="container">
+    <div class="card">
+      <div class="card-title">📋 日報一覧</div>
+      <div class="date-filter">
+        <input type="date" id="fromDate">
+        <span class="sep">〜</span>
+        <input type="date" id="toDate">
+        <button class="btn-filter" onclick="loadReports()">絞り込む</button>
+      </div>
+      <div id="reportsList"></div>
+    </div>
+  </div>
+</div>
 
-      <div class="match-cards">
-        <div class="match-card">
-          <div class="match-card-label">条件 ①</div>
-          <div class="match-card-title">日時一致</div>
-          <div class="match-card-desc">kintoneの活動開始時刻（例：13:30）とカレンダー予定の開始時刻が一致する</div>
-        </div>
-        <div class="match-card">
-          <div class="match-card-label">条件 ②</div>
-          <div class="match-card-title">タイトル一致</div>
-          <div class="match-card-desc">kintoneの件名とカレンダー予定のタイトルが一致する</div>
+<div id="tab-sync" style="display:none">
+  <div class="container">
+    <div class="card">
+      <div class="card-title">🔄 過去データをカレンダーに同期</div>
+      <div class="sync-desc">
+        スプレッドシートに保存されている過去の日報を、Googleカレンダーの予定に書き込みます。<br><br>
+        <b>マッチング方式：</b>「日時が一致」または「タイトルが一致」する予定に書き込みます。<br>
+        <b>注意：</b>すでに日報が書き込まれている予定はスキップします。
+      </div>
+      <div class="form-group">
+        <label class="form-label">📅 同期する期間</label>
+        <div class="date-filter">
+          <input type="date" id="syncFromDate">
+          <span class="sep">〜</span>
+          <input type="date" id="syncToDate">
         </div>
       </div>
-
-      <div class="result-title">同期できる場合・できない場合</div>
-      <table class="result-table">
-        <thead>
-          <tr><th>マーク</th><th>状況</th><th>データの確認場所</th></tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td class="mark">✅</td>
-            <td>同じ時刻の予定がある</td>
-            <td>Googleカレンダーのメモ欄 ＋ アプリ日報一覧</td>
-          </tr>
-          <tr>
-            <td class="mark">✅</td>
-            <td>同じタイトルの予定がある</td>
-            <td>Googleカレンダーのメモ欄 ＋ アプリ日報一覧</td>
-          </tr>
-          <tr>
-            <td class="mark">❌</td>
-            <td>予定がすでに削除されている</td>
-            <td>アプリの「📋 日報一覧」タブで確認可能</td>
-          </tr>
-          <tr>
-            <td class="mark">❌</td>
-            <td>時刻もタイトルも一致しない</td>
-            <td>アプリの「📋 日報一覧」タブで確認可能</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div class="not-lost">
-        <strong>❌ のデータも、消えたわけではありません</strong>
-        アプリの「📋 日報一覧」タブを開くと、カレンダーに同期できたものもできなかったものも、すべての過去データが一覧で確認できます。カレンダー同期はあくまで「カレンダーでも見られると便利」という追加機能です。
+      <div class="msg" id="syncMsg"></div>
+      <button class="btn-save" id="syncBtn" onclick="onSyncCalendar()">カレンダーに同期する</button>
+      <div class="sync-result" id="syncResult">
+        <div class="sync-result-item"><span class="label">✅ カレンダーに書き込み成功</span><span class="value" id="syncMatched">0件</span></div>
+        <div class="sync-result-item"><span class="label">⏭️ 書き込み済みのためスキップ</span><span class="value" id="syncAlready">0件</span></div>
+        <div class="sync-result-item"><span class="label">❌ 対応する予定が見つからず未反映</span><span class="value" id="syncSkipped">0件</span></div>
+        <div class="sync-result-item"><span class="label">📊 処理対象合計</span><span class="value" id="syncTotal">0件</span></div>
       </div>
     </div>
-  </section>
+  </div>
+</div>
 
-  <!-- プライバシー -->
-  <section id="privacy">
-    <div class="privacy-section">
-      <div class="section-label">Privacy</div>
-      <h2>あなたのデータは守られています</h2>
-      <div class="privacy-cards">
+<script>
+  var DUMMY_EVENTS = [
+    { id:'e1', title:'[営業] 10:00 山田商事 定例MTG' },
+    { id:'e2', title:'[営業] 13:30 グリーン工業 新規提案' },
+    { id:'e3', title:'[社内] 16:00 チーム週次ミーティング' }
+  ];
 
-        <div class="privacy-card">
-          <div class="privacy-icon">🔒</div>
-          <div>
-            <h3>他の人に見えるのはカレンダーで共有した情報だけ</h3>
-            <p>日報はGoogleカレンダーの予定のメモ欄に書き込まれます。見えるのはカレンダーを共有している相手だけです。カレンダーを共有していない人には一切見えません。</p>
-          </div>
-        </div>
+  var DUMMY_REPORTS = [
+    { date:'2026-06-14', title:'グリーン工業 新規提案', activity:'訪問', companion:'部長', content:'新製品ラインの提案を実施。先方は前向きで、来週見積もりを提出予定。競合はA社。' },
+    { date:'2026-06-13', title:'山田商事 定例MTG', activity:'来社', companion:'', content:'月次の発注確認。今月は前月比120%。追加ロットの相談あり。' },
+    { date:'2026-06-12', title:'佐藤製作所 アフターフォロー', activity:'電話', companion:'', content:'納品後の稼働状況確認。問題なく稼働中。次回定期点検は7月中旬で調整。' },
+    { date:'2026-06-11', title:'ブルースカイ社 商談', activity:'リモート', companion:'課長', content:'オンラインでの初回商談。ニーズヒアリング完了。要件をまとめて再提案する。' }
+  ];
 
-        <div class="privacy-card">
-          <div class="privacy-icon">👤</div>
-          <div>
-            <h3>日報一覧には自分のデータしか表示されない</h3>
-            <p>アプリの「📋 日報一覧」タブには、ログイン中のご本人の日報だけが表示されます。他の社員の日報は絶対に表示されません。</p>
-          </div>
-        </div>
+  var currentTab = 'input';
 
-        <div class="privacy-card">
-          <div class="privacy-icon">🗄️</div>
-          <div>
-            <h3>スプレッドシートには社員からアクセスできない</h3>
-            <p>日報データが蓄積されているスプレッドシートは、管理者（データ管理責任者）だけが開けます。社員の皆さんにはURLも共有していないため、直接開くことはできません。</p>
-          </div>
-        </div>
+  (function init(){
+    var t = new Date();
+    var s = t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
+    var m1 = s.slice(0,7)+'-01';
+    document.getElementById('date').value = s;
+    document.getElementById('fromDate').value = m1;
+    document.getElementById('toDate').value = s;
+    document.getElementById('syncFromDate').value = m1;
+    document.getElementById('syncToDate').value = s;
+    loadEvents();
+  })();
 
-      </div>
-    </div>
-  </section>
+  function switchTab(tab){
+    currentTab = tab;
+    ['input','list','sync'].forEach(function(tt){
+      document.getElementById('tab-'+tt).style.display = (tt===tab)?'block':'none';
+      document.getElementById('tab-btn-'+tt).classList.toggle('active', tt===tab);
+    });
+    if(tab==='list') loadReports();
+  }
 
-</main>
+  function onDateChange(){ loadEvents(); }
 
-<footer>
-  <strong>株式会社ブックスタンド</strong><br>
-  ご不明な点がございましたらお気軽にご連絡ください。<br>
-  3380@bookstand.biz
-</footer>
+  function loadEvents(){
+    var sel = document.getElementById('eventSelect');
+    sel.innerHTML = '';
+    DUMMY_EVENTS.forEach(function(ev){
+      var o = document.createElement('option');
+      o.value = ev.id; o.textContent = ev.title;
+      sel.appendChild(o);
+    });
+  }
 
+  function onSave(){
+    var content = document.getElementById('content').value.trim();
+    if(!content){ showMsg('内容を入力してください','error'); return; }
+    if(!confirm('このアカウントで保存します：\n\ntanaka@example.co.jp\n\nよろしいですか？')) return;
+
+    var btn = document.getElementById('saveBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>保存中...';
+
+    setTimeout(function(){
+      btn.disabled = false;
+      btn.innerHTML = '日報を保存する';
+      showMsg('✅ 保存完了（tanaka@example.co.jp）','success');
+      var sel = document.getElementById('eventSelect');
+      var title = sel.options[sel.selectedIndex].textContent.replace(/^\[.*?\]\s*\d{2}:\d{2}\s*/,'');
+      DUMMY_REPORTS.unshift({
+        date: document.getElementById('date').value,
+        title: title,
+        activity: document.getElementById('activity').value,
+        companion: document.getElementById('companion').value.trim(),
+        content: content
+      });
+      document.getElementById('content').value = '';
+      document.getElementById('companion').value = '';
+    }, 800);
+  }
+
+  function loadReports(){
+    var list = document.getElementById('reportsList');
+    if(DUMMY_REPORTS.length===0){ list.innerHTML='<div class="empty-msg">この期間の日報はありません</div>'; return; }
+    list.innerHTML = DUMMY_REPORTS.map(function(r){
+      return '<div class="report-item">'+
+        '<div class="report-date">'+esc(r.date)+'</div>'+
+        '<div class="report-meta">'+esc(r.title)+'　|　'+esc(r.activity)+
+        (r.companion?'　|　同行: '+esc(r.companion):'')+'</div>'+
+        '<div class="report-content">'+esc(r.content)+'</div></div>';
+    }).join('');
+  }
+
+  function onSyncCalendar(){
+    if(!confirm('指定期間の日報をGoogleカレンダーに同期します。\nよろしいですか？')) return;
+    var btn = document.getElementById('syncBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>同期中...';
+    showSyncMsg('カレンダーを検索してマッチングしています...','info');
+    document.getElementById('syncResult').style.display='none';
+    setTimeout(function(){
+      btn.disabled = false;
+      btn.innerHTML = 'カレンダーに同期する';
+      showSyncMsg('同期完了しました！','success');
+      document.getElementById('syncMatched').textContent = '3件';
+      document.getElementById('syncAlready').textContent = '1件';
+      document.getElementById('syncSkipped').textContent = '0件';
+      document.getElementById('syncTotal').textContent = '4件';
+      document.getElementById('syncResult').style.display='block';
+    }, 1500);
+  }
+
+  function showMsg(t,type){
+    var el = document.getElementById('msg');
+    el.textContent=t; el.className='msg'+(type?' '+type:''); el.style.display=t?'block':'none';
+  }
+  function showSyncMsg(t,type){
+    var el = document.getElementById('syncMsg');
+    el.textContent=t; el.className='msg'+(type?' '+type:''); el.style.display=t?'block':'none';
+  }
+  function esc(s){
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
 </body>
 </html>
