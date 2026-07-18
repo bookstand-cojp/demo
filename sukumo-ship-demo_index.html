@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>宿毛連絡船 シフト自動生成システム｜デモ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0B2545; --navy2:#13315C; --foam:#F2F6F9; --line:#C9D6E2;
+  --buoy:#F26430; --pass:#1E8E5A; --fail:#C43D2F; --warn:#B7791F;
+  --ink:#1C2B3A; --mut:#5B7186;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--foam);color:var(--ink);line-height:1.7}
+.disp{font-family:'Zen Kaku Gothic New',sans-serif}
+
+header{background:var(--navy);color:#fff;padding:26px 20px 22px;position:relative;overflow:hidden}
+header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:5px;
+  background:repeating-linear-gradient(90deg,var(--buoy) 0 28px,#fff 28px 34px)}
+.hwrap{max-width:1060px;margin:0 auto}
+.eyebrow{font-size:12px;letter-spacing:.22em;color:#9FB6CE;font-weight:700}
+h1{font-family:'Zen Kaku Gothic New';font-weight:900;font-size:clamp(22px,4vw,34px);letter-spacing:.03em;margin-top:4px}
+.sub{color:#C7D6E6;font-size:13.5px;margin-top:6px}
+.sub b{color:#FFD9C7;font-weight:700}
+
+main{max-width:1060px;margin:0 auto;padding:28px 20px 60px}
+section{margin-bottom:34px}
+h2{font-family:'Zen Kaku Gothic New';font-weight:700;font-size:19px;display:flex;align-items:center;gap:10px;margin-bottom:14px}
+h2::before{content:"";width:14px;height:14px;background:var(--buoy);border-radius:50%;flex:0 0 auto;box-shadow:inset 0 0 0 3.5px #fff,0 0 0 1.5px var(--buoy)}
+
+/* crew */
+.crew{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.card .nm{font-family:'Zen Kaku Gothic New';font-weight:700;font-size:16px;display:flex;justify-content:space-between;align-items:baseline}
+.card .role{font-size:11.5px;color:var(--mut)}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px}
+.chip{font-size:11px;padding:1.5px 8px;border-radius:99px;border:1px solid var(--line);color:var(--navy2);background:var(--foam);font-weight:500}
+.chip.q{background:#FDEEE6;border-color:#F4C4AC;color:#9A3D14}
+
+/* run panel */
+.runrow{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+button#run{font-family:'Zen Kaku Gothic New';font-weight:700;font-size:16.5px;color:#fff;
+  background:var(--buoy);border:none;border-radius:10px;padding:13px 30px;cursor:pointer;
+  box-shadow:0 3px 0 #C24A1E;transition:transform .06s}
+button#run:active{transform:translateY(2px);box-shadow:0 1px 0 #C24A1E}
+button#run:disabled{background:#B9C6D2;box-shadow:none;cursor:default}
+.attempts{display:flex;gap:8px}
+.att{width:38px;height:38px;border-radius:50%;border:2px solid var(--line);background:#fff;
+  display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:14px;color:var(--mut)}
+.att.now{border-color:var(--buoy);color:var(--buoy);animation:pulse 1s infinite}
+.att.ng{border-color:var(--fail);color:var(--fail);background:#FBEDEB}
+.att.ok{border-color:var(--pass);color:#fff;background:var(--pass)}
+@keyframes pulse{50%{box-shadow:0 0 0 6px rgba(242,100,48,.18)}}
+.statline{font-size:13px;color:var(--mut)}
+.statline b{color:var(--ink)}
+
+.console{background:var(--navy);border-radius:12px;padding:16px 18px;min-height:280px;max-height:420px;
+  overflow-y:auto;font-family:var(--mono);font-size:13px;line-height:1.85;color:#D7E3F0;
+  border:1px solid #08203D;box-shadow:inset 0 2px 10px rgba(0,0,0,.35)}
+.console .t{color:#6E87A3;margin-right:10px}
+.console .v{color:#FF9B87}
+.console .w{color:#F0C36D}
+.console .g{color:#6FE3A5;font-weight:700}
+.console .h{color:#9FB6CE}
+.console .dim{color:#4E6786}
+
+/* result */
+#resultSec{display:none}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--mut);margin-bottom:10px}
+.lg{display:inline-flex;align-items:center;gap:5px}
+.sw{width:13px;height:13px;border-radius:3px;display:inline-block}
+.tblwrap{overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;font-size:12px;white-space:nowrap}
+th,td{border:1px solid #E2EAF1;padding:4px 6px;text-align:center}
+th{background:var(--foam);font-weight:700;position:sticky;left:auto}
+th.name{position:sticky;left:0;background:var(--navy);color:#fff;z-index:2;font-family:'Zen Kaku Gothic New';min-width:64px}
+td.name{position:sticky;left:0;background:var(--navy2);color:#fff;font-weight:700;z-index:1;font-family:'Zen Kaku Gothic New'}
+.r-船長{background:#FDEAE1;color:#A33B10;font-weight:700}
+.r-一航士{background:#E7F0FA;color:#1B4E89}
+.r-甲板員{background:#EAF6EE;color:#1F6B45}
+.r-機関長{background:#F3ECFA;color:#5B2E8E;font-weight:700}
+.r-一機士{background:#FBF4E4;color:#7A5A11}
+.r-週休{background:#F3F5F7;color:#9AA9B7}
+.warnbox{margin-top:12px;background:#FDF6E7;border:1px solid #EAD394;border-radius:10px;padding:10px 14px;font-size:13px;color:#7A5A11}
+.note{margin-top:10px;font-size:12px;color:var(--mut)}
+
+footer{background:var(--navy);color:#93A9C0;font-size:12px;padding:18px 20px;text-align:center}
+footer b{color:#fff}
+@media (prefers-reduced-motion:reduce){.att.now{animation:none}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hwrap">
+    <div class="eyebrow">SUKUMO FERRY CREW SCHEDULER — LIVE DEMO</div>
+    <h1>宿毛連絡船 シフト自動生成システム</h1>
+    <div class="sub">AIが提案 → <b>コードが審判</b> → 不合格なら違反を添えて再生成。判定ロジックは本番GASと同一コードをブラウザに移植しています（AI生成のみシミュレーション）。</div>
+  </div>
+</header>
+
+<main>
+
+<section>
+  <h2>乗組員マスタ（7名）</h2>
+  <div class="crew" id="crew"></div>
+</section>
+
+<section>
+  <h2>生成 → 検証 → 再生成ループ</h2>
+  <div class="runrow">
+    <button id="run">▶ 2026年8月のシフトを生成</button>
+    <div class="attempts">
+      <div class="att" id="a1">1</div><div class="att" id="a2">2</div><div class="att" id="a3">3</div>
+    </div>
+    <div class="statline" id="stat">審判：checkDayFeasible ×31日 ＋ checkMonth（ハード5系統／ソフト3系統）</div>
+  </div>
+  <div class="console" id="console"><span class="dim">実行待機中… ボタンを押すと開始します。</span></div>
+</section>
+
+<section id="resultSec">
+  <h2>確定シフト（2026年8月・31日）</h2>
+  <div class="legend">
+    <span class="lg"><span class="sw" style="background:#FDEAE1"></span>船長</span>
+    <span class="lg"><span class="sw" style="background:#E7F0FA"></span>一航士</span>
+    <span class="lg"><span class="sw" style="background:#EAF6EE"></span>甲板員</span>
+    <span class="lg"><span class="sw" style="background:#F3ECFA"></span>機関長</span>
+    <span class="lg"><span class="sw" style="background:#FBF4E4"></span>一機士</span>
+    <span class="lg"><span class="sw" style="background:#F3F5F7"></span>週休</span>
+  </div>
+  <div class="tblwrap"><table id="grid"></table></div>
+  <div class="warnbox" id="warnbox"></div>
+  <div class="note">※ 宮地の月間乗船上限・井上の船長月2回・ペア制約などは次期実装（ルール確認書 §4 参照）。ハード条件（人数・役職・資格）はすべて本番同一ロジックで判定済み。</div>
+</section>
+
+</main>
+
+<footer>検証ロジック：GAS <b>feasibility.gs</b> より移植（checkDayFeasible / checkMonth）｜株式会社ブックスタンド</footer>
+
+<script>
+/* ===== 職員マスタ（seed.gs と同一） ===== */
+const MASTER=[
+ {氏名:'浜田',在籍:'Y',海技士_航海:'3',海技士_機関:'',可_船長:'Y',可_一航士:'Y',可_甲板員:'Y',可_機関長:'',可_一機士:'',可_二機士:'',標準固定:'N',備考:'主任船長'},
+ {氏名:'杉本',在籍:'Y',海技士_航海:'5',海技士_機関:'',可_船長:'Y',可_一航士:'Y',可_甲板員:'Y',可_機関長:'',可_一機士:'',可_二機士:'',標準固定:'N',備考:'船長兼一航士'},
+ {氏名:'井上',在籍:'Y',海技士_航海:'5',海技士_機関:'',可_船長:'Y',可_一航士:'Y',可_甲板員:'Y',可_機関長:'',可_一機士:'',可_二機士:'',標準固定:'N',備考:'若手船長枠'},
+ {氏名:'中平',在籍:'Y',海技士_航海:'',海技士_機関:'4',可_船長:'',可_一航士:'',可_甲板員:'Y',可_機関長:'Y',可_一機士:'',可_二機士:'',標準固定:'N',備考:'機関長専任'},
+ {氏名:'末廣',在籍:'Y',海技士_航海:'',海技士_機関:'5',可_船長:'',可_一航士:'',可_甲板員:'Y',可_機関長:'',可_一機士:'Y',可_二機士:'Y',標準固定:'N',備考:'一等機関士'},
+ {氏名:'宮地',在籍:'Y',海技士_航海:'',海技士_機関:'',可_船長:'',可_一航士:'',可_甲板員:'Y',可_機関長:'',可_一機士:'',可_二機士:'',標準固定:'N',備考:'臨時・後員'},
+ {氏名:'中定',在籍:'Y',海技士_航海:'',海技士_機関:'',可_船長:'',可_一航士:'Y',可_甲板員:'Y',可_機関長:'',可_一機士:'',可_二機士:'',標準固定:'N',備考:'若手4番手'},
+];
+const CONFIG={必要乗組人数:5,標準人数:0,偏り許容_週休:3,連勤上限:0};
+
+/* ===== 審判（feasibility.gs から移植・ロジック同一） ===== */
+function checkDayFeasible(assignment,master,config){
+  var v=[],byName={};master.forEach(m=>byName[m['氏名']]=m);
+  var crewRoles=['船長','一航士','甲板員','機関長','一機士','二機士'];
+  var assigned=Object.entries(assignment);
+  var crew=assigned.filter(e=>crewRoles.includes(e[1]));
+  if(crew.length!==config['必要乗組人数'])v.push('乗組人数='+crew.length+'（必要'+config['必要乗組人数']+'）');
+  ['船長','一航士','甲板員','機関長'].forEach(role=>{
+    var n=crew.filter(e=>e[1]===role).length;
+    if(n===0)v.push(role+': 未充足');if(n>1)v.push(role+': 重複（'+n+'名）');
+  });
+  var k2=crew.filter(e=>e[1]==='一機士'||e[1]==='二機士').length;
+  if(k2!==1)v.push('機関2人目（一機士/二機士）: '+k2+'名（1名であること）');
+  crew.forEach(e=>{
+    var name=e[0],role=e[1],m=byName[name];
+    if(!m){v.push(name+': マスタに存在しない');return;}
+    if(role==='船長'&&!(m['可_船長']==='Y'&&Number(m['海技士_航海'])<=5))v.push(name+' を船長に不可（五級航海以上＋可_船長 が必要）');
+    if(role==='機関長'&&!(m['可_機関長']==='Y'&&Number(m['海技士_機関'])<=4))v.push(name+' を機関長に不可（四級機関以上＋可_機関長 が必要）');
+    var fm={'一航士':'可_一航士','甲板員':'可_甲板員','一機士':'可_一機士','二機士':'可_二機士'};
+    if(fm[role]&&m[fm[role]]!=='Y')v.push(name+' を'+role+'に不可（'+fm[role]+' が必要）');
+  });
+  var zaiseki=master.filter(m=>m['在籍']==='Y').length;
+  var expectOff=zaiseki-config['必要乗組人数']-(config['標準人数']||0);
+  var off=assigned.filter(e=>e[1]==='週休').length;
+  if(off!==expectOff)v.push('週休人数='+off+'（算出値'+expectOff+'）');
+  return{ok:v.length===0,violations:v};
+}
+function checkMonth(schedule,master,config){
+  var violations=[],warnings=[],dates=Object.keys(schedule).sort();
+  dates.forEach(d=>{var r=checkDayFeasible(schedule[d],master,config);
+    if(!r.ok)r.violations.forEach(msg=>violations.push(d+': '+msg));});
+  var names=master.filter(m=>m['在籍']==='Y').map(m=>m['氏名']);
+  var offC={};names.forEach(n=>offC[n]=0);
+  dates.forEach(d=>{Object.keys(schedule[d]).forEach(n=>{if(schedule[d][n]==='週休'&&n in offC)offC[n]++;});});
+  var ov=names.map(n=>offC[n]),mx=Math.max(...ov),mn=Math.min(...ov);
+  if(mx-mn>config['偏り許容_週休'])warnings.push('週休偏り='+(mx-mn)+'日（許容'+config['偏り許容_週休']+'日） 最多:'+mx+'日 最少:'+mn+'日');
+  var cc={};names.forEach(n=>cc[n]=0);
+  dates.forEach(d=>{Object.keys(schedule[d]).forEach(n=>{if(schedule[d][n]==='船長'&&n in cc)cc[n]++;});});
+  var cv=names.map(n=>cc[n]),cmx=Math.max(...cv),cmn=Math.min(...cv),th=(config['偏り許容_週休']||2)*2;
+  if(cmx-cmn>th)warnings.push('船長担当偏り='+(cmx-cmn)+'回（許容'+th+'回） 最多:'+cmx+'回 最少:'+cmn+'回');
+  return{ok:violations.length===0,violations,warnings};
+}
+
+/* ===== シミュレーションAI：正解案＋わざと間違えた下書き ===== */
+const DECK=['浜田','杉本','井上','宮地','中定'];
+const CAPTAINS=['浜田','杉本','井上'];
+const PAIRS=(()=>{const p=[];for(let i=0;i<DECK.length;i++)for(let j=i+1;j<DECK.length;j++)p.push([DECK[i],DECK[j]]);return p;})();
+function dates(){const a=[];for(let d=1;d<=31;d++)a.push('2026-08-'+String(d).padStart(2,'0'));return a;}
+function validDraft(){
+  const s={};
+  dates().forEach((date,i)=>{
+    const off=PAIRS[i%PAIRS.length];
+    const day={中平:'機関長',末廣:'一機士'};
+    off.forEach(n=>day[n]='週休');
+    const present=DECK.filter(n=>!off.includes(n));
+    const caps=present.filter(n=>CAPTAINS.includes(n));
+    const cap=caps[i%caps.length];day[cap]='船長';
+    const rest=present.filter(n=>n!==cap);
+    const fo=rest.find(n=>['浜田','杉本','井上','中定'].includes(n));day[fo]='一航士';
+    day[rest.find(n=>n!==fo)]='甲板員';
+    s[date]=day;
+  });
+  return s;
+}
+function brokenDraft1(){ // 中定を一機士に（実テストで観測した失敗を再現）
+  const s=validDraft();
+  [0,4,5,6,10,14].forEach(i=>{const d=dates()[i],day=s[d];
+    const naka=Object.keys(day).find(n=>n==='中定'&&day[n]!=='週休');
+    if(naka){const r=day['中定'];day['中定']='一機士';day['末廣']=r;}});
+  return s;
+}
+function brokenDraft2(){ // 宮地を機関長に（資格なし）
+  const s=validDraft();
+  [8,14,20,26].forEach(i=>{const d=dates()[i],day=s[d];
+    if(day['宮地']&&day['宮地']!=='週休'){const r=day['宮地'];day['宮地']='機関長';day['中平']=r;}});
+  return s;
+}
+
+/* ===== UI ===== */
+const crewEl=document.getElementById('crew');
+MASTER.forEach(m=>{
+  const quals=[];
+  if(m.海技士_航海)quals.push(`<span class="chip q">航海${m.海技士_航海}級</span>`);
+  if(m.海技士_機関)quals.push(`<span class="chip q">機関${m.海技士_機関}級</span>`);
+  ['可_船長','可_一航士','可_甲板員','可_機関長','可_一機士','可_二機士'].forEach(k=>{
+    if(m[k]==='Y')quals.push(`<span class="chip">${k.slice(2)}</span>`);});
+  crewEl.insertAdjacentHTML('beforeend',
+    `<div class="card"><div class="nm">${m.氏名}<span class="role">${m.備考}</span></div><div class="chips">${quals.join('')}</div></div>`);
+});
+
+const con=document.getElementById('console');
+function ts(){const d=new Date();return d.toTimeString().slice(0,8);}
+function log(html){con.insertAdjacentHTML('beforeend',`<div><span class="t">${ts()}</span>${html}</div>`);con.scrollTop=con.scrollHeight;}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+async function runDemo(){
+  const btn=document.getElementById('run');btn.disabled=true;
+  con.innerHTML='';document.getElementById('resultSec').style.display='none';
+  ['a1','a2','a3'].forEach(id=>{const e=document.getElementById(id);e.className='att';});
+  log('<span class="h">対象: 2026-08 ／ 在籍者: 7名 ／ 再生成上限: 5回</span>');
+  const drafts=[
+    {s:brokenDraft1(),wait:1400,label:'Gemini がシフト案を生成中…'},
+    {s:brokenDraft2(),wait:1400,label:'違反リストを添えて再生成中…'},
+    {s:validDraft(), wait:1400,label:'違反リストを添えて再生成中…'},
+  ];
+  let final=null;
+  for(let a=0;a<3;a++){
+    const att=document.getElementById('a'+(a+1));att.classList.add('now');
+    log(`<span class="h">=== 生成試行 ${a+1}/5 ===</span>`);
+    log(`<span class="dim">${drafts[a].label}</span>`);
+    await sleep(drafts[a].wait);
+    log('<span class="dim">審判 checkMonth() 実行中…（本番と同一ロジック）</span>');
+    await sleep(600);
+    const r=checkMonth(drafts[a].s,MASTER,CONFIG);
+    log(`violations: <b>${r.violations.length}</b> ／ warnings: ${r.warnings.length}`);
+    if(!r.ok){
+      att.classList.remove('now');att.classList.add('ng');
+      for(const v of r.violations.slice(0,4)){log(`<span class="v">　✗ ${v}</span>`);await sleep(180);}
+      if(r.violations.length>4)log(`<span class="v">　… 他 ${r.violations.length-4} 件</span>`);
+      log('<span class="dim">→ 不合格。違反を次回プロンプトへ渡して再生成します</span>');
+      await sleep(700);
+    }else{
+      att.classList.remove('now');att.classList.add('ok');
+      log(`<span class="g">✅ 合格（試行 ${a+1} 回目）— ハード条件 31日 × 5系統 すべてクリア</span>`);
+      r.warnings.forEach(w=>log(`<span class="w">　⚠ ${w}</span>`));
+      final={s:drafts[a].s,r};break;
+    }
+  }
+  if(final){renderGrid(final.s,final.r);document.getElementById('resultSec').style.display='block';
+    document.getElementById('resultSec').scrollIntoView({behavior:'smooth'});}
+  btn.disabled=false;btn.textContent='↺ もう一度生成する';
+}
+function renderGrid(s,r){
+  const ds=dates();const g=document.getElementById('grid');
+  let html='<tr><th class="name">氏名</th>'+ds.map(d=>`<th>${Number(d.slice(-2))}</th>`).join('')+'</tr>';
+  MASTER.forEach(m=>{
+    html+=`<tr><td class="name">${m.氏名}</td>`+ds.map(d=>{
+      const role=s[d][m.氏名]||'';
+      const short={船長:'船',一航士:'一航',甲板員:'甲',機関長:'機長',一機士:'一機',週休:'休'}[role]||role;
+      return `<td class="r-${role}">${short}</td>`;}).join('')+'</tr>';
+  });
+  g.innerHTML=html;
+  const wb=document.getElementById('warnbox');
+  wb.innerHTML=r.warnings.length?('<b>⚠ ソフト条件の警告：</b><br>'+r.warnings.map(w=>'・'+w).join('<br>')
+    +'<br><span style="font-size:12px">機関系資格が中平・末廣に集中しているため週休が偏ります（実データ通りの構造的課題。人員・資格計画の検討材料になります）</span>'):'ソフト条件の警告はありません。';
+}
+document.getElementById('run').addEventListener('click',runDemo);
+</script>
+</body>
+</html>
