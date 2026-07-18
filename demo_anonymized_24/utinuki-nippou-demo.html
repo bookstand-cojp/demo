@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>日報入力システム｜機能アップデートのご案内</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:   #1A3A5C;
+    --blue:   #1A56A0;
+    --sky:    #4A90D9;
+    --mint:   #E8F4FD;
+    --green:  #1A7A4A;
+    --lgreen: #E8F5EE;
+    --gray:   #F7F8FA;
+    --border: #E2E8F0;
+    --text:   #1A2A3A;
+    --muted:  #64748B;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Noto Sans JP', -apple-system, sans-serif;
+    background: #F0F4F9;
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.75;
+  }
+
+  /* ── ヘッダー ── */
+  header {
+    background: var(--navy);
+    color: #fff;
+    padding: 56px 24px 48px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, #1A3A5C 0%, #1A56A0 60%, #4A90D9 100%);
+    opacity: .7;
+  }
+  header > * { position: relative; z-index: 1; }
+  .header-label {
+    display: inline-block;
+    background: rgba(255,255,255,.15);
+    color: rgba(255,255,255,.9);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: .1em;
+    padding: 4px 14px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255,255,255,.2);
+  }
+  header h1 {
+    font-size: clamp(22px, 5vw, 34px);
+    font-weight: 700;
+    line-height: 1.35;
+    margin-bottom: 12px;
+    letter-spacing: -.01em;
+  }
+  header p {
+    color: rgba(255,255,255,.75);
+    font-size: 14px;
+  }
+
+  /* ── ナビ ── */
+  nav {
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  }
+  nav a {
+    display: block;
+    padding: 14px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    text-decoration: none;
+    white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    transition: color .2s, border-color .2s;
+  }
+  nav a:hover { color: var(--blue); border-bottom-color: var(--blue); }
+
+  /* ── レイアウト ── */
+  main { max-width: 760px; margin: 0 auto; padding: 40px 20px 80px; }
+
+  /* ── セクション ── */
+  section { margin-bottom: 48px; }
+
+  .section-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    color: var(--blue);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .section-label::before {
+    content: '';
+    display: block;
+    width: 20px; height: 2px;
+    background: var(--blue);
+    border-radius: 1px;
+  }
+
+  h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 20px;
+    line-height: 1.4;
+  }
+
+  /* ── 機能カード ── */
+  .feature-grid { display: flex; flex-direction: column; gap: 16px; }
+  .feature-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    transition: box-shadow .2s, transform .2s;
+  }
+  .feature-card:hover {
+    box-shadow: 0 4px 16px rgba(26,86,160,.1);
+    transform: translateY(-1px);
+  }
+  .feature-num {
+    flex-shrink: 0;
+    width: 40px; height: 40px;
+    background: var(--blue);
+    color: #fff;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 700;
+  }
+  .feature-body h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 8px;
+  }
+  .feature-body p { color: var(--muted); font-size: 14px; line-height: 1.7; }
+
+  /* ── 同期説明 ── */
+  .sync-section { background: #fff; border-radius: 16px; padding: 32px; border: 1px solid var(--border); }
+  .sync-section h2 { margin-bottom: 8px; }
+  .sync-section > p { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
+
+  .match-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 28px; }
+  @media (max-width: 520px) { .match-cards { grid-template-columns: 1fr; } }
+  .match-card {
+    background: var(--mint);
+    border: 1px solid #BFD9F0;
+    border-radius: 10px;
+    padding: 18px 20px;
+  }
+  .match-card-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--blue);
+    letter-spacing: .08em;
+    margin-bottom: 6px;
+  }
+  .match-card-title { font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
+  .match-card-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+  .or-divider {
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--blue);
+    margin: -2px 0 16px;
+    display: none;
+  }
+
+  .result-title { font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 12px; }
+
+  .result-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .result-table th {
+    background: var(--navy);
+    color: #fff;
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 12px;
+  }
+  .result-table th:first-child { border-radius: 8px 0 0 0; }
+  .result-table th:last-child  { border-radius: 0 8px 0 0; }
+  .result-table td {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    line-height: 1.6;
+  }
+  .result-table tr:nth-child(even) td { background: var(--gray); }
+  .result-table .mark { font-size: 16px; text-align: center; }
+
+  .not-lost {
+    background: var(--lgreen);
+    border: 1px solid #A8D5BC;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-top: 20px;
+    font-size: 14px;
+    color: var(--green);
+    font-weight: 500;
+    line-height: 1.65;
+  }
+  .not-lost strong { display: block; margin-bottom: 4px; font-size: 15px; }
+
+  /* ── プライバシー ── */
+  .privacy-section { background: #fff; border-radius: 16px; padding: 32px; border: 1px solid var(--border); }
+  .privacy-section h2 { margin-bottom: 24px; }
+  .privacy-cards { display: flex; flex-direction: column; gap: 14px; }
+  .privacy-card {
+    display: flex;
+    gap: 16px;
+    padding: 18px 20px;
+    background: var(--lgreen);
+    border: 1px solid #A8D5BC;
+    border-radius: 10px;
+    align-items: flex-start;
+  }
+  .privacy-icon { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+  .privacy-card h3 { font-size: 14px; font-weight: 700; color: var(--green); margin-bottom: 6px; }
+  .privacy-card p  { font-size: 13px; color: #2D6A4A; line-height: 1.65; }
+
+  /* ── フッター ── */
+  footer {
+    background: var(--navy);
+    color: rgba(255,255,255,.6);
+    text-align: center;
+    padding: 32px 24px;
+    font-size: 13px;
+    line-height: 1.8;
+  }
+  footer strong { color: #fff; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-label">株式会社ブックスタンド　2026年6月</div>
+  <h1>日報入力システム<br>機能アップデートのご案内</h1>
+  <p>ウチヌキ様向け　システム改善のお知らせ</p>
+</header>
+
+<nav>
+  <a href="#features">追加機能</a>
+  <a href="#sync">カレンダー同期</a>
+  <a href="#privacy">プライバシー</a>
+</nav>
+
+<main>
+
+  <!-- 追加機能 -->
+  <section id="features">
+    <div class="section-label">New Features</div>
+    <h2>今回追加・改善した機能</h2>
+    <div class="feature-grid">
+
+      <div class="feature-card">
+        <div class="feature-num">1</div>
+        <div class="feature-body">
+          <h3>ログイン中のアカウント確認</h3>
+          <p>画面の上部に「ログイン中：〇〇@〇〇.com」が常時表示されるようになりました。保存ボタンを押すと「このアカウントで保存します。よろしいですか？」の確認が出るので、誤ったアカウントで保存してしまう事故を防ぎます。</p>
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-num">2</div>
+        <div class="feature-body">
+          <h3>過去データ（kintone）の引き継ぎ</h3>
+          <p>これまでkintoneに記録してきた日報データをこのシステムに一括で引き継げるようになりました。取り込み後は、社員の皆さんが「📋 日報一覧」タブを開くだけで過去の日報が自動で表示されます。</p>
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-num">3</div>
+        <div class="feature-body">
+          <h3>🔄 カレンダー同期タブの追加</h3>
+          <p>過去のkintoneデータをGoogleカレンダーに同期する新しいタブが追加されました。期間を指定してボタンを押すと、カレンダーの予定のメモ欄に日報内容が自動で書き込まれます。社長が「カレンダーを見れば日報もわかる」という状態を過去データでも実現できます。</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- カレンダー同期 -->
+  <section id="sync">
+    <div class="sync-section">
+      <div class="section-label">Calendar Sync</div>
+      <h2>カレンダー同期について</h2>
+      <p>以下の<strong>どちらかの条件</strong>でGoogleカレンダーの予定を探して書き込みます。</p>
+
+      <div class="match-cards">
+        <div class="match-card">
+          <div class="match-card-label">条件 ①</div>
+          <div class="match-card-title">日時一致</div>
+          <div class="match-card-desc">kintoneの活動開始時刻（例：13:30）とカレンダー予定の開始時刻が一致する</div>
+        </div>
+        <div class="match-card">
+          <div class="match-card-label">条件 ②</div>
+          <div class="match-card-title">タイトル一致</div>
+          <div class="match-card-desc">kintoneの件名とカレンダー予定のタイトルが一致する</div>
+        </div>
+      </div>
+
+      <div class="result-title">同期できる場合・できない場合</div>
+      <table class="result-table">
+        <thead>
+          <tr><th>マーク</th><th>状況</th><th>データの確認場所</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mark">✅</td>
+            <td>同じ時刻の予定がある</td>
+            <td>Googleカレンダーのメモ欄 ＋ アプリ日報一覧</td>
+          </tr>
+          <tr>
+            <td class="mark">✅</td>
+            <td>同じタイトルの予定がある</td>
+            <td>Googleカレンダーのメモ欄 ＋ アプリ日報一覧</td>
+          </tr>
+          <tr>
+            <td class="mark">❌</td>
+            <td>予定がすでに削除されている</td>
+            <td>アプリの「📋 日報一覧」タブで確認可能</td>
+          </tr>
+          <tr>
+            <td class="mark">❌</td>
+            <td>時刻もタイトルも一致しない</td>
+            <td>アプリの「📋 日報一覧」タブで確認可能</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="not-lost">
+        <strong>❌ のデータも、消えたわけではありません</strong>
+        アプリの「📋 日報一覧」タブを開くと、カレンダーに同期できたものもできなかったものも、すべての過去データが一覧で確認できます。カレンダー同期はあくまで「カレンダーでも見られると便利」という追加機能です。
+      </div>
+    </div>
+  </section>
+
+  <!-- プライバシー -->
+  <section id="privacy">
+    <div class="privacy-section">
+      <div class="section-label">Privacy</div>
+      <h2>あなたのデータは守られています</h2>
+      <div class="privacy-cards">
+
+        <div class="privacy-card">
+          <div class="privacy-icon">🔒</div>
+          <div>
+            <h3>他の人に見えるのはカレンダーで共有した情報だけ</h3>
+            <p>日報はGoogleカレンダーの予定のメモ欄に書き込まれます。見えるのはカレンダーを共有している相手だけです。カレンダーを共有していない人には一切見えません。</p>
+          </div>
+        </div>
+
+        <div class="privacy-card">
+          <div class="privacy-icon">👤</div>
+          <div>
+            <h3>日報一覧には自分のデータしか表示されない</h3>
+            <p>アプリの「📋 日報一覧」タブには、ログイン中のご本人の日報だけが表示されます。他の社員の日報は絶対に表示されません。</p>
+          </div>
+        </div>
+
+        <div class="privacy-card">
+          <div class="privacy-icon">🗄️</div>
+          <div>
+            <h3>スプレッドシートには社員からアクセスできない</h3>
+            <p>日報データが蓄積されているスプレッドシートは、管理者（データ管理責任者）だけが開けます。社員の皆さんにはURLも共有していないため、直接開くことはできません。</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <strong>株式会社ブックスタンド</strong><br>
+  ご不明な点がございましたらお気軽にご連絡ください。<br>
+  3380@bookstand.biz
+</footer>
+
+</body>
+</html>
