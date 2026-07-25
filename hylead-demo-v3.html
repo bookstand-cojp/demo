@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ハイリード業務DXシステム（デモ v3）</title>
+<style>
+:root{
+  --navy:#16324F; --navy-d:#0E2238; --paper:#F7F9FB; --white:#fff;
+  --amber:#F5A623; --amber-d:#D98E0B; --green:#2E7D4F; --green-bg:#E8F5EE;
+  --red:#C0392B; --red-bg:#FDEDEC; --yellow-bg:#FFF8E1; --line:#D9E1E8;
+  --ink:#1C2B36; --sub:#5A6B78;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP',system-ui,sans-serif;background:var(--paper);color:var(--ink);font-size:15px;line-height:1.6}
+header{background:var(--navy);color:#fff;padding:13px 18px;display:flex;align-items:center;gap:11px;flex-wrap:wrap}
+.logo{width:32px;height:32px;background:var(--amber);border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--navy);font-size:18px}
+header h1{font-size:16px;font-weight:700}
+header .badge{margin-left:auto;background:rgba(255,255,255,.15);padding:3px 11px;border-radius:20px;font-size:11.5px}
+.tabs{display:flex;background:var(--navy-d);padding:0 10px;gap:3px;overflow-x:auto}
+.tab{padding:13px 17px;color:#9FB3C4;font-size:14px;font-weight:700;cursor:pointer;border:none;background:none;border-bottom:3px solid transparent;white-space:nowrap}
+.tab.active{color:#fff;border-bottom-color:var(--amber)}
+main{max-width:1000px;margin:0 auto;padding:22px 15px 70px}
+.panel{display:none}.panel.active{display:block}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:19px;margin-bottom:16px}
+.card h2{font-size:15.5px;margin-bottom:3px;color:var(--navy)}
+.card .hint{font-size:12.5px;color:var(--sub);margin-bottom:13px}
+.callout{background:linear-gradient(135deg,#16324F,#1E4266);color:#fff;border-radius:12px;padding:16px 20px;margin-bottom:16px;display:flex;gap:13px;align-items:flex-start}
+.callout .ic{font-size:22px}
+.callout b{display:block;font-size:14px;margin-bottom:2px}
+.callout span{font-size:12.5px;opacity:.85}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:11px;flex-wrap:wrap}
+.btn{border:none;border-radius:8px;padding:10px 18px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:active{transform:scale(.97)}
+.btn-navy{background:var(--navy);color:#fff}
+.btn-amber{background:var(--amber);color:var(--navy-d)}
+.btn-green{background:var(--green);color:#fff}
+.btn-ghost{background:#EAF1F7;color:var(--navy);border:1.5px solid var(--navy)}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--navy);color:#fff;padding:11px 22px;border-radius:30px;font-size:13.5px;font-weight:600;transition:transform .3s;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:99}
+.toast.show{transform:translateX(-50%) translateY(0)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:var(--navy);color:#fff;padding:8px 9px;text-align:left;font-size:12px;font-weight:600;white-space:nowrap}
+td{padding:8px 9px;border-bottom:1px solid var(--line)}
+.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.chip{display:inline-block;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap}
+.chip.big{background:#EAF1F7;color:var(--navy)}
+.chip.small{background:var(--yellow-bg);color:var(--amber-d);border:1px solid #F0DFA8}
+.chip.ok{background:var(--green-bg);color:var(--green)}
+
+/* 日報 */
+.field{margin-bottom:15px}
+.field label{display:block;font-size:12.5px;font-weight:700;color:var(--sub);margin-bottom:6px}
+.field label .req{color:var(--red);font-size:11px;margin-left:5px}
+select,input[type=text],input[type=date],input[type=number]{width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:9px;font-size:15px;font-family:inherit;background:#fff}
+select:focus,input:focus{outline:none;border-color:var(--amber)}
+.ninku-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.ninku-btn{padding:13px 0;border:2px solid var(--line);border-radius:10px;background:#fff;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;color:var(--ink);font-variant-numeric:tabular-nums}
+.ninku-btn.on{border-color:var(--amber);background:#FFF8E8;color:var(--amber-d)}
+.ninku-fine{display:flex;gap:7px;margin-top:7px;align-items:center}
+.ninku-fine .lbl{font-size:11.5px;color:var(--sub);white-space:nowrap}
+.ninku-fine button{flex:1;padding:9px 0;border:1.5px dashed var(--line);border-radius:8px;background:#fff;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--sub)}
+.ninku-fine button.on{border-style:solid;border-color:var(--amber);background:#FFF8E8;color:var(--amber-d)}
+.assist-row{display:grid;grid-template-columns:1fr 100px;gap:9px;align-items:end}
+.step-note{font-size:11.5px;color:var(--sub);background:var(--paper);border-radius:8px;padding:9px 12px;margin-bottom:14px}
+.step-note b{color:var(--navy)}
+.daily-list{max-height:280px;overflow-y:auto}
+
+/* 写真 */
+.site-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:11px}
+.site-card{border:2px solid var(--line);border-radius:11px;padding:14px;cursor:pointer;background:#fff;transition:border-color .15s;position:relative}
+.site-card:hover{border-color:var(--amber)}
+.site-card .nm{font-weight:700;font-size:14px;margin-bottom:2px}
+.site-card .meta{font-size:11.5px;color:var(--sub)}
+.site-card .folder{position:absolute;right:12px;top:12px;font-size:20px}
+.photo-strip{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap}
+.thumb{width:58px;height:58px;border-radius:7px;background:linear-gradient(135deg,#DCE6EE,#C3D2DE);display:flex;align-items:center;justify-content:center;font-size:9.5px;color:var(--sub);text-align:center;border:1px solid var(--line)}
+
+/* 見積 */
+.est-head{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:14px}
+.qhead,.qrow{display:grid;grid-template-columns:1.6fr 1.3fr 65px 55px 95px 100px 28px;gap:6px;align-items:center}
+.qhead{font-size:11px;color:var(--sub);margin-bottom:5px;padding:0 2px}
+.qrow{margin-bottom:6px}
+.qrow input,.qrow select{padding:8px 8px;font-size:13px;border-radius:7px}
+.qrow .amt{text-align:right;font-weight:700;font-size:13px;font-variant-numeric:tabular-nums}
+.del{background:none;border:none;color:var(--red);font-size:17px;cursor:pointer}
+.fixed-row{background:var(--paper);border-radius:8px;padding:9px 11px;margin-bottom:6px;display:grid;grid-template-columns:1fr 100px;gap:9px;align-items:center;font-size:13.5px}
+.fixed-row .lb{font-weight:700}
+.total-box{background:var(--navy);color:#fff;border-radius:12px;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.total-box .lbl{font-size:12.5px;opacity:.8}
+.total-box .big{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums}
+.sub-lines{font-size:12.5px;opacity:.85;line-height:1.75;font-variant-numeric:tabular-nums}
+
+/* 見積書プレビュー（ハイリード公式書式） */
+.preview{background:#fff;border:1px solid var(--line);padding:32px;max-width:660px;margin:0 auto;box-shadow:0 4px 16px rgba(0,0,0,.08);font-size:12.5px}
+.pv-title{text-align:center;font-size:22px;letter-spacing:.45em;text-indent:.45em;margin-bottom:6px;font-weight:700}
+.pv-date{text-align:right;font-size:11.5px;margin-bottom:14px}
+.pv-to{font-size:15px;border-bottom:1.5px solid var(--ink);display:inline-block;padding:0 30px 3px 4px;margin-bottom:12px}
+.pv-lead{font-size:11.5px;line-height:1.7;margin-bottom:14px}
+.pv-co{text-align:right;font-size:11.5px;line-height:1.7;margin-bottom:12px;position:relative}
+.stamp{position:absolute;right:0;top:-4px;width:52px;height:52px;border:2.5px solid var(--red);border-radius:50%;color:var(--red);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;transform:rotate(-7deg);opacity:.85;writing-mode:vertical-rl;letter-spacing:1.5px}
+.pv-table{width:100%;border-collapse:collapse;font-size:11.5px;margin-bottom:12px}
+.pv-table th,.pv-table td{border:1px solid #888;padding:5px 7px}
+.pv-table th{background:#EFF3F7;color:var(--ink);font-weight:700;text-align:center}
+.pv-table .lb{background:#F7F9FB;font-weight:700;width:110px;white-space:nowrap}
+.pv-amount{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums}
+.pv-sec{font-size:12.5px;font-weight:700;margin:14px 0 6px;padding-left:6px;border-left:3px solid var(--navy)}
+
+/* ダッシュボード */
+.proj-chips{display:flex;gap:9px;margin-bottom:16px;flex-wrap:wrap}
+.proj-chip{flex:1;min-width:210px;background:#fff;border:2px solid var(--line);border-radius:12px;padding:13px 15px;cursor:pointer}
+.proj-chip.on{border-color:var(--navy);background:#EAF1F7}
+.proj-chip .pname{font-weight:700;font-size:14px}
+.proj-chip .pstat{font-size:11px;color:var(--sub);margin-top:2px}
+.proj-chip .pmargin{font-size:19px;font-weight:800;margin-top:5px}
+.dash-grid{display:grid;grid-template-columns:200px 1fr;gap:20px;align-items:start}
+.gauge-wrap{display:flex;flex-direction:column;align-items:center;background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px}
+.gauge{width:150px;height:150px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.gauge .hole{width:105px;height:105px;background:#fff;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.gauge .pct{font-size:24px;font-weight:800}
+.gauge .lbl2{font-size:10.5px;color:var(--sub)}
+.cost-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:5px}
+.cost-table td{padding:7px 4px;border-bottom:1px solid var(--line)}
+.cost-table tr.total td{border-top:2px solid var(--navy);border-bottom:none;font-weight:800;padding-top:11px}
+.cost-table .indent{padding-left:16px;color:var(--sub);font-size:12px}
+.staff-row{display:flex;justify-content:space-between;font-size:12.5px;padding:6px 0;border-bottom:1px dashed var(--line)}
+@media(max-width:760px){
+  .dash-grid{grid-template-columns:1fr}
+  .qhead,.qrow{grid-template-columns:1.4fr 1fr 50px 44px 78px 82px 24px;gap:4px}
+  .est-head{grid-template-columns:1fr}
+  .preview{padding:18px}
+}
+@media print{
+  header,.tabs,.no-print{display:none!important}
+  main{padding:0;max-width:none}
+  .preview{box-shadow:none;border:none}
+  body{background:#fff}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">H</div>
+  <h1>ハイリード業務DXシステム</h1>
+  <span class="badge">デモ v3</span>
+</header>
+
+<div class="tabs no-print">
+  <button class="tab active" onclick="showTab(0)">📱 日報・工数</button>
+  <button class="tab" onclick="showTab(1)">📷 現場写真</button>
+  <button class="tab" onclick="showTab(2)">📋 見積作成</button>
+  <button class="tab" onclick="showTab(3)">💰 材料費入力</button>
+  <button class="tab" onclick="showTab(4)">📊 原価ダッシュボード</button>
+</div>
+
+<main>
+
+<!-- ========== 日報・工数 ========== -->
+<div class="panel active" id="panel0">
+  <div class="callout">
+    <div class="ic">📱</div>
+    <div>
+      <b>職人さんがスマホで、3つ選ぶだけ</b>
+      <span>現場・自分の名前・人工。これだけで現場ごとの人件費が自動で積み上がります。入力項目を増やさないことが、現場に定着させる一番のコツです。</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>日報入力</h2>
+    <p class="hint">2026年7月13日（月）</p>
+
+    <div class="field">
+      <label>現場を選ぶ<span class="req">必須</span></label>
+      <select id="dSite"></select>
+    </div>
+
+    <div class="field">
+      <label>お名前<span class="req">必須</span></label>
+      <select id="dName">
+        <option>田中</option><option>佐藤</option><option>山本</option><option>新谷</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>人工（にんく）<span class="req">必須</span></label>
+      <div class="ninku-grid" id="ninkuGrid"></div>
+      <div class="ninku-fine">
+        <span class="lbl">細かい刻み</span>
+        <button onclick="setNinku(0.25)">0.25</button>
+        <button onclick="setNinku(0.75)">0.75</button>
+        <button onclick="setNinku(1.25)">1.25</button>
+        <button onclick="setNinku(1.75)">1.75</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>応援（外部作業員）がいれば人数を入力</label>
+      <div class="assist-row">
+        <select id="dAssistCo">
+          <option value="">（応援なし）</option>
+          <option>大阪電設サービス</option>
+          <option>ナニワ工業</option>
+          <option>個人応援</option>
+        </select>
+        <input type="number" id="dAssistNum" min="0" step="0.5" value="0" placeholder="人数">
+      </div>
+    </div>
+
+    <button class="btn btn-amber" style="width:100%;padding:14px" onclick="submitDaily()">日報を送信する</button>
+  </div>
+
+  <div class="card">
+    <h2>今日の入力状況</h2>
+    <p class="hint">送信された日報はここに溜まり、原価ダッシュボードに自動反映されます</p>
+    <div class="daily-list">
+      <table>
+        <thead><tr><th>現場</th><th>氏名</th><th class="num">人工</th><th>応援</th><th class="num">労務費</th></tr></thead>
+        <tbody id="dailyBody">
+          <tr><td colspan="5" style="text-align:center;color:var(--sub);padding:22px">まだ入力がありません</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 現場写真 ========== -->
+<div class="panel" id="panel1">
+  <div class="callout">
+    <div class="ic">📷</div>
+    <div>
+      <b>現場を選ぶだけ。写真はGoogleドライブの現場フォルダへ</b>
+      <span>案件を登録すると、Googleドライブに現場フォルダが自動で作られます。職人さんは現場を選んで写真を撮るだけ。全員がいつでも見られます。</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="toolbar">
+      <div>
+        <h2>現場を選んで写真をアップロード</h2>
+        <p class="hint" style="margin:0">写真はDropboxからGoogleドライブへ移行します</p>
+      </div>
+    </div>
+    <div class="site-grid" id="siteGrid"></div>
+  </div>
+
+  <div class="card">
+    <div class="toolbar">
+      <div>
+        <h2>工事写真帳の出力</h2>
+        <p class="hint" style="margin:0">現在お使いのExcel様式（表紙＋写真帳）で自動作成できます</p>
+      </div>
+      <button class="btn btn-ghost" onclick="toast('工事写真帳（表紙＋写真ページ）を作成しました')">📄 工事写真帳を作る</button>
+    </div>
+    <div style="font-size:12.5px;color:var(--sub);line-height:1.9">
+      表紙：工事名称／工事場所／工期 を案件データから自動で差し込み<br>
+      写真帳：選んだ写真を貼り付けてページを自動生成
+    </div>
+  </div>
+</div>
+
+<!-- ========== 見積作成 ========== -->
+<div class="panel" id="panel2">
+  <div class="card no-print">
+    <div class="toolbar">
+      <div>
+        <h2>見積作成</h2>
+        <p class="hint" style="margin:0">現在お使いの御見積書の書式（表紙＋内訳書）でそのまま出力します</p>
+      </div>
+      <div style="display:inline-flex;border:1.5px solid var(--navy);border-radius:8px;overflow:hidden">
+        <button class="segb on" id="segMin" onclick="setMode('min')">民間単価</button>
+        <button class="segb" id="segKan" onclick="setMode('kan')">官公庁単価</button>
+      </div>
+    </div>
+
+    <div class="est-head">
+      <div class="field" style="margin:0">
+        <label>宛先</label>
+        <input type="text" id="eTo" value="株式会社 トップフィールド" oninput="renderPreview()">
+      </div>
+      <div class="field" style="margin:0">
+        <label>工事名称</label>
+        <input type="text" id="eName" value="（仮称）住道矢田9丁目計画 新築工事" oninput="renderPreview()">
+      </div>
+      <div class="field" style="margin:0">
+        <label>工期</label>
+        <input type="text" id="eTerm" value="2026年8月1日 〜 2027年3月31日" oninput="renderPreview()">
+      </div>
+      <div class="field" style="margin:0">
+        <label>支払条件</label>
+        <input type="text" id="ePay" value="月末締め翌月末支払" oninput="renderPreview()">
+      </div>
+    </div>
+
+    <div class="qhead">
+      <span>名称</span><span>規格・形状・寸法</span><span>数量</span><span>単位</span><span style="text-align:right">単価</span><span style="text-align:right">金額</span><span></span>
+    </div>
+    <div id="qrows"></div>
+    <button class="btn btn-ghost" style="width:100%;margin-top:5px" onclick="addRow()">＋ 項目を追加</button>
+
+    <div style="margin-top:14px">
+      <div class="fixed-row">
+        <span class="lb">法定福利費</span>
+        <input type="number" id="eFukuri" value="185000" onchange="calc()" style="text-align:right;padding:7px">
+      </div>
+      <div class="fixed-row">
+        <span class="lb">諸経費</span>
+        <input type="number" id="eShokei" value="420000" onchange="calc()" style="text-align:right;padding:7px">
+      </div>
+    </div>
+  </div>
+
+  <div class="card no-print">
+    <div class="total-box">
+      <div class="sub-lines">
+        <div>工事項目 計：<span id="sSub">¥0</span></div>
+        <div>法定福利費：<span id="sFuku">¥0</span></div>
+        <div>諸経費：<span id="sSho">¥0</span></div>
+      </div>
+      <div style="text-align:right">
+        <div class="lbl">御見積金額（消費税別）</div>
+        <div class="big" id="sTotal">¥0</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card no-print">
+    <div class="toolbar">
+      <div style="display:flex;align-items:center;gap:9px;font-size:13.5px;font-weight:600">
+        <input type="checkbox" id="stampChk" checked onchange="renderPreview()" style="width:auto"> 社印あり
+      </div>
+      <button class="btn btn-amber" onclick="window.print()">🖨 見積書をPDF出力</button>
+    </div>
+  </div>
+
+  <div class="preview" id="preview"></div>
+</div>
+
+<!-- ========== 材料費入力 ========== -->
+<div class="panel" id="panel3">
+  <div class="callout">
+    <div class="ic">💰</div>
+    <div>
+      <b>今スプレッドシートでやっている締め集計を、そのままこの画面へ</b>
+      <span>20日締め・月末締めの現場ごとの集計をここに入れるだけ。前月請求分の差引も自動で計算します。将来は請求書の写真から自動読み取りに置き換えられます。</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="toolbar">
+      <div>
+        <h2>材料費の締め入力</h2>
+        <p class="hint" style="margin:0">仕入先と締め期間を選んで、現場ごとの金額を入力します</p>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <select id="mVendor" style="width:auto;padding:8px 11px;font-size:13.5px">
+          <option>不二電機</option><option>小川電機</option><option>関西電材</option>
+        </select>
+        <select id="mPeriod" style="width:auto;padding:8px 11px;font-size:13.5px">
+          <option>7月20日締分</option><option>7月21日〜7月末</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr><th>現場</th><th>区分</th><th class="num">税抜</th><th class="num">税込</th><th class="num">前月分(込)</th><th class="num">差引後(込)</th></tr>
+        </thead>
+        <tbody id="matBody"></tbody>
+      </table>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;gap:22px;margin-top:14px;font-size:13.5px;flex-wrap:wrap">
+      <div>大工事 計：<b id="mBig">¥0</b></div>
+      <div>雑小工事 計：<b id="mSmall">¥0</b></div>
+      <div style="font-size:15px">請求合計（差引後）：<b id="mTotal" style="color:var(--navy)">¥0</b></div>
+    </div>
+
+    <div style="display:flex;gap:9px;margin-top:14px;flex-wrap:wrap">
+      <button class="btn btn-green" onclick="saveMat()">この締め分を確定する</button>
+      <button class="btn btn-ghost" onclick="toast('会計ソフト取込用のCSVを出力しました')">⬇ 会計ソフト用CSV出力</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 原価ダッシュボード ========== -->
+<div class="panel" id="panel4">
+  <div class="callout">
+    <div class="ic">🎯</div>
+    <div>
+      <b>日報の人工と材料費が、そのまま現場ごとの利益になります</b>
+      <span>職人さんが入れた人工、事務で入れた材料費。バラバラだった数字が1つの現場データに集まり、目標利益率21%に届いているかがすぐ分かります。スタッフ自身もスマホで自分の現場を確認できます。</span>
+    </div>
+  </div>
+
+  <div class="proj-chips" id="projChips"></div>
+  <div class="dash-grid" id="dashDetail"></div>
+</div>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===== 共通 ===== */
+const yen = n => '¥' + Math.round(n).toLocaleString();
+function showTab(i){
+  document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',i===j));
+  document.querySelectorAll('.panel').forEach((p,j)=>p.classList.toggle('active',i===j));
+  if(i===4) renderDash();
+}
+function toast(m){
+  const t=document.getElementById('toast');
+  t.textContent=m; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+/* ===== マスタ（不二電機の実データを参考にした現場名） ===== */
+const SITES = [
+  {id:'ems',   name:'エムズ本社',        kind:'大工事', estimate:6850000, photos:12},
+  {id:'fmc',   name:'FMC高宮',           kind:'大工事', estimate:1420000, photos:8},
+  {id:'shona', name:'庄内西町店舗',      kind:'大工事', estimate:1180000, photos:5},
+  {id:'suzu',  name:'すずらん幼稚園',    kind:'雑小工事', estimate:  95000, photos:3},
+  {id:'ace',   name:'エースカンパニー玉造', kind:'雑小工事', estimate: 42000, photos:2},
+  {id:'other', name:'その他（倉庫・事務所・会議）', kind:'—', estimate:0, photos:0},
+];
+const RATE = 26000;         // 自社職人 人工単価
+const ASSIST_RATE = 32000;  // 応援 単価
+
+/* ===== 日報・工数 ===== */
+let selNinku = 1.0;
+let dailyRows = [];
+// 初期値：デモを触りやすくするため既存データを入れておく
+let laborBase = { ems:{amount:1352000, detail:[['田中','32.0人工'],['佐藤','20.0人工']]},
+                  fmc:{amount:390000,  detail:[['山本','15.0人工']]},
+                  shona:{amount:286000,detail:[['田中','11.0人工']]},
+                  suzu:{amount:26000,  detail:[['佐藤','1.0人工']]},
+                  ace:{amount:0,       detail:[]},
+                  other:{amount:0,     detail:[]} };
+
+function initSites(){
+  const s = document.getElementById('dSite');
+  s.innerHTML = SITES.map(x=>`<option value="${x.id}">${x.name}</option>`).join('');
+  document.getElementById('siteGrid').innerHTML = SITES.filter(x=>x.id!=='other').map(x=>`
+    <div class="site-card" onclick="openSite('${x.name}')">
+      <div class="folder">📁</div>
+      <div class="nm">${x.name}</div>
+      <div class="meta">写真 ${x.photos}枚</div>
+      <div class="photo-strip">
+        ${Array.from({length:Math.min(x.photos,4)}).map((_,i)=>`<div class="thumb">写真${i+1}</div>`).join('')}
+      </div>
+    </div>`).join('');
+  document.getElementById('ninkuGrid').innerHTML = [0.5,1.0,1.5,2.0]
+    .map(v=>`<button class="ninku-btn${v===1.0?' on':''}" onclick="setNinku(${v})">${v.toFixed(1)}</button>`).join('');
+  renderMat();
+}
+function setNinku(v){
+  selNinku = v;
+  document.querySelectorAll('.ninku-btn').forEach(b=>b.classList.toggle('on', parseFloat(b.textContent)===v));
+  document.querySelectorAll('.ninku-fine button').forEach(b=>b.classList.toggle('on', parseFloat(b.textContent)===v));
+  toast(v + ' 人工を選びました');
+}
+function submitDaily(){
+  const siteId = document.getElementById('dSite').value;
+  const site = SITES.find(s=>s.id===siteId);
+  const name = document.getElementById('dName').value;
+  const co   = document.getElementById('dAssistCo').value;
+  const num  = parseFloat(document.getElementById('dAssistNum').value)||0;
+  const labor = selNinku*RATE + num*ASSIST_RATE;
+
+  dailyRows.push({site:site.name, siteId, name, ninku:selNinku, assist:co?`${co} ${num}人`:'—', labor});
+  laborBase[siteId].amount += labor;
+  laborBase[siteId].detail.push([name, selNinku.toFixed(2)+'人工'+(num?` ＋応援${num}人`:'')]);
+
+  const tb = document.getElementById('dailyBody');
+  if(dailyRows.length===1) tb.innerHTML='';
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td><b>${site.name}</b></td><td>${name}</td>
+    <td class="num"><b>${selNinku.toFixed(2)}</b></td><td style="font-size:11.5px">${co?co+' '+num+'人':'—'}</td>
+    <td class="num">${yen(labor)}</td>`;
+  tb.prepend(tr);
+
+  document.getElementById('dAssistNum').value = 0;
+  document.getElementById('dAssistCo').value = '';
+  toast('日報を送信しました。原価に反映されます');
+}
+function openSite(n){ toast(n+' のGoogleドライブフォルダを開きます'); }
+
+/* ===== 見積（ハイリード公式書式） ===== */
+const MAT = [
+  {n:'幹線工事',       spec:'CVT38sq×3C 一式',        min:1850, kan:2100, unit:'m'},
+  {n:'電灯コンセント設備工事', spec:'VVF1.6-2C ほか',   min:620,  kan:710,  unit:'m'},
+  {n:'照明器具設備工事', spec:'LEDベースライト40W形',   min:9800, kan:11500,unit:'台'},
+  {n:'動力設備工事',   spec:'分電盤 主幹60A 12回路',   min:48000,kan:55000,unit:'面'},
+  {n:'自動火災報知設備工事', spec:'受信機・感知器一式',  min:185000,kan:210000,unit:'式'},
+  {n:'配線工事',       spec:'施工手間',               min:26000,kan:30000,unit:'人工'},
+];
+let mode='min';
+let rows=[{m:0,q:820},{m:2,q:46},{m:3,q:3},{m:5,q:64}];
+
+function setMode(x){
+  mode=x;
+  document.getElementById('segMin').classList.toggle('on',x==='min');
+  document.getElementById('segKan').classList.toggle('on',x==='kan');
+  renderRows();
+}
+function addRow(){ rows.push({m:0,q:1}); renderRows(); }
+function delRow(i){ rows.splice(i,1); renderRows(); }
+function upd(i,k,v){ rows[i][k] = k==='q' ? (parseFloat(v)||0) : parseInt(v); renderRows(); }
+
+function renderRows(){
+  const w=document.getElementById('qrows');
+  w.innerHTML = rows.map((r,i)=>{
+    const m=MAT[r.m], p=m[mode];
+    return `<div class="qrow">
+      <select onchange="upd(${i},'m',this.value)">${MAT.map((x,j)=>`<option value="${j}"${j===r.m?' selected':''}>${x.n}</option>`).join('')}</select>
+      <input type="text" value="${m.spec}" readonly style="background:var(--paper);color:var(--sub)">
+      <input type="number" value="${r.q}" onchange="upd(${i},'q',this.value)">
+      <input type="text" value="${m.unit}" readonly style="background:var(--paper);color:var(--sub);text-align:center">
+      <div class="amt">${yen(p)}</div>
+      <div class="amt">${yen(p*r.q)}</div>
+      <button class="del" onclick="delRow(${i})">×</button>
+    </div>`;
+  }).join('');
+  calc();
+}
+function estSub(){ return rows.reduce((s,r)=>s+MAT[r.m][mode]*r.q,0); }
+function calc(){
+  const sub=estSub();
+  const fk=parseFloat(document.getElementById('eFukuri').value)||0;
+  const sh=parseFloat(document.getElementById('eShokei').value)||0;
+  document.getElementById('sSub').textContent=yen(sub);
+  document.getElementById('sFuku').textContent=yen(fk);
+  document.getElementById('sSho').textContent=yen(sh);
+  document.getElementById('sTotal').textContent=yen(sub+fk+sh);
+  renderPreview();
+}
+function renderPreview(){
+  const sub=estSub();
+  const fk=parseFloat(document.getElementById('eFukuri').value)||0;
+  const sh=parseFloat(document.getElementById('eShokei').value)||0;
+  const total=sub+fk+sh;
+  const st=document.getElementById('stampChk').checked;
+  const d=new Date();
+  document.getElementById('preview').innerHTML=`
+    <div class="pv-title">御 見 積 書</div>
+    <div class="pv-date">${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日</div>
+    <div class="pv-to">${document.getElementById('eTo').value} 御中</div>
+    <div class="pv-lead">下記の通り、御見積り申し上げます。<br>御注文仰付けの程お願い申し上げます。</div>
+    <div class="pv-co">
+      ${st?'<div class="stamp">ハイリード</div>':''}
+      株式会社ハイリード<br>大阪府寝屋川市<br>TEL 072-000-0000
+    </div>
+    <table class="pv-table">
+      <tr><td class="lb">見　積　金　額</td><td class="pv-amount">${yen(total)} －</td></tr>
+      <tr><td class="lb">工　事　名　称</td><td>${document.getElementById('eName').value}</td></tr>
+      <tr><td class="lb">工　　　　期</td><td>${document.getElementById('eTerm').value}</td></tr>
+      <tr><td class="lb">支　払　条　件</td><td>${document.getElementById('ePay').value}</td></tr>
+      <tr><td class="lb">見積有効期限</td><td>提出日より90日と致します。</td></tr>
+      <tr><td class="lb">そ の 他 条 件</td><td>消費税は含まれておりません。</td></tr>
+    </table>
+    <div class="pv-sec">内 訳 書</div>
+    <table class="pv-table">
+      <tr><th>名称</th><th>規格 形状 寸法</th><th style="width:52px">数量</th><th style="width:42px">単位</th><th style="width:78px">単価</th><th style="width:88px">金額</th></tr>
+      ${rows.map(r=>{const m=MAT[r.m],p=m[mode];return `<tr><td>${m.n}</td><td style="font-size:10.5px">${m.spec}</td><td class="num">${r.q}</td><td style="text-align:center">${m.unit}</td><td class="num">${yen(p)}</td><td class="num">${yen(p*r.q)}</td></tr>`;}).join('')}
+      <tr><td>法定福利費</td><td></td><td class="num">1</td><td style="text-align:center">式</td><td class="num">${yen(fk)}</td><td class="num">${yen(fk)}</td></tr>
+      <tr><td>諸経費</td><td></td><td class="num">1</td><td style="text-align:center">式</td><td class="num">${yen(sh)}</td><td class="num">${yen(sh)}</td></tr>
+      <tr><td colspan="5" style="text-align:right;font-weight:700">合　計</td><td class="num" style="font-weight:800">${yen(total)}</td></tr>
+    </table>
+    <div style="font-size:10.5px;color:var(--sub);margin-top:10px">単価区分：${mode==='min'?'民間':'官公庁'}　※本見積書はデモ用サンプルです</div>`;
+}
+
+/* ===== 材料費入力（不二電機の締め集計を再現） ===== */
+let matData = [
+  {site:'エムズ本社',        kind:'大工事',  tax:492554, prev:127100},
+  {site:'FMC高宮',           kind:'大工事',  tax: 97983, prev: 74113},
+  {site:'庄内西町店舗',      kind:'大工事',  tax: 78731, prev:      0},
+  {site:'すずらん幼稚園',    kind:'雑小工事',tax:  3321, prev:      0},
+  {site:'エースカンパニー玉造',kind:'雑小工事',tax:  6213, prev:  6834},
+];
+function renderMat(){
+  const tb=document.getElementById('matBody');
+  tb.innerHTML = matData.map((m,i)=>{
+    const inc=Math.round(m.tax*1.1), diff=inc-m.prev;
+    return `<tr>
+      <td><b>${m.site}</b></td>
+      <td><span class="chip ${m.kind==='大工事'?'big':'small'}">${m.kind}</span></td>
+      <td class="num"><input type="number" value="${m.tax}" onchange="updMat(${i},this.value)" style="width:100px;text-align:right;padding:5px;font-size:12.5px"></td>
+      <td class="num">${yen(inc)}</td>
+      <td class="num" style="color:var(--sub)">${yen(m.prev)}</td>
+      <td class="num"><b>${yen(diff)}</b></td>
+    </tr>`;
+  }).join('');
+  const big=matData.filter(m=>m.kind==='大工事').reduce((s,m)=>s+Math.round(m.tax*1.1)-m.prev,0);
+  const sml=matData.filter(m=>m.kind==='雑小工事').reduce((s,m)=>s+Math.round(m.tax*1.1)-m.prev,0);
+  document.getElementById('mBig').textContent=yen(big);
+  document.getElementById('mSmall').textContent=yen(sml);
+  document.getElementById('mTotal').textContent=yen(big+sml);
+}
+function updMat(i,v){ matData[i].tax=parseFloat(v)||0; renderMat(); }
+function saveMat(){ toast('締め分を確定しました。原価ダッシュボードに反映されます'); renderDash(); }
+
+/* ===== 原価ダッシュボード ===== */
+const TARGET=21;
+let curSite='ems';
+function matForSite(name){
+  const m=matData.find(x=>x.site===name);
+  return m ? Math.round(m.tax*1.1) : 0;
+}
+function renderDash(){
+  const chips=document.getElementById('projChips');
+  const list=SITES.filter(s=>s.id!=='other');
+  chips.innerHTML=list.map(s=>{
+    const mat=matForSite(s.name), lab=laborBase[s.id].amount;
+    const profit=s.estimate-mat-lab;
+    const mg=s.estimate>0?profit/s.estimate*100:0;
+    const c=mg>=TARGET?'var(--green)':mg>=TARGET-6?'var(--amber-d)':'var(--red)';
+    return `<div class="proj-chip ${s.id===curSite?'on':''}" onclick="selSite('${s.id}')">
+      <div class="pname">${s.name}</div>
+      <div class="pstat">${s.kind}</div>
+      <div class="pmargin" style="color:${c}">粗利率 ${mg.toFixed(1)}%</div>
+    </div>`;
+  }).join('');
+
+  const s=list.find(x=>x.id===curSite);
+  const mat=matForSite(s.name), lab=laborBase[s.id].amount;
+  const profit=s.estimate-mat-lab;
+  const mg=s.estimate>0?profit/s.estimate*100:0;
+  const cl=Math.max(0,Math.min(100,mg));
+  const c=mg>=TARGET?'#2E7D4F':mg>=TARGET-6?'#F5A623':'#C0392B';
+  const msg=mg>=TARGET?'✓ 目標利益率（21%）達成':mg>=0?'⚠ 目標利益率（21%）に届いていません':'🚨 このままだと赤字です';
+
+  document.getElementById('dashDetail').innerHTML=`
+    <div class="gauge-wrap">
+      <div class="gauge" style="background:conic-gradient(${c} ${cl*3.6}deg,#E5EBF0 0deg)">
+        <div class="hole"><div class="pct" style="color:${c}">${mg.toFixed(1)}%</div><div class="lbl2">粗利率</div></div>
+      </div>
+      <div style="font-size:11.5px;color:var(--sub);margin-top:11px;text-align:center">
+        目標：21%以上<br><b style="color:${c}">${msg}</b>
+      </div>
+    </div>
+    <div class="card" style="margin:0">
+      <h2>${s.name}</h2>
+      <p class="hint" style="margin-bottom:5px">${s.kind}</p>
+      <table class="cost-table">
+        <tr><td>見積金額</td><td class="num">${yen(s.estimate)}</td></tr>
+        <tr><td class="indent">材料費（締め入力から自動集計）</td><td class="num indent">− ${yen(mat)}</td></tr>
+        <tr><td class="indent">人件費（日報の人工から自動集計）</td><td class="num indent">− ${yen(lab)}</td></tr>
+        <tr class="total"><td>粗利額</td><td class="num">${yen(profit)}</td></tr>
+      </table>
+      <div style="margin-top:14px">
+        <b style="font-size:12.5px">人件費の内訳（日報より）</b>
+        <div style="margin-top:5px">
+          ${laborBase[s.id].detail.length
+            ? laborBase[s.id].detail.map(d=>`<div class="staff-row"><span>${d[0]}</span><span>${d[1]}</span></div>`).join('')
+            : '<div style="font-size:12px;color:var(--sub);padding:7px 0">まだ日報がありません</div>'}
+        </div>
+      </div>
+    </div>`;
+}
+function selSite(id){ curSite=id; renderDash(); }
+
+/* ===== 起動 ===== */
+initSites();
+renderRows();
+</script>
+<style>
+.segb{border:none;background:#fff;color:var(--navy);padding:8px 16px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.segb.on{background:var(--navy);color:#fff}
+</style>
+</body>
+</html>
