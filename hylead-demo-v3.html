@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ハイリード業務DXシステム（デモ v3）</title>
+<title>ハイリード業務DXシステム（デモ v5）</title>
 <style>
 :root{
   --navy:#16324F; --navy-d:#0E2238; --paper:#F7F9FB; --white:#fff;
@@ -61,6 +61,33 @@ select:focus,input:focus{outline:none;border-color:var(--amber)}
 .ninku-fine button{flex:1;padding:9px 0;border:1.5px dashed var(--line);border-radius:8px;background:#fff;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--sub)}
 .ninku-fine button.on{border-style:solid;border-color:var(--amber);background:#FFF8E8;color:var(--amber-d)}
 .assist-row{display:grid;grid-template-columns:1fr 100px;gap:9px;align-items:end}
+/* 現場単位の日報入力 */
+.sec-label{font-size:12px;font-weight:700;color:var(--sub);margin:16px 0 8px;padding-left:8px;border-left:3px solid var(--navy)}
+.crew-row{border:1.5px solid var(--line);border-radius:11px;padding:11px 13px;margin-bottom:9px;background:#fff}
+.crew-row.on{border-color:var(--amber);background:#FFFCF4}
+.crew-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
+.crew-name{font-size:15px;font-weight:700}
+.crew-plan{font-size:11px;color:var(--sub)}
+.crew-sum{font-size:13px;font-weight:800;color:var(--amber-d);font-variant-numeric:tabular-nums}
+.crew-sum.zero{color:var(--sub);font-weight:600}
+.nk-row{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.nk{padding:10px 0;border:1.5px solid var(--line);border-radius:8px;background:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--ink);font-variant-numeric:tabular-nums}
+.nk.on{border-color:var(--amber);background:#FFF3D9;color:var(--amber-d);border-width:2px}
+.nk.none{font-size:12.5px;color:var(--sub)}
+.nk-fine{display:flex;gap:5px;margin-top:5px}
+.nk-fine .nk{flex:1;padding:7px 0;font-size:12px;border-style:dashed}
+.as-row{display:grid;grid-template-columns:1fr 130px;gap:10px;align-items:center;border:1.5px solid var(--line);border-radius:11px;padding:11px 13px;margin-bottom:9px;background:#fff}
+.as-row.on{border-color:var(--amber);background:#FFFCF4}
+.as-name{font-size:14.5px;font-weight:700}
+.as-plan{font-size:11px;color:var(--sub)}
+.stepper{display:flex;align-items:center;gap:6px;justify-content:flex-end}
+.stepper button{width:34px;height:34px;border:1.5px solid var(--line);border-radius:8px;background:#fff;font-size:17px;font-weight:700;cursor:pointer;color:var(--navy);font-family:inherit}
+.stepper input{width:52px;text-align:center;padding:7px 0;border:1.5px solid var(--line);border-radius:8px;font-size:15px;font-weight:700;font-family:inherit}
+.pbar-wrap{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:4px}
+.pbar-top{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:7px}
+.pbar{height:9px;background:#E5EBF0;border-radius:5px;overflow:hidden}
+.pbar span{display:block;height:100%;border-radius:5px}
+@media(max-width:520px){ .nk-row{grid-template-columns:repeat(3,1fr)} }
 .step-note{font-size:11.5px;color:var(--sub);background:var(--paper);border-radius:8px;padding:9px 12px;margin-bottom:14px}
 .step-note b{color:var(--navy)}
 .daily-list{max-height:280px;overflow-y:auto}
@@ -142,15 +169,16 @@ select:focus,input:focus{outline:none;border-color:var(--amber)}
 <header>
   <div class="logo">H</div>
   <h1>ハイリード業務DXシステム</h1>
-  <span class="badge">デモ v3</span>
+  <span class="badge">デモ v5</span>
 </header>
 
 <div class="tabs no-print">
   <button class="tab active" onclick="showTab(0)">📱 日報・工数</button>
   <button class="tab" onclick="showTab(1)">📷 現場写真</button>
   <button class="tab" onclick="showTab(2)">📋 見積作成</button>
-  <button class="tab" onclick="showTab(3)">💰 材料費入力</button>
-  <button class="tab" onclick="showTab(4)">📊 原価ダッシュボード</button>
+  <button class="tab" onclick="showTab(3)">🎯 実行予算</button>
+  <button class="tab" onclick="showTab(4)">💰 材料費入力</button>
+  <button class="tab" onclick="showTab(5)">📊 原価ダッシュボード</button>
 </div>
 
 <main>
@@ -160,53 +188,32 @@ select:focus,input:focus{outline:none;border-color:var(--amber)}
   <div class="callout">
     <div class="ic">📱</div>
     <div>
-      <b>職人さんがスマホで、3つ選ぶだけ</b>
-      <span>現場・自分の名前・人工。これだけで現場ごとの人件費が自動で積み上がります。入力項目を増やさないことが、現場に定着させる一番のコツです。</span>
+      <b>現場の担当者が、その日入った人をまとめて報告します</b>
+      <span>現場を選ぶと、その現場に入る予定の職人さんが並びます。入った人の人工を押して、応援の方がいれば人数を入れるだけ。1回の送信で現場の全員分が記録され、予算どおりに進んでいるかが分かります。</span>
     </div>
   </div>
 
   <div class="card">
-    <h2>日報入力</h2>
-    <p class="hint">2026年7月13日（月）</p>
-
-    <div class="field">
-      <label>現場を選ぶ<span class="req">必須</span></label>
-      <select id="dSite"></select>
-    </div>
-
-    <div class="field">
-      <label>お名前<span class="req">必須</span></label>
-      <select id="dName">
-        <option>田中</option><option>佐藤</option><option>山本</option><option>新谷</option>
-      </select>
-    </div>
-
-    <div class="field">
-      <label>人工（にんく）<span class="req">必須</span></label>
-      <div class="ninku-grid" id="ninkuGrid"></div>
-      <div class="ninku-fine">
-        <span class="lbl">細かい刻み</span>
-        <button onclick="setNinku(0.25)">0.25</button>
-        <button onclick="setNinku(0.75)">0.75</button>
-        <button onclick="setNinku(1.25)">1.25</button>
-        <button onclick="setNinku(1.75)">1.75</button>
+    <div class="toolbar">
+      <div>
+        <h2>日報入力</h2>
+        <p class="hint" style="margin:0">2026年7月13日（月）</p>
       </div>
+      <select id="dSite" onchange="renderCrew()" style="width:auto;min-width:220px;padding:9px 11px;font-size:14px"></select>
     </div>
 
-    <div class="field">
-      <label>応援（外部作業員）がいれば人数を入力</label>
-      <div class="assist-row">
-        <select id="dAssistCo">
-          <option value="">（応援なし）</option>
-          <option>大阪電設サービス</option>
-          <option>ナニワ工業</option>
-          <option>個人応援</option>
-        </select>
-        <input type="number" id="dAssistNum" min="0" step="0.5" value="0" placeholder="人数">
-      </div>
-    </div>
+    <div id="progressBar"></div>
 
-    <button class="btn btn-amber" style="width:100%;padding:14px" onclick="submitDaily()">日報を送信する</button>
+    <div class="sec-label">自社の職人</div>
+    <div id="crewList"></div>
+
+    <div class="sec-label">応援・協力会社</div>
+    <div id="assistList"></div>
+
+    <button class="btn btn-amber" style="width:100%;padding:14px;margin-top:14px" onclick="submitDaily()">この現場の日報を送信する</button>
+    <p style="font-size:11.5px;color:var(--sub);margin-top:9px;text-align:center">
+      入っていない人は「なし」のままで大丈夫です
+    </p>
   </div>
 
   <div class="card">
@@ -214,9 +221,9 @@ select:focus,input:focus{outline:none;border-color:var(--amber)}
     <p class="hint">送信された日報はここに溜まり、原価ダッシュボードに自動反映されます</p>
     <div class="daily-list">
       <table>
-        <thead><tr><th>現場</th><th>氏名</th><th class="num">人工</th><th>応援</th><th class="num">労務費</th></tr></thead>
+        <thead><tr><th>現場</th><th>区分</th><th>お名前・業者</th><th class="num">人工</th></tr></thead>
         <tbody id="dailyBody">
-          <tr><td colspan="5" style="text-align:center;color:var(--sub);padding:22px">まだ入力がありません</td></tr>
+          <tr><td colspan="4" style="text-align:center;color:var(--sub);padding:22px">まだ入力がありません</td></tr>
         </tbody>
       </table>
     </div>
@@ -338,6 +345,39 @@ select:focus,input:focus{outline:none;border-color:var(--amber)}
 <!-- ========== 材料費入力 ========== -->
 <div class="panel" id="panel3">
   <div class="callout">
+    <div class="ic">🎯</div>
+    <div>
+      <b>受注金額が決まったら、原価をいくらに収めるかを先に決めます</b>
+      <span>建設業の原価管理は「予算が先、実績が後」。着工前に社長が決めている材料費の枠・必要な人工数を、そのままここに入れます。日報と材料費の実績は、この予算どおりに進んでいるかを確かめるための材料になります。</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="toolbar">
+      <div>
+        <h2>実行予算の入力</h2>
+        <p class="hint" style="margin:0">現場を選んで、材料費・労務費・外注費の枠を入れてください</p>
+      </div>
+      <select id="bSite" style="width:auto;padding:8px 11px;font-size:13.5px" onchange="renderBudget()"></select>
+    </div>
+    <div id="budgetForm"></div>
+  </div>
+
+  <div class="card">
+    <div class="total-box">
+      <div class="sub-lines" id="bBreak"></div>
+      <div style="text-align:right">
+        <div class="lbl">予定粗利（見積金額 − 原価計）</div>
+        <div class="big" id="bProfit">¥0</div>
+        <div class="lbl" id="bMargin">粗利率 —</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 材料費入力 ========== -->
+<div class="panel" id="panel4">
+  <div class="callout">
     <div class="ic">💰</div>
     <div>
       <b>今スプレッドシートでやっている締め集計を、そのままこの画面へ</b>
@@ -384,12 +424,12 @@ select:focus,input:focus{outline:none;border-color:var(--amber)}
 </div>
 
 <!-- ========== 原価ダッシュボード ========== -->
-<div class="panel" id="panel4">
+<div class="panel" id="panel5">
   <div class="callout">
     <div class="ic">🎯</div>
     <div>
-      <b>日報の人工と材料費が、そのまま現場ごとの利益になります</b>
-      <span>職人さんが入れた人工、事務で入れた材料費。バラバラだった数字が1つの現場データに集まり、目標利益率21%に届いているかがすぐ分かります。スタッフ自身もスマホで自分の現場を確認できます。</span>
+      <b>着工前に決めた予算どおりに進んでいるか、その場で分かります</b>
+      <span>実行予算（予定）と、日報・材料費から積み上がる実績を並べて表示します。「50人工で見ていたが、今46人工まで来ている」「材料費が6万円超えている」が工事の途中で分かるので、終わってから気づくことがなくなります。スタッフ自身もスマホで自分の現場を確認できます。</span>
     </div>
   </div>
 
@@ -407,7 +447,8 @@ const yen = n => '¥' + Math.round(n).toLocaleString();
 function showTab(i){
   document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',i===j));
   document.querySelectorAll('.panel').forEach((p,j)=>p.classList.toggle('active',i===j));
-  if(i===4) renderDash();
+  if(i===3) renderBudget();
+  if(i===5) renderDash();
 }
 function toast(m){
   const t=document.getElementById('toast');
@@ -427,16 +468,60 @@ const SITES = [
 const RATE = 26000;         // 自社職人 人工単価
 const ASSIST_RATE = 32000;  // 応援 単価
 
-/* ===== 日報・工数 ===== */
-let selNinku = 1.0;
+// 実行予算（着工前に社長が決める枠）※費目ごとに 人工数×単価 で持つ
+let BUDGET = {
+  ems:  {mat:3000000, labNin:50, labRate:26000, outNin:25, outRate:32000},
+  fmc:  {mat: 620000, labNin:15, labRate:26000, outNin: 0, outRate:32000},
+  shona:{mat: 480000, labNin:12, labRate:26000, outNin: 4, outRate:32000},
+  suzu: {mat:  40000, labNin: 1, labRate:26000, outNin: 0, outRate:32000},
+  ace:  {mat:      0, labNin: 0, labRate:26000, outNin: 0, outRate:32000},
+  other:{mat:      0, labNin: 0, labRate:26000, outNin: 0, outRate:32000},
+};
+function budgetOf(id){
+  const b = BUDGET[id];
+  if(!b) return null;
+  const lab = b.labNin*b.labRate, out = b.outNin*b.outRate;
+  const total = b.mat+lab+out;
+  if(total===0) return null;               // 予算未登録あつかい
+  return {mat:b.mat, lab, out, total, labNin:b.labNin, outNin:b.outNin};
+}
+
+/* ===== 日報・工数（現場単位・担当者がまとめて入力） ===== */
 let dailyRows = [];
-// 初期値：デモを触りやすくするため既存データを入れておく
-let laborBase = { ems:{amount:1352000, detail:[['田中','32.0人工'],['佐藤','20.0人工']]},
-                  fmc:{amount:390000,  detail:[['山本','15.0人工']]},
-                  shona:{amount:286000,detail:[['田中','11.0人工']]},
-                  suzu:{amount:26000,  detail:[['佐藤','1.0人工']]},
-                  ace:{amount:0,       detail:[]},
-                  other:{amount:0,     detail:[]} };
+
+// 職人マスタ（自社）と協力会社
+const CREW = [
+  {id:'tanaka', name:'田中'},
+  {id:'sato',   name:'佐藤'},
+  {id:'yamamoto', name:'山本'},
+  {id:'shintani', name:'新谷'},
+];
+const PARTNERS = [
+  {id:'osaka', name:'大阪電設サービス'},
+  {id:'naniwa', name:'ナニワ工業'},
+];
+
+// 現場ごとの「今日入る予定」（実行予算・工事予定から写す想定）
+const PLAN = {
+  ems:  {crew:{tanaka:1.0, sato:1.0}, partner:{osaka:2}},
+  fmc:  {crew:{yamamoto:1.0}, partner:{}},
+  shona:{crew:{tanaka:1.0}, partner:{naniwa:1}},
+  suzu: {crew:{sato:0.5}, partner:{}},
+  ace:  {crew:{}, partner:{}},
+  other:{crew:{}, partner:{}},
+};
+
+// 入力中の値（現場ごとに保持）
+let entry = {};
+
+// 実績：自社労務(lab)と応援=外注(out)を分けて持つ
+let laborBase = {
+  ems:  {lab:1352000, labNin:52, out:800000, outNin:25, detail:[['田中','32.00人工'],['佐藤','20.00人工'],['大阪電設サービス（応援）','25.00人工']]},
+  fmc:  {lab: 390000, labNin:15, out:     0, outNin: 0, detail:[['山本','15.00人工']]},
+  shona:{lab: 286000, labNin:11, out:128000, outNin: 4, detail:[['田中','11.00人工'],['ナニワ工業（応援）','4.00人工']]},
+  suzu: {lab:  26000, labNin: 1, out:     0, outNin: 0, detail:[['佐藤','1.00人工']]},
+  ace:  {lab:      0, labNin: 0, out:     0, outNin: 0, detail:[]},
+  other:{lab:      0, labNin: 0, out:     0, outNin: 0, detail:[]} };
 
 function initSites(){
   const s = document.getElementById('dSite');
@@ -450,40 +535,128 @@ function initSites(){
         ${Array.from({length:Math.min(x.photos,4)}).map((_,i)=>`<div class="thumb">写真${i+1}</div>`).join('')}
       </div>
     </div>`).join('');
-  document.getElementById('ninkuGrid').innerHTML = [0.5,1.0,1.5,2.0]
-    .map(v=>`<button class="ninku-btn${v===1.0?' on':''}" onclick="setNinku(${v})">${v.toFixed(1)}</button>`).join('');
+  renderCrew();
   renderMat();
 }
-function setNinku(v){
-  selNinku = v;
-  document.querySelectorAll('.ninku-btn').forEach(b=>b.classList.toggle('on', parseFloat(b.textContent)===v));
-  document.querySelectorAll('.ninku-fine button').forEach(b=>b.classList.toggle('on', parseFloat(b.textContent)===v));
-  toast(v + ' 人工を選びました');
+
+function curSiteId(){ return document.getElementById('dSite').value || SITES[0].id; }
+
+function renderCrew(){
+  const id = curSiteId();
+  if(!entry[id]){
+    // 予定を初期値として写す（毎日ゼロから入力させない）
+    const p = PLAN[id] || {crew:{},partner:{}};
+    entry[id] = { crew: Object.assign({}, p.crew), partner: Object.assign({}, p.partner) };
+  }
+  const e = entry[id];
+  const steps=[0,0.5,1.0,1.5,2.0];
+  const fine=[0.25,0.75,1.25,1.75];
+
+  document.getElementById('crewList').innerHTML = CREW.map(c=>{
+    const v = e.crew[c.id] || 0;
+    const planned = (PLAN[id]&&PLAN[id].crew[c.id]) || 0;
+    return `<div class="crew-row ${v>0?'on':''}">
+      <div class="crew-head">
+        <div>
+          <span class="crew-name">${c.name}</span>
+          ${planned?`<span class="crew-plan">　予定 ${planned.toFixed(2)}人工</span>`:''}
+        </div>
+        <span class="crew-sum ${v>0?'':'zero'}">${v>0?v.toFixed(2)+' 人工':'なし'}</span>
+      </div>
+      <div class="nk-row">
+        ${steps.map(x=>`<button class="nk ${x===0?'none':''} ${v===x?'on':''}" onclick="setCrew('${c.id}',${x})">${x===0?'なし':x.toFixed(1)}</button>`).join('')}
+      </div>
+      <div class="nk-fine">
+        ${fine.map(x=>`<button class="nk ${v===x?'on':''}" onclick="setCrew('${c.id}',${x})">${x}</button>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('assistList').innerHTML = PARTNERS.map(pt=>{
+    const v = e.partner[pt.id] || 0;
+    const planned = (PLAN[id]&&PLAN[id].partner[pt.id]) || 0;
+    return `<div class="as-row ${v>0?'on':''}">
+      <div>
+        <div class="as-name">${pt.name}</div>
+        <div class="as-plan">${planned?`予定 ${planned}人`:'予定なし'}</div>
+      </div>
+      <div class="stepper">
+        <button onclick="stepPartner('${pt.id}',-0.5)">−</button>
+        <input type="number" step="0.5" min="0" value="${v}" onchange="setPartner('${pt.id}',this.value)">
+        <button onclick="stepPartner('${pt.id}',0.5)">＋</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  renderProgress();
 }
+
+function setCrew(cid,v){ entry[curSiteId()].crew[cid]=v; renderCrew(); }
+function setPartner(pid,v){ entry[curSiteId()].partner[pid]=Math.max(0,parseFloat(v)||0); renderCrew(); }
+function stepPartner(pid,d){
+  const e=entry[curSiteId()];
+  e.partner[pid]=Math.max(0,(e.partner[pid]||0)+d);
+  renderCrew();
+}
+
+// 人工ベースの進捗（金額を出さない）
+function renderProgress(){
+  const id=curSiteId();
+  const b=budgetOf(id);
+  const wrap=document.getElementById('progressBar');
+  if(!b || !b.labNin){ wrap.innerHTML=''; return; }
+  const done=laborBase[id].labNin;
+  const pct=Math.min(100, done/b.labNin*100);
+  const col = pct<=100?'var(--green)':'var(--red)';
+  wrap.innerHTML=`<div class="pbar-wrap">
+    <div class="pbar-top">
+      <span>この現場の人工の消化状況</span>
+      <b>予定 ${b.labNin} 人工中　${done.toFixed(2)} 人工（${pct.toFixed(0)}%）</b>
+    </div>
+    <div class="pbar"><span style="width:${pct}%;background:${col}"></span></div>
+  </div>`;
+}
+
 function submitDaily(){
-  const siteId = document.getElementById('dSite').value;
-  const site = SITES.find(s=>s.id===siteId);
-  const name = document.getElementById('dName').value;
-  const co   = document.getElementById('dAssistCo').value;
-  const num  = parseFloat(document.getElementById('dAssistNum').value)||0;
-  const labor = selNinku*RATE + num*ASSIST_RATE;
+  const id=curSiteId();
+  const site=SITES.find(s=>s.id===id);
+  const e=entry[id];
+  const B=laborBase[id];
+  const tb=document.getElementById('dailyBody');
+  let n=0;
 
-  dailyRows.push({site:site.name, siteId, name, ninku:selNinku, assist:co?`${co} ${num}人`:'—', labor});
-  laborBase[siteId].amount += labor;
-  laborBase[siteId].detail.push([name, selNinku.toFixed(2)+'人工'+(num?` ＋応援${num}人`:'')]);
+  CREW.forEach(c=>{
+    const v=e.crew[c.id]||0; if(!v) return;
+    B.lab += v*RATE; B.labNin += v;
+    B.detail.push([c.name, v.toFixed(2)+'人工']);
+    dailyRows.push({site:site.name, kind:'自社', who:c.name, ninku:v});
+    n++;
+  });
+  PARTNERS.forEach(pt=>{
+    const v=e.partner[pt.id]||0; if(!v) return;
+    B.out += v*ASSIST_RATE; B.outNin += v;
+    B.detail.push([pt.name+'（応援）', v.toFixed(2)+'人工']);
+    dailyRows.push({site:site.name, kind:'応援', who:pt.name, ninku:v});
+    n++;
+  });
 
-  const tb = document.getElementById('dailyBody');
-  if(dailyRows.length===1) tb.innerHTML='';
-  const tr = document.createElement('tr');
-  tr.innerHTML = `<td><b>${site.name}</b></td><td>${name}</td>
-    <td class="num"><b>${selNinku.toFixed(2)}</b></td><td style="font-size:11.5px">${co?co+' '+num+'人':'—'}</td>
-    <td class="num">${yen(labor)}</td>`;
-  tb.prepend(tr);
+  if(!n){ toast('入った方を選んでください'); return; }
 
-  document.getElementById('dAssistNum').value = 0;
-  document.getElementById('dAssistCo').value = '';
-  toast('日報を送信しました。原価に反映されます');
+  if(tb.querySelector('td[colspan]')) tb.innerHTML='';
+  dailyRows.slice(-n).reverse().forEach(r=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td><b>${r.site}</b></td>
+      <td><span class="chip ${r.kind==='自社'?'big':'small'}">${r.kind}</span></td>
+      <td>${r.who}</td><td class="num"><b>${r.ninku.toFixed(2)}</b></td>`;
+    tb.prepend(tr);
+  });
+
+  // 送信後は入力欄をリセット（予定に戻す）
+  delete entry[id];
+  renderCrew();
+  toast(n+'件の日報を送信しました。原価に反映されます');
 }
+
 function openSite(n){ toast(n+' のGoogleドライブフォルダを開きます'); }
 
 /* ===== 見積（ハイリード公式書式） ===== */
@@ -600,6 +773,68 @@ function renderMat(){
 function updMat(i,v){ matData[i].tax=parseFloat(v)||0; renderMat(); }
 function saveMat(){ toast('締め分を確定しました。原価ダッシュボードに反映されます'); renderDash(); }
 
+/* ===== 実行予算 ===== */
+function renderBudget(){
+  const sel=document.getElementById('bSite');
+  if(!sel.options.length){
+    sel.innerHTML=SITES.filter(x=>x.id!=='other')
+      .map(x=>`<option value="${x.id}">${x.name}</option>`).join('');
+  }
+  const id=sel.value||SITES[0].id;
+  const site=SITES.find(x=>x.id===id);
+  const b=BUDGET[id];
+  document.getElementById('budgetForm').innerHTML=`
+    <div style="font-size:13px;color:var(--sub);margin-bottom:12px">
+      受注（見積）金額：<b style="color:var(--navy);font-size:15px">${yen(site.estimate)}</b>
+    </div>
+    <div style="overflow-x:auto">
+    <table>
+      <thead><tr><th>費目</th><th class="num">人工数</th><th class="num">単価</th><th class="num">予算額</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>材料費</b><br><span style="font-size:11px;color:var(--sub)">代理店への発注枠</span></td>
+          <td class="num" style="color:var(--sub)">―</td>
+          <td class="num" style="color:var(--sub)">―</td>
+          <td class="num"><input type="number" value="${b.mat}" onchange="updBudget('${id}','mat',this.value)" style="width:120px;text-align:right;padding:6px;font-size:13px"></td>
+        </tr>
+        <tr>
+          <td><b>労務費</b><br><span style="font-size:11px;color:var(--sub)">自社の職人</span></td>
+          <td class="num"><input type="number" step="0.5" value="${b.labNin}" onchange="updBudget('${id}','labNin',this.value)" style="width:80px;text-align:right;padding:6px;font-size:13px"></td>
+          <td class="num"><input type="number" value="${b.labRate}" onchange="updBudget('${id}','labRate',this.value)" style="width:100px;text-align:right;padding:6px;font-size:13px"></td>
+          <td class="num"><b>${yen(b.labNin*b.labRate)}</b></td>
+        </tr>
+        <tr>
+          <td><b>外注費</b><br><span style="font-size:11px;color:var(--sub)">協力業者（応援）</span></td>
+          <td class="num"><input type="number" step="0.5" value="${b.outNin}" onchange="updBudget('${id}','outNin',this.value)" style="width:80px;text-align:right;padding:6px;font-size:13px"></td>
+          <td class="num"><input type="number" value="${b.outRate}" onchange="updBudget('${id}','outRate',this.value)" style="width:100px;text-align:right;padding:6px;font-size:13px"></td>
+          <td class="num"><b>${yen(b.outNin*b.outRate)}</b></td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+    <div style="font-size:11.5px;color:var(--sub);margin-top:11px">
+      ※ 協力業者への発注は「1,000,000円」ではなく「50人工 × 20,000円」という形で枠を持ちます。こうすることで、日報に入力された応援の人工数と直接くらべられます。
+    </div>`;
+
+  const lab=b.labNin*b.labRate, out=b.outNin*b.outRate, total=b.mat+lab+out;
+  const profit=site.estimate-total;
+  const mg=site.estimate>0?profit/site.estimate*100:0;
+  const col=mg>=TARGET?'#8FE3B0':mg>=TARGET-6?'#FFD98A':'#FFB3AC';
+  document.getElementById('bBreak').innerHTML=
+    `<div>材料費：${yen(b.mat)}</div>
+     <div>労務費：${yen(lab)}（${b.labNin}人工）</div>
+     <div>外注費：${yen(out)}（${b.outNin}人工）</div>
+     <div style="margin-top:4px;padding-top:4px;border-top:1px solid rgba(255,255,255,.3)">原価計：${yen(total)}</div>`;
+  document.getElementById('bProfit').textContent=yen(profit);
+  document.getElementById('bMargin').innerHTML=
+    `<span style="color:${col}">粗利率 ${site.estimate>0?mg.toFixed(1)+'%':'—'}　目標21%</span>`;
+}
+function updBudget(id,key,val){
+  BUDGET[id][key]=parseFloat(val)||0;
+  renderBudget();
+  toast('実行予算を更新しました');
+}
+
 /* ===== 原価ダッシュボード ===== */
 const TARGET=21;
 let curSite='ems';
@@ -607,49 +842,94 @@ function matForSite(name){
   const m=matData.find(x=>x.site===name);
   return m ? Math.round(m.tax*1.1) : 0;
 }
+function actualOf(id, siteName){
+  const B = laborBase[id];
+  const mat = matForSite(siteName);
+  return {mat, lab:B.lab, out:B.out, total:mat+B.lab+B.out, labNin:B.labNin, outNin:B.outNin};
+}
 function renderDash(){
   const chips=document.getElementById('projChips');
   const list=SITES.filter(s=>s.id!=='other');
   chips.innerHTML=list.map(s=>{
-    const mat=matForSite(s.name), lab=laborBase[s.id].amount;
-    const profit=s.estimate-mat-lab;
-    const mg=s.estimate>0?profit/s.estimate*100:0;
+    const a=actualOf(s.id,s.name);
+    const mg=s.estimate>0?(s.estimate-a.total)/s.estimate*100:0;
     const c=mg>=TARGET?'var(--green)':mg>=TARGET-6?'var(--amber-d)':'var(--red)';
     return `<div class="proj-chip ${s.id===curSite?'on':''}" onclick="selSite('${s.id}')">
       <div class="pname">${s.name}</div>
       <div class="pstat">${s.kind}</div>
-      <div class="pmargin" style="color:${c}">粗利率 ${mg.toFixed(1)}%</div>
+      <div class="pmargin" style="color:${c}">実績粗利率 ${mg.toFixed(1)}%</div>
     </div>`;
   }).join('');
 
   const s=list.find(x=>x.id===curSite);
-  const mat=matForSite(s.name), lab=laborBase[s.id].amount;
-  const profit=s.estimate-mat-lab;
-  const mg=s.estimate>0?profit/s.estimate*100:0;
+  const a=actualOf(s.id,s.name);
+  const b=budgetOf(s.id);
+  const aProfit=s.estimate-a.total;
+  const mg=s.estimate>0?aProfit/s.estimate*100:0;
   const cl=Math.max(0,Math.min(100,mg));
   const c=mg>=TARGET?'#2E7D4F':mg>=TARGET-6?'#F5A623':'#C0392B';
   const msg=mg>=TARGET?'✓ 目標利益率（21%）達成':mg>=0?'⚠ 目標利益率（21%）に届いていません':'🚨 このままだと赤字です';
 
+  // 差異セル（プラス=予算内で緑／マイナス=超過で赤）
+  const dif=(bv,av)=>{
+    if(b===null) return '<td class="num" style="color:var(--sub)">―</td>';
+    const d=bv-av;
+    const col=d<0?'var(--red)':d>0?'var(--green)':'var(--sub)';
+    return `<td class="num" style="color:${col};font-weight:700">${d>0?'+':''}${yen(d)}</td>`;
+  };
+  const bcell=v=> b===null?'<td class="num" style="color:var(--sub)">未登録</td>':`<td class="num">${yen(v)}</td>`;
+
+  const bProfit = b? s.estimate-b.total : null;
+  const bMg = (b && s.estimate>0)? bProfit/s.estimate*100 : null;
+
   document.getElementById('dashDetail').innerHTML=`
     <div class="gauge-wrap">
       <div class="gauge" style="background:conic-gradient(${c} ${cl*3.6}deg,#E5EBF0 0deg)">
-        <div class="hole"><div class="pct" style="color:${c}">${mg.toFixed(1)}%</div><div class="lbl2">粗利率</div></div>
+        <div class="hole"><div class="pct" style="color:${c}">${mg.toFixed(1)}%</div><div class="lbl2">実績粗利率</div></div>
       </div>
       <div style="font-size:11.5px;color:var(--sub);margin-top:11px;text-align:center">
         目標：21%以上<br><b style="color:${c}">${msg}</b>
+        ${b?`<br><span style="color:var(--sub)">予算時：${bMg.toFixed(1)}%</span>`:''}
       </div>
     </div>
     <div class="card" style="margin:0">
       <h2>${s.name}</h2>
-      <p class="hint" style="margin-bottom:5px">${s.kind}</p>
+      <p class="hint" style="margin-bottom:8px">${s.kind}　／　見積金額 ${yen(s.estimate)}</p>
+      <div style="overflow-x:auto">
       <table class="cost-table">
-        <tr><td>見積金額</td><td class="num">${yen(s.estimate)}</td></tr>
-        <tr><td class="indent">材料費（締め入力から自動集計）</td><td class="num indent">− ${yen(mat)}</td></tr>
-        <tr><td class="indent">人件費（日報の人工から自動集計）</td><td class="num indent">− ${yen(lab)}</td></tr>
-        <tr class="total"><td>粗利額</td><td class="num">${yen(profit)}</td></tr>
+        <tr style="border-bottom:2px solid var(--navy)">
+          <td style="font-weight:700">費目</td>
+          <td class="num" style="font-weight:700">実行予算</td>
+          <td class="num" style="font-weight:700">実績</td>
+          <td class="num" style="font-weight:700">差異</td>
+        </tr>
+        <tr><td>材料費</td>${bcell(b?b.mat:0)}<td class="num">${yen(a.mat)}</td>${dif(b?b.mat:0,a.mat)}</tr>
+        <tr>
+          <td>労務費<span style="font-size:11px;color:var(--sub)">（自社）</span></td>
+          ${b?`<td class="num">${yen(b.lab)}<br><span style="font-size:11px;color:var(--sub)">${b.labNin}人工</span></td>`:'<td class="num" style="color:var(--sub)">未登録</td>'}
+          <td class="num">${yen(a.lab)}<br><span style="font-size:11px;color:var(--sub)">${a.labNin.toFixed(2)}人工</span></td>
+          ${dif(b?b.lab:0,a.lab)}
+        </tr>
+        <tr>
+          <td>外注費<span style="font-size:11px;color:var(--sub)">（応援）</span></td>
+          ${b?`<td class="num">${yen(b.out)}<br><span style="font-size:11px;color:var(--sub)">${b.outNin}人工</span></td>`:'<td class="num" style="color:var(--sub)">未登録</td>'}
+          <td class="num">${yen(a.out)}<br><span style="font-size:11px;color:var(--sub)">${a.outNin.toFixed(2)}人工</span></td>
+          ${dif(b?b.out:0,a.out)}
+        </tr>
+        <tr class="total"><td>原価計</td>${bcell(b?b.total:0)}<td class="num">${yen(a.total)}</td>${dif(b?b.total:0,a.total)}</tr>
+        <tr class="total" style="border-top:none">
+          <td>粗利</td>
+          ${b?`<td class="num">${yen(bProfit)}<br><span style="font-size:11px;color:var(--sub)">${bMg.toFixed(1)}%</span></td>`:'<td class="num" style="color:var(--sub)">―</td>'}
+          <td class="num" style="color:${c}">${yen(aProfit)}<br><span style="font-size:11px">${mg.toFixed(1)}%</span></td>
+          <td class="num" style="color:var(--sub)">―</td>
+        </tr>
       </table>
-      <div style="margin-top:14px">
-        <b style="font-size:12.5px">人件費の内訳（日報より）</b>
+      </div>
+      <div style="font-size:11.5px;color:var(--sub);margin-top:9px">
+        ${b?'※ 差異がマイナス（赤）は予算超過です。労務費・外注費は人工数でも比較できます':'※ この現場は実行予算が未登録です。「実行予算」タブから登録すると予実比較ができます'}
+      </div>
+      <div style="margin-top:16px">
+        <b style="font-size:12.5px">人工の内訳（日報より）</b>
         <div style="margin-top:5px">
           ${laborBase[s.id].detail.length
             ? laborBase[s.id].detail.map(d=>`<div class="staff-row"><span>${d[0]}</span><span>${d[1]}</span></div>`).join('')
