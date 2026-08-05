@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>MIROCビール様｜このシステムで何が変わるか</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+ --ink:#2B2118;--ink2:#5C4F41;--paper:#FAF6EE;--panel:#FFF;--line:#E5DCC9;
+ --amber:#C98A1B;--amberD:#A97013;--ok:#3E7C4F;--alert:#B03A2E;--gray:#8B939B;
+ --shadow:0 1px 3px rgba(43,33,24,.08),0 4px 16px rgba(43,33,24,.07);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Zen Kaku Gothic New',sans-serif;background:var(--paper);color:var(--ink);line-height:1.7;font-size:15px;-webkit-font-smoothing:antialiased}
+.num{font-variant-numeric:tabular-nums}
+.wrap{max-width:940px;margin:0 auto;padding:0 20px}
+
+/* HERO */
+.hero{background:var(--ink);color:var(--paper);padding:56px 0 48px;text-align:center}
+.hero .eyebrow{font-size:12px;letter-spacing:.18em;color:#C9BFA9;font-weight:700}
+.hero h1{font-family:'Shippori Mincho',serif;font-size:38px;font-weight:700;line-height:1.4;margin:14px 0 16px}
+.hero h1 em{font-style:normal;color:var(--amber)}
+.hero p{font-size:15px;color:#D8CFBC;max-width:600px;margin:0 auto}
+.hero .tag{display:inline-block;margin-top:22px;font-size:11.5px;background:var(--amber);color:var(--ink);padding:3px 14px;border-radius:20px;font-weight:700;letter-spacing:.08em}
+
+section{padding:52px 0}
+.sec-head{text-align:center;margin-bottom:30px}
+.sec-head .n{font-family:'Shippori Mincho',serif;font-size:13px;color:var(--amberD);font-weight:700;letter-spacing:.1em}
+.sec-head h2{font-family:'Shippori Mincho',serif;font-size:27px;font-weight:700;margin-top:4px}
+.sec-head p{font-size:14px;color:var(--ink2);margin-top:8px}
+
+/* 体感デモ */
+.try{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.try-task{background:#F6F1E6;padding:16px 22px;border-bottom:1px solid var(--line);font-size:14.5px}
+.try-task b{color:var(--amberD)}
+.try-tabs{display:flex;border-bottom:1px solid var(--line)}
+.try-tabs button{flex:1;border:none;background:#F0EBDF;font-family:inherit;font-size:14px;font-weight:700;padding:15px 10px;cursor:pointer;color:var(--gray);border-bottom:3px solid transparent}
+.try-tabs button.on{background:var(--panel);color:var(--ink);border-bottom-color:var(--amber)}
+.try-tabs button.on.now{border-bottom-color:var(--alert);color:var(--alert)}
+.try-body{padding:24px 22px;min-height:420px}
+.tp{display:none}.tp.on{display:block}
+
+.stepbar{display:flex;gap:6px;margin-bottom:18px}
+.stepbar i{flex:1;height:5px;background:var(--line);border-radius:3px}
+.stepbar i.done{background:var(--alert)}
+.stepbar i.doneA{background:var(--ok)}
+.step-label{font-size:12px;font-weight:700;color:var(--gray);letter-spacing:.05em;margin-bottom:6px}
+.step-q{font-size:17px;font-weight:700;margin-bottom:14px}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.choices button{font-family:inherit;font-size:13.5px;padding:13px 12px;border:1.5px solid var(--line);background:#FFFDF8;border-radius:9px;cursor:pointer;text-align:left;color:var(--ink);line-height:1.4}
+.choices button:hover{border-color:var(--amber);background:#FBF3E2}
+.msg{margin-top:14px;padding:12px 16px;border-radius:9px;font-size:13.5px;display:none}
+.msg.show{display:block}
+.msg-ng{background:#FBEFEC;border-left:4px solid var(--alert);color:var(--alert)}
+.msg-ok{background:#EAF3EC;border-left:4px solid var(--ok);color:var(--ok)}
+.counter{display:flex;gap:20px;font-size:12.5px;color:var(--ink2);margin-top:18px;padding-top:14px;border-top:1px dashed var(--line);flex-wrap:wrap}
+.counter b{font-family:'Shippori Mincho',serif;font-size:19px;color:var(--ink)}
+
+.appform{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.appform label{display:block;font-size:11.5px;font-weight:700;color:var(--ink2);margin-bottom:4px}
+.appform input,.appform select{width:100%;font-family:inherit;font-size:14.5px;padding:10px 12px;border:1.5px solid var(--line);border-radius:8px;background:#FFFDF8;color:var(--ink)}
+.appform input:focus,.appform select:focus{outline:2px solid var(--amber);border-color:var(--amber)}
+.btn{font-family:inherit;font-size:14.5px;font-weight:700;padding:13px 26px;border-radius:9px;cursor:pointer;border:none;background:var(--amber);color:var(--ink)}
+.btn:hover{box-shadow:0 2px 10px rgba(201,138,27,.38)}
+.btn:active{transform:translateY(1px)}
+.btn-sm{padding:9px 16px;font-size:13px}
+.btn-out{background:transparent;border:1.5px solid var(--line);color:var(--ink2)}
+
+.chain{margin-top:20px}
+.chain-item{display:flex;align-items:flex-start;gap:12px;padding:11px 0;opacity:0;transform:translateY(6px);transition:all .4s}
+.chain-item.in{opacity:1;transform:none}
+.chain-item .ck{width:22px;height:22px;border-radius:50%;background:var(--ok);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;margin-top:2px}
+.chain-item .tx{font-size:14px}
+.chain-item .tx small{display:block;color:var(--ink2);font-size:12px}
+
+/* 対比カード */
+.ba{display:grid;gap:16px}
+.ba-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
+.ba-head{padding:14px 20px;border-bottom:1px solid var(--line);font-weight:700;font-size:15.5px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ba-head .ic{width:26px;height:26px;border-radius:7px;background:var(--amber);color:var(--ink);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.ba-grid{display:grid;grid-template-columns:1fr 46px 1fr}
+.ba-side{padding:18px 20px}
+.ba-now{background:#FCF5F3}
+.ba-app{background:#F4F9F5}
+.ba-lbl{font-size:11px;font-weight:700;letter-spacing:.08em;margin-bottom:8px}
+.ba-now .ba-lbl{color:var(--alert)}
+.ba-app .ba-lbl{color:var(--ok)}
+.ba-side p{font-size:13.5px;line-height:1.65}
+.ba-side .big{font-family:'Shippori Mincho',serif;font-size:23px;font-weight:700;display:block;margin-bottom:4px}
+.ba-now .big{color:var(--alert)}
+.ba-app .big{color:var(--ok)}
+.ba-arrow{display:flex;align-items:center;justify-content:center;background:var(--panel);color:var(--amber);font-size:20px;font-weight:700}
+
+/* 7ブロック図 */
+.blocks{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px}
+.blocks span{font-size:10.5px;padding:4px 8px;border-radius:5px;background:#EFE3DF;color:var(--alert);font-weight:700}
+.oneblock{font-size:12px;padding:7px 14px;border-radius:6px;background:#DCEDE1;color:var(--ok);font-weight:700;display:inline-block;margin-top:10px}
+
+/* 電卓 */
+.calc{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:24px 22px}
+.calc-row{display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.calc-row:last-of-type{border-bottom:none}
+.calc-row .lb{flex:1;min-width:220px;font-size:14px}
+.calc-row .lb small{display:block;font-size:11.5px;color:var(--ink2)}
+.calc-row input{width:88px;font-family:inherit;font-size:15px;padding:8px 10px;border:1.5px solid var(--line);border-radius:7px;text-align:right;background:#FFFDF8;font-variant-numeric:tabular-nums}
+.calc-row input:focus{outline:2px solid var(--amber);border-color:var(--amber)}
+.calc-row .un{font-size:12.5px;color:var(--ink2);width:70px}
+.calc-out{background:var(--ink);color:var(--paper);border-radius:10px;padding:20px;margin-top:20px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.calc-out .lb2{font-size:12px;color:#C9BFA9;font-weight:700}
+.calc-out .v{font-family:'Shippori Mincho',serif;font-size:34px;font-weight:700;color:var(--amber)}
+.calc-out .v small{font-size:16px}
+.note{font-size:12px;color:var(--ink2);margin-top:12px;padding:11px 15px;background:#F6F1E6;border-radius:8px;border-left:3px solid var(--gray)}
+.note b{color:var(--ink)}
+
+/* 事実の根拠 */
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.fact{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:16px 18px;box-shadow:var(--shadow)}
+.fact .v{font-family:'Shippori Mincho',serif;font-size:27px;font-weight:700;color:var(--amberD)}
+.fact .v small{font-size:13px;color:var(--ink)}
+.fact .l{font-size:12px;color:var(--ink2);margin-top:2px;line-height:1.5}
+
+/* 守り */
+.guard{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.guard-item{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--ok);border-radius:0 11px 11px 0;padding:16px 18px;box-shadow:var(--shadow)}
+.guard-item b{display:block;font-size:14.5px;margin-bottom:5px}
+.guard-item p{font-size:12.5px;color:var(--ink2);line-height:1.6}
+
+footer{background:var(--ink);color:#C9BFA9;text-align:center;padding:28px 20px;font-size:12.5px;margin-top:20px}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(90px);background:var(--ink);color:var(--paper);padding:12px 24px;border-radius:10px;font-size:14px;box-shadow:0 6px 24px rgba(0,0,0,.28);transition:transform .3s;z-index:100;max-width:90vw}
+#toast.show{transform:translateX(-50%) translateY(0)}
+
+@media(max-width:700px){
+ .hero h1{font-size:27px}
+ .choices{grid-template-columns:1fr}
+ .appform{grid-template-columns:1fr}
+ .ba-grid{grid-template-columns:1fr}
+ .ba-arrow{padding:6px;transform:rotate(90deg)}
+ .try-body{padding:18px 15px;min-height:auto}
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="wrap">
+    <div class="eyebrow">MIROCビール株式会社 御中</div>
+    <h1>入力は<em>1回</em>だけ。<br>あとは申告まで、全部つながる。</h1>
+    <p>現在お使いの帳簿ファイルを分析し、どこに手間がかかっているかを確認しました。このページでは、実際に触りながら「何が変わるか」をご覧いただけます。</p>
+    <div class="tag">株式会社ブックスタンド</div>
+  </div>
+</div>
+
+<!-- 01 体感 -->
+<section>
+<div class="wrap">
+  <div class="sec-head">
+    <div class="n">０１</div>
+    <h2>まず、触って比べてみてください</h2>
+    <p>「ケグを1本出荷した」を記録するだけの作業です。左のタブから順にお試しください。</p>
+  </div>
+
+  <div class="try">
+    <div class="try-task">記録したいこと　<b>8月5日｜SA1（発泡酒①）｜15Lケグ 1本｜自店へ出荷</b></div>
+    <div class="try-tabs">
+      <button id="tabNow" class="on now" onclick="swTab('now')">現在のやり方</button>
+      <button id="tabApp" onclick="swTab('app')">このシステム</button>
+    </div>
+    <div class="try-body">
+
+      <!-- 現行 -->
+      <div class="tp on" id="tp-now">
+        <div class="stepbar"><i id="s1"></i><i id="s2"></i><i id="s3"></i><i id="s4"></i><i id="s5"></i></div>
+        <div id="nowStage"></div>
+        <div class="msg" id="nowMsg"></div>
+        <div class="counter">
+          <span>操作した回数　<b class="num" id="cntOp">0</b></span>
+          <span>開いたファイル　<b class="num" id="cntFile">0</b></span>
+          <span>迷った回数　<b class="num" id="cntMiss">0</b></span>
+        </div>
+      </div>
+
+      <!-- アプリ -->
+      <div class="tp" id="tp-app">
+        <div class="stepbar"><i id="a1"></i><i id="a2"></i><i id="a3"></i><i id="a4"></i><i id="a5"></i></div>
+        <div id="appStage">
+          <div class="step-label">STEP 1 / 1</div>
+          <div class="step-q">出荷を登録する</div>
+          <div class="appform">
+            <div><label>出荷日</label><input type="date" value="2026-08-05"></div>
+            <div><label>液種</label><select><option selected>SA1（発泡酒①）</option><option>RIPA2（ビール）</option><option>QAD4（発泡酒②）</option></select></div>
+            <div><label>容器</label><select><option selected>15Lケグ</option><option>10Lケグ</option><option>330ml瓶</option><option>一升瓶</option></select></div>
+            <div><label>本数</label><input type="number" value="1"></div>
+            <div><label>ケグ番号</label><input type="number" value="206"></div>
+            <div><label>出荷先</label><select><option selected>自店</option><option>西野金陵株式会社</option><option>ふるさと納税</option></select></div>
+          </div>
+          <div style="margin-top:18px"><button class="btn" onclick="appSubmit()">登録する</button></div>
+          <div class="chain" id="chain"></div>
+        </div>
+        <div class="counter">
+          <span>操作した回数　<b class="num" id="cntOpA">0</b></span>
+          <span>開いたファイル　<b class="num" id="cntFileA">1</b></span>
+          <span>迷う場面　<b class="num">0</b></span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 02 4つの変化 -->
+<section style="background:#F4EFE4">
+<div class="wrap">
+  <div class="sec-head">
+    <div class="n">０２</div>
+    <h2>変わるのは、この4つです</h2>
+    <p>お預かりしたファイルを分析して分かった、手間のかかっている箇所です。</p>
+  </div>
+
+  <div class="ba">
+    <div class="ba-card">
+      <div class="ba-head"><span class="ic">1</span>出荷の記録</div>
+      <div class="ba-grid">
+        <div class="ba-side ba-now">
+          <div class="ba-lbl">現在</div>
+          <span class="big">7か所に書き分け</span>
+          <p>容器と課税区分の組み合わせごとに、書き込む列が変わります。液種の区分が違えば、書く場所も別になります。</p>
+          <div class="blocks"><span>ケグ</span><span>ペット</span><span>一升瓶</span><span>瓶・ビール</span><span>瓶・発泡酒①</span><span>瓶・発泡酒②</span><span>瓶・発泡酒③</span></div>
+        </div>
+        <div class="ba-arrow">→</div>
+        <div class="ba-side ba-app">
+          <div class="ba-lbl">このシステム</div>
+          <span class="big">1行を登録するだけ</span>
+          <p>どの容器でも、どの区分でも、同じ画面に1行入れるだけです。集計・分類はシステムが行います。</p>
+          <div class="oneblock">出荷日／液種／容器／本数／出荷先</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ba-card">
+      <div class="ba-head"><span class="ic">2</span>発酵中の記録</div>
+      <div class="ba-grid">
+        <div class="ba-side ba-now">
+          <div class="ba-lbl">現在</div>
+          <span class="big">残渣を計算して按分</span>
+          <p>製品化できなかった量を求め、オリ引きを行った日に振り分けて、発酵簿に書き込んでいただいています。</p>
+        </div>
+        <div class="ba-arrow">→</div>
+        <div class="ba-side ba-app">
+          <div class="ba-lbl">このシステム</div>
+          <span class="big">実施日にチェックだけ</span>
+          <p>オリ引きを行った日を記録するだけです。残渣の算出も、日ごとの按分も、容器詰めが終わった時点で自動計算されます。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="ba-card">
+      <div class="ba-head"><span class="ic">3</span>月次の酒税計算</div>
+      <div class="ba-grid">
+        <div class="ba-side ba-now">
+          <div class="ba-lbl">現在</div>
+          <span class="big">2つのファイルを行き来</span>
+          <p>抜出用で部門ごとに集計し、月締ファイルへ転記。本数と容量をかけ、リッターに直し、税率をかけ、減税を適用します。</p>
+        </div>
+        <div class="ba-arrow">→</div>
+        <div class="ba-side ba-app">
+          <div class="ba-lbl">このシステム</div>
+          <span class="big">画面を開くだけ</span>
+          <p>区分別の集計から納税額まで一画面に表示されます。申告書へ転記する数字がそのまま出ます。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="ba-card">
+      <div class="ba-head"><span class="ic">4</span>税率の改正対応<span style="font-size:11px;background:#FBEFEC;color:var(--alert);padding:2px 10px;border-radius:20px;font-weight:700">2026年10月</span></div>
+      <div class="ba-grid">
+        <div class="ba-side ba-now">
+          <div class="ba-lbl">現在</div>
+          <span class="big">シートを1枚ずつ修正</span>
+          <p>税率と減税率が月ごとのシートに直接書き込まれています。毎月シートを複製する運用のため、改正後は以降のシートを手で直す必要があります。</p>
+        </div>
+        <div class="ba-arrow">→</div>
+        <div class="ba-side ba-app">
+          <div class="ba-lbl">このシステム</div>
+          <span class="big">設定に1行足すだけ</span>
+          <p>改正日と新税率を登録すれば、出荷日に応じて自動で切り替わります。改正日をまたぐ月も、日付ごとに正しい税率が適用されます。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 03 時間 -->
+<section>
+<div class="wrap">
+  <div class="sec-head">
+    <div class="n">０３</div>
+    <h2>どれくらい時間が浮くか</h2>
+    <p>実際にかかっているお時間を入れていただくと、その場で試算されます。</p>
+  </div>
+
+  <div class="calc">
+    <div class="calc-row">
+      <div class="lb">出荷の書き分け<small>抜出用ファイルへの記入（1か月あたり）</small></div>
+      <input type="number" id="i1" value="180" oninput="calcTime()"><span class="un">分／月</span>
+    </div>
+    <div class="calc-row">
+      <div class="lb">発酵簿への残渣の記入<small>計算と按分、書き込み（1か月あたり）</small></div>
+      <input type="number" id="i2" value="60" oninput="calcTime()"><span class="un">分／月</span>
+    </div>
+    <div class="calc-row">
+      <div class="lb">月次の集計と転記<small>抜出用から月締への転記、税額の確認</small></div>
+      <input type="number" id="i3" value="90" oninput="calcTime()"><span class="un">分／月</span>
+    </div>
+    <div class="calc-row">
+      <div class="lb">数字の確認・突き合わせ<small>合わないときの原因探し</small></div>
+      <input type="number" id="i4" value="60" oninput="calcTime()"><span class="un">分／月</span>
+    </div>
+
+    <div class="calc-out">
+      <div>
+        <div class="lb2">1か月あたり</div>
+        <div class="v num" id="outM">—<small> 時間</small></div>
+      </div>
+      <div style="font-size:22px;color:var(--amber)">→</div>
+      <div>
+        <div class="lb2">1年あたり（推計）</div>
+        <div class="v num" id="outY">—<small> 時間</small></div>
+      </div>
+      <div style="margin-left:auto;text-align:right">
+        <div class="lb2">残る作業</div>
+        <div style="font-size:13px">出荷の登録（1行）と<br>内容の確認のみ</div>
+      </div>
+    </div>
+
+    <div class="note">
+      <b>この数字について。</b>上の入力欄は仮の値を置いています。実際のお時間を入れていただくと、その値で計算し直します。削減できるのは書き分け・転記・按分といった<b>手作業そのもの</b>であり、出荷の登録と内容の確認は引き続き必要です。ここでは削減率を8割として計算しています（計算式：入力時間の合計 × 0.8 × 12か月）。実際の効果は運用開始後に実測して確認します。
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 04 事実 -->
+<section style="background:#F4EFE4">
+<div class="wrap">
+  <div class="sec-head">
+    <div class="n">０４</div>
+    <h2>お預かりしたファイルから分かったこと</h2>
+    <p>以下はすべて、実際のファイルを分析して確認した事実です。</p>
+  </div>
+  <div class="facts">
+    <div class="fact"><div class="v num">7<small> か所</small></div><div class="l">出荷を書き分ける列ブロックの数</div></div>
+    <div class="fact"><div class="v num">1,003<small> 行</small></div><div class="l">抜出用シート1枚の記入欄</div></div>
+    <div class="fact"><div class="v num">17<small> 枚</small></div><div class="l">抜出用ファイルの月別シート</div></div>
+    <div class="fact"><div class="v num">27<small> 枚</small></div><div class="l">月締ファイルの月別シート（2024年4月〜）</div></div>
+    <div class="fact"><div class="v num">4<small> 区分</small></div><div class="l">税率の異なる課税区分</div></div>
+    <div class="fact"><div class="v num">237<small> 件</small></div><div class="l">分析した仕込バッチ</div></div>
+  </div>
+  <div class="note" style="margin-top:18px">
+    <b>確認できた計算の正しさ。</b>2026年6月のビールの課税移出は1,073.07L、酒税額は194,225円と算出されています。同じ計算をシステム側で再現したところ、<b>1円まで一致</b>しました。現在の計算方法をそのまま引き継げることを確認しています。
+  </div>
+</div>
+</section>
+
+<!-- 05 守り -->
+<section>
+<div class="wrap">
+  <div class="sec-head">
+    <div class="n">０５</div>
+    <h2>速くなるだけではありません</h2>
+    <p>申告に関わる数字なので、間違いが起きない仕組みを組み込みます。</p>
+  </div>
+  <div class="guard">
+    <div class="guard-item"><b>転記のミスがなくなる</b><p>入力は1回だけ。以降はすべて同じデータを参照するため、写し間違いが起きません。</p></div>
+    <div class="guard-item"><b>数字が合わないと止まる</b><p>タンク量と製品・酵母・欠減の合計が一致しないバッチがある月は、確定できないようにします。</p></div>
+    <div class="guard-item"><b>申告期限を知らせる</b><p>廃棄は当月末、欠減・亡失と酒税は翌月末。期限が近づくと画面に表示されます。</p></div>
+    <div class="guard-item"><b>書き分けの迷いが消える</b><p>どの列に書くかを判断する必要がなくなるため、そもそも間違えようがありません。</p></div>
+    <div class="guard-item"><b>法改正に強い</b><p>税率は設定として持ちます。改正のたびにファイルを直す作業がなくなります。</p></div>
+    <div class="guard-item"><b>過去の申告はそのまま</b><p>税率が変わっても、過去の記録は当時の税率のまま保持されます。</p></div>
+  </div>
+</div>
+</section>
+
+<section style="padding-top:0">
+<div class="wrap">
+  <div style="background:var(--ink);color:var(--paper);border-radius:14px;padding:34px 30px;text-align:center">
+    <div style="font-size:12px;letter-spacing:.14em;color:#C9BFA9;font-weight:700">NEXT</div>
+    <h2 style="font-family:'Shippori Mincho',serif;font-size:24px;font-weight:700;margin:10px 0 12px">実際の画面もご覧いただけます</h2>
+    <p style="font-size:14px;color:#D8CFBC;max-width:560px;margin:0 auto 22px">現場での入力画面、バッチ台帳、月次酒税計算、税率マスタまで、実際に操作できるデモをご用意しました。10月の改正に切り替わる様子もお試しいただけます。</p>
+    <a href="./app/" style="display:inline-block;background:var(--amber);color:var(--ink);font-weight:700;font-size:15px;padding:14px 32px;border-radius:9px;text-decoration:none">画面デモを開く →</a>
+  </div>
+</div>
+</section>
+
+<footer>
+  株式会社ブックスタンド　｜　醸造管理・酒税申告支援システム<br>
+  <span style="font-size:11.5px;opacity:.75">本ページはデモです。画面や数値はご説明用のサンプルを含みます。</span>
+</footer>
+
+<div id="toast"></div>
+
+<script>
+// ── タブ ──
+function swTab(k){
+ document.getElementById('tabNow').classList.toggle('on',k==='now');
+ document.getElementById('tabApp').classList.toggle('on',k==='app');
+ document.getElementById('tp-now').classList.toggle('on',k==='now');
+ document.getElementById('tp-app').classList.toggle('on',k==='app');
+}
+
+// ── 現行フローの体感 ──
+let step=0,ops=0,files=0,miss=0;
+const stages=[
+ {label:'STEP 1 / 5',q:'まず、どのファイルを開きますか？',
+  ch:[['☆2 月ごとの課税移出_抜出用',1],['☆2 月締_酒税申告計算',0],['オリ引き量計算表',0],['11_01 容器別_移出簿',0]],
+  ngMsg:'このファイルではありません。出荷の記録は「抜出用」に書き込みます。',
+  okMsg:'正解です。ここで開いたファイルが1つ目になります。'},
+ {label:'STEP 2 / 5',q:'次に、どの月のシートを選びますか？（17枚あります）',
+  ch:[['26_8月',1],['26_7月',0],['26_6月',0],['25_8月',0]],
+  ngMsg:'月を間違えると、別の月の申告に混ざってしまいます。',
+  okMsg:'8月のシートを選びました。'},
+ {label:'STEP 3 / 5',q:'このシートには7つの記入ブロックがあります。15Lケグの発泡酒①は、どこに書きますか？',
+  ch:[['15ℓケグ部門（B〜L列）',1],['瓶部門・発泡酒①（AB〜AF列）',0],['1500㎖ペット部門（N〜Q列）',0],['瓶部門・ビール（U〜Y列）',0]],
+  ngMsg:'そこは瓶やペットの欄です。容器と区分の組み合わせで書く場所が変わります。',
+  okMsg:'ケグはB〜L列のブロックです。ここまでで3操作。'},
+ {label:'STEP 4 / 5',q:'ケグのブロックの中で、発泡酒①の列はどれですか？',
+  ch:[['I列（発泡酒1 麦芽比率50％以上）',1],['H列（ビール）',0],['J列（発泡酒2 麦芽比率25-50%）',0],['K列（発泡酒3 麦芽比率0-25%）',0]],
+  ngMsg:'区分を間違えると税率が変わり、納税額がずれます。',
+  okMsg:'I列に「1」を記入します。'},
+ {label:'STEP 5 / 5',q:'記入は終わりました。月末にはもう1つ作業があります。それは？',
+  ch:[['月締ファイルを開いて転記し、税額を計算する',1],['特にない。自動で申告書ができる',0],['もう一度抜出用を見直すだけ',0],['税務署に電話する',0]],
+  ngMsg:'集計した数字は、月締ファイルへ転記する必要があります。',
+  okMsg:'2つ目のファイルを開いて転記し、税率と減税を適用します。'},
+];
+function renderStage(){
+ const st=stages[step];
+ if(!st){finishNow();return;}
+ let h='<div class="step-label">'+st.label+'</div><div class="step-q">'+st.q+'</div><div class="choices">';
+ st.ch.forEach((c,i)=>{h+='<button onclick="pick('+i+')">'+c[0]+'</button>';});
+ h+='</div>';
+ document.getElementById('nowStage').innerHTML=h;
+ document.getElementById('nowMsg').className='msg';
+}
+function pick(i){
+ const st=stages[step];
+ ops++;
+ const ok=st.ch[i][1]===1;
+ const m=document.getElementById('nowMsg');
+ if(!ok){
+  miss++;
+  m.className='msg show msg-ng';m.textContent='✗ '+st.ngMsg;
+  updCnt();return;
+ }
+ if(step===0||step===4){files++;}
+ m.className='msg show msg-ok';m.textContent='✓ '+st.okMsg;
+ document.getElementById('s'+(step+1)).className='done';
+ updCnt();
+ step++;
+ setTimeout(renderStage,900);
+}
+function updCnt(){
+ document.getElementById('cntOp').textContent=ops;
+ document.getElementById('cntFile').textContent=files;
+ document.getElementById('cntMiss').textContent=miss;
+}
+function finishNow(){
+ document.getElementById('nowStage').innerHTML=
+  '<div class="step-label">完了</div>'+
+  '<div class="step-q">ケグ1本の記録に、これだけかかりました</div>'+
+  '<div style="font-size:14px;line-height:1.9">'+
+  '・ファイルを<b>2つ</b>開いた<br>'+
+  '・書く場所を<b>2段階</b>で判断した（ブロック → 区分の列）<br>'+
+  '・月末に<b>転記と税額計算</b>が別途必要<br>'+
+  '</div>'+
+  '<div class="msg show msg-ng" style="margin-top:16px">これが1本分です。実際には月に数百件の出荷があり、そのすべてで「どこに書くか」の判断が発生します。</div>'+
+  '<div style="margin-top:18px"><button class="btn" onclick="swTab(\'app\')">このシステムだとどうなるか見る</button> '+
+  '<button class="btn btn-out btn-sm" onclick="resetNow()">もう一度</button></div>';
+}
+function resetNow(){
+ step=0;ops=0;files=0;miss=0;updCnt();
+ for(let i=1;i<=5;i++)document.getElementById('s'+i).className='';
+ renderStage();
+}
+
+// ── アプリ側 ──
+const chainItems=[
+ ['記録しました','出荷日・液種・容器・本数・出荷先を1行で保存'],
+ ['課税区分に振り分けました','SA1 → 発泡酒① として自動分類'],
+ ['月次集計に反映しました','8月の発泡酒①・15Lケグに +1本'],
+ ['リッターに換算しました','15,000ml → 15.00L'],
+ ['税額を計算しました','出荷日の税率181円/L を自動適用'],
+ ['ケグ在庫を更新しました','ケグ番号206 を出荷済みに'],
+];
+function appSubmit(){
+ const c=document.getElementById('chain');
+ c.innerHTML='';
+ document.getElementById('cntOpA').textContent='1';
+ chainItems.forEach((it,i)=>{
+  const d=document.createElement('div');
+  d.className='chain-item';
+  d.innerHTML='<div class="ck">✓</div><div class="tx">'+it[0]+'<small>'+it[1]+'</small></div>';
+  c.appendChild(d);
+  setTimeout(()=>{
+   d.classList.add('in');
+   const bar=document.getElementById('a'+Math.min(i+1,5));
+   if(bar)bar.className='doneA';
+  },160*(i+1));
+ });
+ setTimeout(()=>{
+  const d=document.createElement('div');
+  d.className='msg show msg-ok';
+  d.style.marginTop='14px';
+  d.textContent='操作は1回です。書く場所を選ぶ場面も、月末の転記もありません。';
+  c.appendChild(d);
+  setTimeout(()=>d.classList.add('in'),20);
+ },160*(chainItems.length+1));
+ toast('登録しました（デモ）');
+}
+
+// ── 時間試算 ──
+function calcTime(){
+ let sum=0;
+ ['i1','i2','i3','i4'].forEach(id=>{sum+=parseFloat(document.getElementById(id).value)||0;});
+ const cut=sum*0.8;
+ document.getElementById('outM').innerHTML=(cut/60).toFixed(1)+'<small> 時間</small>';
+ document.getElementById('outY').innerHTML=(cut*12/60).toFixed(0)+'<small> 時間</small>';
+}
+
+let tt;
+function toast(m){const e=document.getElementById('toast');e.textContent=m;e.classList.add('show');
+ clearTimeout(tt);tt=setTimeout(()=>e.classList.remove('show'),3000);}
+
+renderStage();calcTime();
+</script>
+</body>
+</html>
