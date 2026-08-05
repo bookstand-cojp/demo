@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MIROC 醸造管理・酒税申告支援システム（デモ v2）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2B2118; --ink-soft:#5C4F41; --paper:#FAF6EE; --panel:#FFF; --line:#E5DCC9;
+  --amber:#C98A1B; --amber-deep:#A97013; --stainless:#8B939B;
+  --ok:#3E7C4F; --alert:#B03A2E; --info:#3B6A93;
+  --beer:#E3A93C; --yeast:#C9B98F; --loss:#B8B0A4; --residue:#6E5B45;
+  --radius:10px; --shadow:0 1px 3px rgba(43,33,24,.08),0 4px 14px rgba(43,33,24,.06);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Zen Kaku Gothic New',sans-serif;background:var(--paper);color:var(--ink);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.num{font-variant-numeric:tabular-nums}
+header{background:var(--ink);color:var(--paper);padding:14px 20px 0;position:sticky;top:0;z-index:50}
+.brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.brand h1{font-family:'Shippori Mincho',serif;font-size:20px;font-weight:700;letter-spacing:.06em}
+.brand .sub{font-size:11.5px;color:#C9BFA9}
+.brand .demo-badge{margin-left:auto;font-size:11px;background:var(--amber);color:var(--ink);padding:2px 10px;border-radius:20px;font-weight:700;letter-spacing:.08em}
+nav{display:flex;gap:2px;margin-top:12px;overflow-x:auto;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{border:none;background:transparent;color:#C9BFA9;font-family:inherit;font-size:13.5px;font-weight:500;padding:10px 15px;cursor:pointer;border-radius:8px 8px 0 0;white-space:nowrap}
+nav button:hover{color:var(--paper)}
+nav button.on{background:var(--paper);color:var(--ink);font-weight:700}
+nav button:focus-visible{outline:2px solid var(--amber);outline-offset:-2px}
+main{max-width:1120px;margin:0 auto;padding:24px 20px 90px}
+.page{display:none}.page.on{display:block}
+.page-title{display:flex;align-items:baseline;gap:12px;margin-bottom:6px;flex-wrap:wrap}
+.page-title h2{font-family:'Shippori Mincho',serif;font-size:22px;font-weight:700}
+.role-tag{font-size:11px;padding:2px 10px;border-radius:20px;font-weight:700}
+.role-front{background:#E8F0E5;color:var(--ok)}
+.role-admin{background:#F5E8D2;color:var(--amber-deep)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;margin-top:16px}
+.card h3{font-size:15px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card h3::before{content:'';width:4px;height:16px;background:var(--amber);border-radius:2px}
+label{display:block;font-size:12px;font-weight:700;color:var(--ink-soft);margin-bottom:4px}
+input,select{width:100%;font-family:inherit;font-size:15px;padding:10px 12px;border:1.5px solid var(--line);border-radius:8px;background:#FFFDF8;color:var(--ink)}
+input:focus,select:focus{outline:2px solid var(--amber);border-color:var(--amber)}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr 1fr}.g4{grid-template-columns:repeat(4,1fr)}
+.btn{font-family:inherit;font-size:14px;font-weight:700;padding:11px 22px;border-radius:8px;cursor:pointer;border:none}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--amber);color:var(--ink)}
+.btn-primary:hover{box-shadow:0 2px 8px rgba(201,138,27,.4)}
+.btn-ghost{background:transparent;border:1.5px dashed var(--stainless);color:var(--ink-soft)}
+.btn-ghost:hover{border-color:var(--amber);color:var(--amber-deep)}
+.btn-sm{padding:6px 12px;font-size:12.5px}
+.btn-danger-ghost{background:transparent;border:none;color:var(--alert);font-size:18px;cursor:pointer;padding:4px 8px}
+.hint{font-size:12px;color:var(--ink-soft);margin-top:6px}
+.auto-val{background:#FBF3E2;border:1.5px solid #EBD9B0;border-radius:8px;padding:10px 12px;font-size:14px}
+.auto-val b{color:var(--amber-deep)}
+.auto-badge{font-size:10px;background:var(--amber);color:var(--ink);padding:1px 7px;border-radius:10px;font-weight:700;margin-left:6px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;font-size:11.5px;color:var(--ink-soft);font-weight:700;padding:8px 10px;border-bottom:2px solid var(--line);white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid var(--line)}
+tr:hover td{background:#FCF8EF}
+.right{text-align:right}.center{text-align:center}
+.status{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:700;white-space:nowrap}
+.st-ferment{background:#E5EDF5;color:var(--info)}
+.st-done{background:#E8F0E5;color:var(--ok)}
+.st-packed{background:#F5E8D2;color:var(--amber-deep)}
+.check-ok{color:var(--ok);font-weight:700}
+.check-ng{color:var(--alert);font-weight:700}
+.tr-alert td{background:#FBEFEC}
+.tankbar{display:flex;height:22px;border-radius:5px;overflow:hidden;border:1px solid #D8CDB5;min-width:170px;background:#F0EBDF}
+.seg{height:100%}
+.seg-beer{background:linear-gradient(180deg,#EBB94F,#D99A2B)}
+.seg-yeast{background:var(--yeast)}
+.seg-loss{background:repeating-linear-gradient(135deg,var(--loss),var(--loss) 4px,#C8C1B6 4px,#C8C1B6 8px)}
+.seg-residue{background:var(--residue)}
+.tanklegend{display:flex;gap:16px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-soft);margin-top:10px}
+.tanklegend span{display:inline-flex;align-items:center;gap:5px}
+.tanklegend i{width:12px;height:12px;border-radius:3px}
+.kpi-strip{display:flex;gap:14px;flex-wrap:wrap;margin-top:14px}
+.kpi{flex:1;min-width:150px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow)}
+.kpi-label{font-size:11px;color:var(--ink-soft);font-weight:700}
+.kpi-val{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;margin-top:2px}
+.kpi-val small{font-size:13px;font-weight:500}
+.kpi-alert .kpi-val{color:var(--alert)}
+.kpi-hero{background:var(--ink);border-color:var(--ink)}
+.kpi-hero .kpi-label{color:#C9BFA9}
+.kpi-hero .kpi-val{color:var(--amber)}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(90px);background:var(--ink);color:var(--paper);padding:12px 24px;border-radius:10px;font-size:14px;font-weight:500;box-shadow:0 6px 24px rgba(0,0,0,.25);transition:transform .3s;z-index:100;max-width:90vw}
+#toast.show{transform:translateX(-50%) translateY(0)}
+.subtabs{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.subtabs button{font-family:inherit;font-size:13px;font-weight:700;padding:8px 18px;border-radius:24px;cursor:pointer;border:1.5px solid var(--line);background:var(--panel);color:var(--ink-soft)}
+.subtabs button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.subpage{display:none}.subpage.on{display:block}
+.calcflow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-soft);background:#F6F1E6;border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin-bottom:14px}
+.calcflow b{color:var(--ink)}
+.calcflow .arw{color:var(--amber);font-weight:700}
+.taxrow-total td{background:#FBF3E2;font-weight:700}
+.taxfinal{background:var(--ink);color:var(--paper);border-radius:var(--radius);padding:18px 20px;margin-top:16px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.taxfinal .lbl{font-size:12px;color:#C9BFA9;font-weight:700}
+.taxfinal .amt{font-family:'Shippori Mincho',serif;font-size:32px;font-weight:700;color:var(--amber)}
+.taxfinal .amt small{font-size:15px}
+.taxfinal .sub{font-size:12px;color:#C9BFA9}
+.setting-row{display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.setting-row:last-child{border-bottom:none}
+.setting-label{flex:1;min-width:210px}
+.setting-label b{display:block;font-size:14px}
+.setting-label small{font-size:11.5px;color:var(--ink-soft)}
+.setting-val{width:110px}
+.badge-new{font-size:10.5px;background:#E8F0E5;color:var(--ok);padding:2px 8px;border-radius:10px;font-weight:700}
+.badge-old{font-size:10.5px;background:#EEE;color:#888;padding:2px 8px;border-radius:10px;font-weight:700}
+.notice{border-left:4px solid var(--amber);background:#FBF3E2;padding:12px 16px;border-radius:0 8px 8px 0;font-size:13.5px;margin-top:14px}
+.notice b{color:var(--amber-deep)}
+.notice-alert{border-left-color:var(--alert);background:#FBEFEC}
+.notice-alert b{color:var(--alert)}
+.timeline{position:relative;padding-left:26px}
+.timeline::before{content:'';position:absolute;left:8px;top:6px;bottom:6px;width:2px;background:var(--line)}
+.tl-item{position:relative;padding-bottom:16px}
+.tl-item::before{content:'';position:absolute;left:-24px;top:5px;width:12px;height:12px;border-radius:50%;background:var(--amber);border:2.5px solid var(--paper);box-shadow:0 0 0 1.5px var(--amber)}
+.tl-date{font-size:11.5px;color:var(--ink-soft);font-weight:700}
+.tl-body{font-size:14px;margin-top:2px}
+.oribiki-days{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.oribiki-days button{font-family:inherit;font-size:12.5px;padding:8px 14px;border-radius:8px;border:1.5px solid var(--line);background:var(--panel);cursor:pointer;color:var(--ink-soft);font-weight:700}
+.oribiki-days button.on{background:var(--amber);border-color:var(--amber);color:var(--ink)}
+@media(max-width:640px){
+ .g2,.g3,.g4{grid-template-columns:1fr}
+ main{padding:16px 12px 90px}
+ .card{padding:16px 14px}
+ table{font-size:12.5px}td,th{padding:8px 6px}
+ .taxfinal .amt{font-size:26px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <h1>MIROC 醸造管理</h1>
+    <span class="sub">酒税申告支援システム</span>
+    <span class="demo-badge">DEMO v2</span>
+  </div>
+  <nav id="nav">
+    <button data-page="front" class="on">現場入力</button>
+    <button data-page="ledger">バッチ台帳</button>
+    <button data-page="tax">月次酒税計算</button>
+    <button data-page="haiki">廃棄・亡失</button>
+    <button data-page="master">マスタ・設定</button>
+  </nav>
+</header>
+
+<main>
+
+<!-- ══════ 現場入力 ══════ -->
+<section class="page on" id="page-front">
+  <div class="page-title"><h2>現場入力</h2><span class="role-tag role-front">使う人：醸造スタッフ</span></div>
+  <div class="subtabs" id="frontTabs">
+    <button data-sub="shikomi" class="on">仕込</button>
+    <button data-sub="hakkou">発酵記録</button>
+    <button data-sub="tsume">容器詰め</button>
+    <button data-sub="shukka">出荷</button>
+  </div>
+
+  <div class="subpage on" id="sub-shikomi">
+    <div class="card">
+      <h3>新規仕込の登録</h3>
+      <div class="grid g2">
+        <div><label>レシピ（仕込記号）</label>
+          <select id="recipeSel" onchange="prefillRecipe()">
+            <option value="">選択してください</option>
+            <option value="SA1">SA1｜旋風</option>
+            <option value="IPL2">IPL2｜インディアペールラガー</option>
+            <option value="RIPA2">RIPA2｜レッドIPA</option>
+            <option value="LA1">LA1｜レモンレター</option>
+          </select></div>
+        <div><label>仕込順合</label><div class="auto-val num"><b>335</b><span class="auto-badge">自動採番</span></div></div>
+        <div><label>仕込日</label><input type="date" value="2026-08-05"></div>
+        <div><label>払出先タンク</label>
+          <select id="tankSel" onchange="showResidue()">
+            <option value="9">FV1（残液 9L）</option>
+            <option value="9">FV2（残液 9L）</option>
+            <option value="9" selected>FV3（残液 9L）</option>
+            <option value="12">FV4（残液 12L）</option>
+            <option value="9">FV5（残液 9L）</option>
+            <option value="14">FV6（残液 14L）</option>
+          </select></div>
+        <div><label>課税区分（手動選択）</label>
+          <select id="taxSel">
+            <option>ビール</option>
+            <option selected>発泡酒① 麦芽50%以上</option>
+            <option>発泡酒② 麦芽25〜50%</option>
+            <option>発泡酒③ 麦芽25%以下</option>
+          </select></div>
+        <div><label>タンク底残液（タンクマスタから）</label><div class="auto-val num" id="residueVal"><b>9 L</b><span class="auto-badge">タンク別</span></div></div>
+        <div><label>麦芽 (kg)</label><input type="number" id="maltKg" placeholder="例: 120"></div>
+        <div><label>汲み水 (L)</label><input type="number" id="waterL" placeholder="例: 600"></div>
+      </div>
+      <div class="notice"><b>課税区分は手動選択です。</b>免許の性質上、麦芽比率だけでは区分が決まらないため、自動判定は行いません。レシピごとの既定値を表示し、必要に応じて変更できます。</div>
+      <div style="margin-top:16px"><button class="btn btn-primary" onclick="toast('仕込 #335 を登録しました（デモ）')">仕込を登録する</button></div>
+    </div>
+  </div>
+
+  <div class="subpage" id="sub-hakkou">
+    <div class="card">
+      <h3>発酵記録</h3>
+      <div class="grid g3">
+        <div><label>バッチ</label><select><option selected>333｜SA1（FV4）発酵3日目</option><option>334｜LA1（FV2）発酵5日目</option></select></div>
+        <div><label>記録日</label><input type="date" value="2026-08-05"></div>
+        <div><label>品温 (℃)</label><input type="number" step="0.1" value="18.5"></div>
+      </div>
+      <div style="margin-top:14px">
+        <label>糖度 (%)</label><input type="number" step="0.1" value="6.2" style="max-width:200px">
+      </div>
+      <div style="margin-top:16px">
+        <label>本日オリ引きを実施しましたか</label>
+        <div class="oribiki-days">
+          <button class="on" onclick="pickOri(this)">実施した</button>
+          <button onclick="pickOri(this)">していない</button>
+        </div>
+        <p class="hint">オリ引きの<b>実施日</b>だけ記録します。数量の入力は不要です。残渣の総量は容器詰め完了時に自動で確定し、オリ引き実施日に按分されます。</p>
+      </div>
+      <div class="notice"><b>入力が1つ減りました。</b>これまで日々の欠減量を記入いただいていましたが、これは実測値ではなく残渣を按分した値でした。アプリでは残渣を自動算出し、按分もシステムが行います。</div>
+      <div style="margin-top:16px"><button class="btn btn-primary" onclick="toast('発酵記録を保存しました（デモ）')">記録を保存する</button></div>
+    </div>
+  </div>
+
+  <div class="subpage" id="sub-tsume">
+    <div class="card">
+      <h3>容器詰めの登録</h3>
+      <div class="grid g2">
+        <div><label>バッチ</label><select><option selected>332｜RIPA2（FV3・製成済み 540L）</option></select></div>
+        <div><label>詰め日</label><input type="date" value="2026-08-05"></div>
+      </div>
+      <div style="margin-top:16px">
+        <label>容器と本数</label>
+        <table id="tsumeTable">
+          <thead><tr><th>容器</th><th style="width:110px">本数</th><th class="right">リッター</th><th style="width:40px"></th></tr></thead>
+          <tbody>
+            <tr><td><select class="tt" onchange="calcTsume()"><option value="15" selected>15Lケグ</option><option value="10">10Lケグ</option><option value="0.33">330ml瓶</option><option value="1.8">一升瓶</option></select></td>
+                <td><input type="number" class="tq" value="25" oninput="calcTsume()"></td><td class="right num ts">375.0 L</td><td><button class="btn-danger-ghost" onclick="delRow(this)">×</button></td></tr>
+            <tr><td><select class="tt" onchange="calcTsume()"><option value="15">15Lケグ</option><option value="10">10Lケグ</option><option value="0.33" selected>330ml瓶</option><option value="1.8">一升瓶</option></select></td>
+                <td><input type="number" class="tq" value="180" oninput="calcTsume()"></td><td class="right num ts">59.4 L</td><td><button class="btn-danger-ghost" onclick="delRow(this)">×</button></td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:10px"><button class="btn btn-ghost btn-sm" onclick="addRow()">＋ 容器を追加</button></div>
+      </div>
+      <div class="grid g3" style="margin-top:16px">
+        <div class="auto-val">製品合計<br><b class="num" id="tsumeTotal">434.4 L</b><span class="auto-badge">自動</span></div>
+        <div class="auto-val">残渣（自動算出）<br><b class="num" id="zansa">82.6 L</b><span class="auto-badge">G−製品−酵母</span></div>
+        <div><label>破損（通常は0）</label><input type="number" value="0" class="num"></div>
+      </div>
+      <div class="notice"><b>残渣は自動で計算されます。</b>タンク量540L − 製品434.4L − 酵母回収23L ＝ 82.6L。うちタンク底残9L（FV3のタンクマスタ値）を差し引いた分がオリ引き日に按分されます。破損はトラブル時のみ実数を入力してください。</div>
+      <div style="margin-top:16px"><button class="btn btn-primary" onclick="toast('容器詰めを登録しました。残渣を按分し、台帳を更新します（デモ）')">容器詰めを登録する</button></div>
+    </div>
+  </div>
+
+  <div class="subpage" id="sub-shukka">
+    <div class="card">
+      <h3>出荷の登録　<span style="font-size:11px;background:#E8F0E5;color:var(--ok);padding:2px 10px;border-radius:20px">この1行が申告まで自動でつながります</span></h3>
+      <div class="grid g3">
+        <div><label>出荷日</label><input type="date" value="2026-08-05"></div>
+        <div><label>液種</label>
+          <select id="shukkaLiquid" onchange="showTaxClass()">
+            <option value="ビール">RIPA2（ビール）</option>
+            <option value="ビール">IPL2（ビール）</option>
+            <option value="発泡酒①" selected>SA1（発泡酒①）</option>
+            <option value="発泡酒①">LA1（発泡酒①）</option>
+            <option value="発泡酒②">QAD4（発泡酒②）</option>
+          </select></div>
+        <div><label>容器</label>
+          <select><option selected>15Lケグ</option><option>10Lケグ</option><option>330ml瓶</option><option>一升瓶</option></select></div>
+        <div><label>本数</label><input type="number" value="1"></div>
+        <div><label>ケグ番号</label><input type="number" value="206" placeholder="必須"></div>
+        <div><label>出荷先</label>
+          <select><option selected>自店</option><option>西野金陵株式会社</option><option>三留商店</option><option>タニーズ</option><option>ふるさと納税</option><option>ネット配送</option><option>イベント</option></select></div>
+      </div>
+      <div style="margin-top:14px" class="auto-val">課税区分：<b id="taxClassShow">発泡酒① 麦芽50%以上</b><span class="auto-badge">液種から自動</span>　→　月次酒税計算へ自動集計</div>
+      <div class="notice"><b>ここが今回いちばん効く部分です。</b>現行は同じ月の出荷を、容器と課税区分の組み合わせごとに最大7つの列ブロックへ書き分けています。アプリではこの1行だけで、容器別・区分別の集計、リッター換算、税額計算まで自動で行われます。</div>
+      <div style="margin-top:16px"><button class="btn btn-primary" onclick="toast('出荷を登録しました。月次酒税計算に反映されます（デモ）')">出荷を登録する</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ バッチ台帳 ══════ -->
+<section class="page" id="page-ledger">
+  <div class="page-title"><h2>バッチ台帳</h2><span class="role-tag role-admin">管理する人</span></div>
+  <div class="kpi-strip">
+    <div class="kpi"><div class="kpi-label">発酵中</div><div class="kpi-val num">2<small> 件</small></div></div>
+    <div class="kpi"><div class="kpi-label">今月の製成</div><div class="kpi-val num">2,497<small> L</small></div></div>
+    <div class="kpi kpi-alert"><div class="kpi-label">検算エラー</div><div class="kpi-val num">1<small> 件</small></div></div>
+  </div>
+  <div class="card">
+    <h3>バッチ一覧</h3>
+    <div style="overflow-x:auto">
+    <table>
+      <thead><tr><th>順合</th><th>液種</th><th>課税区分</th><th>状態</th><th class="right">タンク量</th><th>リッターの行方</th><th class="right">製品</th><th class="right">残渣</th><th class="center">検算</th></tr></thead>
+      <tbody>
+        <tr><td class="num">332</td><td><b>RIPA2</b></td><td>ビール</td><td><span class="status st-packed">詰済</span></td><td class="right num">540</td>
+          <td><div class="tankbar"><div class="seg seg-beer" style="width:80.4%"></div><div class="seg seg-yeast" style="width:4.3%"></div><div class="seg seg-loss" style="width:13.6%"></div><div class="seg seg-residue" style="width:1.7%"></div></div></td>
+          <td class="right num">434.4</td><td class="right num">82.6</td><td class="center"><span class="check-ok">✓ 一致</span></td></tr>
+        <tr><td class="num">331</td><td><b>IPL2</b></td><td>ビール</td><td><span class="status st-packed">詰済</span></td><td class="right num">535</td>
+          <td><div class="tankbar"><div class="seg seg-beer" style="width:82.2%"></div><div class="seg seg-yeast" style="width:2.8%"></div><div class="seg seg-loss" style="width:13.3%"></div><div class="seg seg-residue" style="width:1.7%"></div></div></td>
+          <td class="right num">440.0</td><td class="right num">80.0</td><td class="center"><span class="check-ok">✓ 一致</span></td></tr>
+        <tr class="tr-alert"><td class="num">330</td><td><b>SA1</b></td><td>発泡酒①</td><td><span class="status st-packed">詰済</span></td><td class="right num">550</td>
+          <td><div class="tankbar"><div class="seg seg-beer" style="width:74%"></div><div class="seg seg-loss" style="width:18%"></div><div class="seg seg-residue" style="width:1.6%"></div></div></td>
+          <td class="right num">407.0</td><td class="right num">99.0</td><td class="center"><span class="check-ng">✗ 差異 −35L</span></td></tr>
+        <tr><td class="num">334</td><td><b>LA1</b></td><td>発泡酒①</td><td><span class="status st-ferment">発酵中</span></td><td class="right num">530</td>
+          <td><div class="tankbar"></div></td><td class="right num">—</td><td class="right num">—</td><td class="center" style="color:var(--stainless)">発酵5日目</td></tr>
+        <tr><td class="num">333</td><td><b>SA1</b></td><td>発泡酒①</td><td><span class="status st-ferment">発酵中</span></td><td class="right num">585</td>
+          <td><div class="tankbar"></div></td><td class="right num">—</td><td class="right num">—</td><td class="center" style="color:var(--stainless)">発酵3日目</td></tr>
+      </tbody>
+    </table></div>
+    <div class="tanklegend">
+      <span><i style="background:var(--beer)"></i>製品</span>
+      <span><i style="background:var(--yeast)"></i>酵母回収</span>
+      <span><i style="background:repeating-linear-gradient(135deg,var(--loss),var(--loss) 4px,#C8C1B6 4px,#C8C1B6 8px)"></i>残渣（オリ引き按分）</span>
+      <span><i style="background:var(--residue)"></i>タンク底残（タンク別）</span>
+    </div>
+  </div>
+  <div class="card">
+    <h3>バッチ #332 RIPA2 の記録</h3>
+    <div class="timeline">
+      <div class="tl-item"><div class="tl-date num">2026/07/12</div><div class="tl-body"><b>仕込</b>　麦芽142kg／汲み水580L　→ FV3へ払出　課税区分：ビール</div></div>
+      <div class="tl-item"><div class="tl-date num">2026/07/13〜07/22</div><div class="tl-body"><b>発酵記録 10件</b>　オリ引き実施日：7/15・7/18・7/21（残渣73.6Lを按分）</div></div>
+      <div class="tl-item"><div class="tl-date num">2026/07/20</div><div class="tl-body"><b>酵母回収</b>　23L</div></div>
+      <div class="tl-item"><div class="tl-date num">2026/08/05</div><div class="tl-body"><b>容器詰め</b>　15Lケグ×25本＋330ml瓶×180本＝434.4L　残渣82.6L（うちタンク底残9L）</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ 月次酒税計算 ══════ -->
+<section class="page" id="page-tax">
+  <div class="page-title"><h2>月次酒税計算</h2><span class="role-tag role-admin">申告書へ転記する数字を自動算出</span></div>
+
+  <div class="card">
+    <h3>対象月の選択</h3>
+    <div class="grid g3">
+      <div><label>集計年月</label>
+        <select id="taxMonth" onchange="calcTax()">
+          <option value="2026-08">2026年8月</option>
+          <option value="2026-09">2026年9月</option>
+          <option value="2026-10">2026年10月（改正後）</option>
+        </select></div>
+      <div><label>出荷記録の件数</label><div class="auto-val num"><b>412</b> 件<span class="auto-badge">自動集計</span></div></div>
+      <div><label>適用税率</label><div class="auto-val" id="rateNote"><b>2023年10月改正の税率</b></div></div>
+    </div>
+    <div class="notice" id="octNotice" style="display:none"><b>10月の酒税法改正に自動対応しています。</b>税率マスタに登録された適用開始日にもとづき、出荷日ごとに正しい税率が適用されます。改正日をまたぐ月でも、日付単位で新旧の税率が使い分けられます。シートの修正は不要です。</div>
+  </div>
+
+  <div class="card">
+    <h3>課税区分別の集計と税額</h3>
+    <div class="calcflow">
+      <b>出荷本数</b><span class="arw">×</span><b>容器容量(ml)</b><span class="arw">→</span><b>合計(ml)</b><span class="arw">→</span><b>L換算（端数切捨）</b><span class="arw">×</span><b>税率</b><span class="arw">→</span><b>酒税額</b>
+    </div>
+    <div style="overflow-x:auto">
+    <table id="taxTable">
+      <thead><tr><th>課税区分</th><th class="right">ケグ</th><th class="right">瓶</th><th class="right">一升瓶</th><th class="right">PET</th><th class="right">合計(L)</th><th class="right">税率</th><th class="right">酒税額</th></tr></thead>
+      <tbody id="taxBody"></tbody>
+      <tfoot><tr class="taxrow-total"><td>合計</td><td class="right num" id="tKeg"></td><td class="right num" id="tBin"></td><td class="right num" id="tIssho"></td><td class="right num" id="tPet"></td><td class="right num" id="tSum"></td><td></td><td class="right num" id="tTax"></td></tr></tfoot>
+    </table></div>
+
+    <div class="taxfinal">
+      <div><div class="lbl">減税前の酒税額</div><div class="num" style="font-size:20px" id="beforeTax">—</div></div>
+      <div style="font-size:20px;color:var(--amber)">→</div>
+      <div><div class="lbl">地ビール減税（20%減）適用後</div><div class="amt num" id="afterTax">—<small> 円</small></div><div class="sub">この金額を申告書に転記します</div></div>
+      <div style="margin-left:auto"><button class="btn btn-primary" onclick="confirmMonth()">月次を確定して出力</button></div>
+    </div>
+    <p class="hint" id="taxHint">申告期限：翌月末まで。確定すると以降の編集がロックされ、申告書転記用のPDFを出力できます。</p>
+  </div>
+
+  <div class="card">
+    <h3>現行のExcel作業との比較</h3>
+    <table>
+      <thead><tr><th>作業</th><th>現行（☆2ファイル）</th><th>アプリ</th></tr></thead>
+      <tbody>
+        <tr><td>出荷の記録</td><td>容器×課税区分ごとに最大7つの列ブロックへ書き分け</td><td class="check-ok">1行を登録するだけ</td></tr>
+        <tr><td>部門別の集計</td><td>ブロックごとに集計し、月締シートへ転記</td><td class="check-ok">自動</td></tr>
+        <tr><td>リッター換算・税額計算</td><td>月締シートで計算</td><td class="check-ok">自動</td></tr>
+        <tr><td>税率の改正対応</td><td>月シートに直接書かれた税率を1枚ずつ手修正</td><td class="check-ok">税率マスタに1行追加するだけ</td></tr>
+        <tr><td>申告書への転記</td><td>画面を見ながら手入力</td><td class="check-ok">転記用の数値表を出力</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════ 廃棄・亡失 ══════ -->
+<section class="page" id="page-haiki">
+  <div class="page-title"><h2>廃棄・亡失申告</h2><span class="role-tag role-admin">申告期限を自動管理</span></div>
+  <div class="card">
+    <h3>当月の廃棄・亡失記録</h3>
+    <div style="overflow-x:auto">
+    <table>
+      <thead><tr><th>実施日</th><th>液種</th><th>課税区分</th><th class="right">数量(L)</th><th>区分</th><th>原因</th><th>申告年月</th></tr></thead>
+      <tbody>
+        <tr><td class="num">2026/08/03</td><td>NKS1</td><td>発泡酒①</td><td class="right num">30.05</td><td>亡失</td><td>瓶詰め機・ホース残留</td><td class="num">2026年9月</td></tr>
+        <tr><td class="num">2026/08/06</td><td>RIPA2</td><td>ビール</td><td class="right num">12.50</td><td>亡失</td><td>瓶詰め機・ホース残留</td><td class="num">2026年9月</td></tr>
+        <tr><td class="num">2026/08/12</td><td>LA1</td><td>発泡酒①</td><td class="right num">28.00</td><td>亡失</td><td>瓶詰め機・ホース残留</td><td class="num">2026年9月</td></tr>
+        <tr><td class="num">2026/08/16</td><td>QAD4</td><td>発泡酒②</td><td class="right num">46.75</td><td>亡失</td><td>瓶詰め機・ホース残留</td><td class="num">2026年9月</td></tr>
+        <tr><td class="num">2026/08/22</td><td>SA1</td><td>発泡酒①</td><td class="right num">20.65</td><td>廃棄</td><td>酵母過多</td><td class="num">2026年8月</td></tr>
+      </tbody>
+      <tfoot><tr class="taxrow-total"><td colspan="3">合計リッター（申告書へ転記）</td><td class="right num">137.95</td><td colspan="3"></td></tr></tfoot>
+    </table></div>
+    <div class="notice"><b>申告期限を自動で判定します。</b>廃棄は当月末まで、製品化時の欠減・亡失は実施月の翌月末まで。期限が近づくと一覧に警告が表示されます。</div>
+    <div style="margin-top:16px"><button class="btn btn-primary" onclick="toast('廃棄・亡失申告書用の文面と数値を出力しました（デモ）')">申告書用に出力する</button></div>
+  </div>
+</section>
+
+<!-- ══════ マスタ・設定 ══════ -->
+<section class="page" id="page-master">
+  <div class="page-title"><h2>マスタ・設定</h2><span class="role-tag role-admin">ここを変えるだけで全計算に反映</span></div>
+
+  <div class="card">
+    <h3>税率マスタ　<span style="font-size:11px;background:#FBEFEC;color:var(--alert);padding:2px 10px;border-radius:20px">10月改正はここに1行足すだけ</span></h3>
+    <div style="overflow-x:auto">
+    <table>
+      <thead><tr><th>適用開始日</th><th>課税区分</th><th class="right">税率(円/L)</th><th>状態</th></tr></thead>
+      <tbody>
+        <tr><td class="num">2020/10/01</td><td>ビール</td><td class="right num">200.00</td><td><span class="badge-old">終了</span></td></tr>
+        <tr><td class="num">2023/10/01</td><td>ビール</td><td class="right num">181.00</td><td><span class="badge-new">適用中</span></td></tr>
+        <tr><td class="num">2023/10/01</td><td>発泡酒① 麦芽50%以上</td><td class="right num">181.00</td><td><span class="badge-new">適用中</span></td></tr>
+        <tr><td class="num">2023/10/01</td><td>発泡酒② 麦芽25〜50%</td><td class="right num">155.00</td><td><span class="badge-new">適用中</span></td></tr>
+        <tr><td class="num">2023/10/01</td><td>発泡酒③ 麦芽25%以下</td><td class="right num">134.25</td><td><span class="badge-new">適用中</span></td></tr>
+      </tbody>
+    </table></div>
+    <div style="margin-top:14px"><button class="btn btn-ghost btn-sm" onclick="addRate()">＋ 改正後の税率を登録する</button></div>
+    <div class="notice"><b>出荷日にもとづいて税率が自動選択されます。</b>現行のExcelでは税率が月シートに直接書かれているため、改正のたびに以降のシートを手で修正する必要がありますが、アプリではこの表に1行追加するだけで完了します。過去の申告データは当時の税率のまま保持されます。</div>
+  </div>
+
+  <div class="card">
+    <h3>タンクマスタ（底残液量をタンクごとに保持）</h3>
+    <div style="overflow-x:auto">
+    <table>
+      <thead><tr><th>タンク</th><th class="right">容量(L)</th><th class="right">底残液量(L)</th><th>備考</th></tr></thead>
+      <tbody>
+        <tr><td>FV1</td><td class="right num">600</td><td class="right num">9</td><td>取出口が最底部より上のため回収不能</td></tr>
+        <tr><td>FV2</td><td class="right num">600</td><td class="right num">9</td><td></td></tr>
+        <tr><td>FV3</td><td class="right num">600</td><td class="right num">9</td><td></td></tr>
+        <tr><td>FV4</td><td class="right num">800</td><td class="right num">12</td><td>大型タンク（例）</td></tr>
+        <tr><td>FV5</td><td class="right num">600</td><td class="right num">9</td><td></td></tr>
+        <tr><td>FV6</td><td class="right num">1000</td><td class="right num">14</td><td>増設分（例）</td></tr>
+      </tbody>
+    </table></div>
+    <div class="notice"><b>タンクごとに設定できます。</b>底残液はタンクの構造（取出口の位置）によって決まるため、サイズや形状が異なるタンクを増設された場合も、この表に追加するだけで対応できます。</div>
+  </div>
+
+  <div class="card">
+    <h3>容器マスタ</h3>
+    <div style="overflow-x:auto">
+    <table>
+      <thead><tr><th>容器名</th><th class="right">容量(ml)</th><th>状態</th></tr></thead>
+      <tbody>
+        <tr><td>15Lケグ</td><td class="right num">15,000</td><td><span class="badge-new">使用中</span></td></tr>
+        <tr><td>10Lケグ</td><td class="right num">10,000</td><td><span class="badge-new">使用中</span></td></tr>
+        <tr><td>330ml瓶</td><td class="right num">330</td><td><span class="badge-new">使用中</span></td></tr>
+        <tr><td>一升瓶</td><td class="right num">1,800</td><td><span class="badge-new">使用中</span></td></tr>
+        <tr><td>1500mlペット</td><td class="right num">1,500</td><td><span class="badge-old">停止中</span></td></tr>
+      </tbody>
+    </table></div>
+    <div style="margin-top:14px"><button class="btn btn-ghost btn-sm" onclick="toast('容器を追加できます（デモ）')">＋ 容器を追加する</button></div>
+    <div class="notice">15L以外のケグの使用頻度が高まる見込みとのことですので、容器は自由に追加できる設計にしています。ペットは停止中として登録し、再開時はここで戻せます。過去の記録はそのまま保持されます。</div>
+  </div>
+
+  <div class="card">
+    <h3>その他の設定</h3>
+    <div class="setting-row"><div class="setting-label"><b>地ビール減税率</b><small>酒税額に乗じる（現行20%減）</small></div><input class="setting-val num" value="0.8"><span>倍</span></div>
+    <div class="setting-row"><div class="setting-label"><b>残渣の按分（初期配分の重み）</b><small>オリ引き初期を厚く配分する比率</small></div><input class="setting-val num" value="1.5"><span>倍</span></div>
+    <div class="setting-row"><div class="setting-label"><b>酒税の申告期限</b><small>対象月の翌月末まで</small></div><input class="setting-val num" value="翌月末"><span></span></div>
+    <div class="setting-row"><div class="setting-label"><b>廃棄の申告期限</b><small>実施した当月末まで</small></div><input class="setting-val num" value="当月末"><span></span></div>
+    <div class="setting-row"><div class="setting-label"><b>欠減・亡失の申告期限</b><small>実施月の翌月末まで</small></div><input class="setting-val num" value="翌月末"><span></span></div>
+    <div style="margin-top:16px"><button class="btn btn-primary" onclick="toast('設定を保存しました（デモ）')">設定を保存する</button></div>
+  </div>
+</section>
+
+</main>
+<div id="toast">保存しました</div>
+
+<script>
+// ナビ
+const nav=document.getElementById('nav');
+nav.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+ nav.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+ document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+ document.getElementById('page-'+b.dataset.page).classList.add('on');window.scrollTo({top:0});});
+
+const ft=document.getElementById('frontTabs');
+ft.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+ ft.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+ document.querySelectorAll('.subpage').forEach(p=>p.classList.remove('on'));
+ document.getElementById('sub-'+b.dataset.sub).classList.add('on');});
+
+// 仕込
+const recipes={SA1:{tax:'発泡酒① 麦芽50%以上',malt:98,water:610},IPL2:{tax:'ビール',malt:145,water:580},RIPA2:{tax:'ビール',malt:142,water:580},LA1:{tax:'発泡酒① 麦芽50%以上',malt:105,water:600}};
+function prefillRecipe(){const r=recipes[document.getElementById('recipeSel').value];if(!r)return;
+ document.getElementById('maltKg').value=r.malt;document.getElementById('waterL').value=r.water;
+ const s=document.getElementById('taxSel');[...s.options].forEach(o=>{if(o.text===r.tax)s.value=o.value;});}
+function showResidue(){const v=document.getElementById('tankSel').value;
+ document.getElementById('residueVal').innerHTML='<b>'+v+' L</b><span class="auto-badge">タンク別</span>';}
+function pickOri(b){b.parentElement.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');}
+
+// 容器詰め
+function calcTsume(){let tot=0;
+ document.querySelectorAll('#tsumeTable tbody tr').forEach(tr=>{
+  const s=parseFloat(tr.querySelector('.tt').value),q=parseFloat(tr.querySelector('.tq').value)||0;
+  const sub=s*q;tr.querySelector('.ts').textContent=sub.toFixed(1)+' L';tot+=sub;});
+ document.getElementById('tsumeTotal').textContent=tot.toFixed(1)+' L';
+ const z=540-tot-23;document.getElementById('zansa').textContent=(z>0?z:0).toFixed(1)+' L';}
+function addRow(){const tb=document.querySelector('#tsumeTable tbody');const tr=document.createElement('tr');
+ tr.innerHTML='<td><select class="tt" onchange="calcTsume()"><option value="15" selected>15Lケグ</option><option value="10">10Lケグ</option><option value="0.33">330ml瓶</option><option value="1.8">一升瓶</option></select></td>'+
+ '<td><input type="number" class="tq" value="0" oninput="calcTsume()"></td><td class="right num ts">0.0 L</td><td><button class="btn-danger-ghost" onclick="delRow(this)">×</button></td>';
+ tb.appendChild(tr);}
+function delRow(b){if(document.querySelectorAll('#tsumeTable tbody tr').length<=1){toast('最低1行は必要です');return;}
+ b.closest('tr').remove();calcTsume();}
+
+// 出荷
+function showTaxClass(){const v=document.getElementById('shukkaLiquid').value;
+ const map={'ビール':'ビール','発泡酒①':'発泡酒① 麦芽50%以上','発泡酒②':'発泡酒② 麦芽25〜50%'};
+ document.getElementById('taxClassShow').textContent=map[v]||v;}
+
+// ── 酒税計算エンジン ──
+const containers={keg15:15000,keg10:10000,bin:330,issho:1800,pet:1500};
+// 月ごとのデモデータ（本数）
+const monthData={
+ '2026-08':{'ビール':{keg15:40,keg10:0,bin:329,issho:0,pet:243},'発泡酒① 麦芽50%以上':{keg15:25,keg10:6,bin:2971,issho:5,pet:0},'発泡酒② 麦芽25〜50%':{keg15:0,keg10:0,bin:0,issho:0,pet:0},'発泡酒③ 麦芽25%以下':{keg15:0,keg10:0,bin:0,issho:0,pet:0}},
+ '2026-09':{'ビール':{keg15:46,keg10:2,bin:410,issho:0,pet:0},'発泡酒① 麦芽50%以上':{keg15:31,keg10:4,bin:2640,issho:8,pet:0},'発泡酒② 麦芽25〜50%':{keg15:6,keg10:0,bin:320,issho:0,pet:0},'発泡酒③ 麦芽25%以下':{keg15:0,keg10:0,bin:0,issho:0,pet:0}},
+ '2026-10':{'ビール':{keg15:52,keg10:3,bin:480,issho:0,pet:0},'発泡酒① 麦芽50%以上':{keg15:28,keg10:5,bin:2850,issho:6,pet:0},'発泡酒② 麦芽25〜50%':{keg15:4,keg10:0,bin:260,issho:0,pet:0},'発泡酒③ 麦芽25%以下':{keg15:0,keg10:0,bin:0,issho:0,pet:0}},
+};
+// 税率マスタ（適用開始日つき）
+const rateMaster=[
+ {from:'2020-10-01',rates:{'ビール':200,'発泡酒① 麦芽50%以上':200,'発泡酒② 麦芽25〜50%':178,'発泡酒③ 麦芽25%以下':134.25}},
+ {from:'2023-10-01',rates:{'ビール':181,'発泡酒① 麦芽50%以上':181,'発泡酒② 麦芽25〜50%':155,'発泡酒③ 麦芽25%以下':134.25}},
+];
+let octRegistered=false;
+function getRates(ym){
+ const d=ym+'-01';
+ let sel=rateMaster[0];
+ rateMaster.forEach(r=>{if(r.from<=d)sel=r;});
+ return sel;
+}
+function calcTax(){
+ const ym=document.getElementById('taxMonth').value;
+ const data=monthData[ym];
+ const rs=getRates(ym);
+ const isOct=(ym==='2026-10');
+ document.getElementById('octNotice').style.display=isOct?'block':'none';
+ document.getElementById('rateNote').innerHTML='<b>'+(rs.from==='2023-10-01'&&!(isOct&&octRegistered)?'2023年10月改正の税率':(isOct&&octRegistered?'2026年10月改正の税率':'旧税率'))+'</b>';
+ const tb=document.getElementById('taxBody');tb.innerHTML='';
+ let tot={keg:0,bin:0,issho:0,pet:0,L:0,tax:0};
+ Object.keys(data).forEach(cls=>{
+  const d=data[cls];
+  const kegL=(d.keg15*containers.keg15+d.keg10*containers.keg10)/1000;
+  const binL=d.bin*containers.bin/1000;
+  const isshoL=d.issho*containers.issho/1000;
+  const petL=d.pet*containers.pet/1000;
+  const sumL=Math.floor((kegL+binL+isshoL+petL)*1000)/1000;
+  const rate=rs.rates[cls];
+  const tax=Math.floor(sumL*rate);
+  tot.keg+=kegL;tot.bin+=binL;tot.issho+=isshoL;tot.pet+=petL;tot.L+=sumL;tot.tax+=tax;
+  const tr=document.createElement('tr');
+  tr.innerHTML='<td>'+cls+'</td>'+
+   '<td class="right num">'+(kegL?kegL.toFixed(1):'—')+'</td>'+
+   '<td class="right num">'+(binL?binL.toFixed(2):'—')+'</td>'+
+   '<td class="right num">'+(isshoL?isshoL.toFixed(1):'—')+'</td>'+
+   '<td class="right num">'+(petL?petL.toFixed(1):'—')+'</td>'+
+   '<td class="right num"><b>'+sumL.toFixed(2)+'</b></td>'+
+   '<td class="right num">'+rate.toFixed(2)+'</td>'+
+   '<td class="right num">'+tax.toLocaleString()+'</td>';
+  tb.appendChild(tr);
+ });
+ document.getElementById('tKeg').textContent=tot.keg.toFixed(1);
+ document.getElementById('tBin').textContent=tot.bin.toFixed(2);
+ document.getElementById('tIssho').textContent=tot.issho.toFixed(1);
+ document.getElementById('tPet').textContent=tot.pet.toFixed(1);
+ document.getElementById('tSum').textContent=tot.L.toFixed(2);
+ document.getElementById('tTax').textContent=tot.tax.toLocaleString();
+ document.getElementById('beforeTax').textContent=tot.tax.toLocaleString()+' 円';
+ document.getElementById('afterTax').innerHTML=Math.floor(tot.tax*0.8).toLocaleString()+'<small> 円</small>';
+}
+function addRate(){
+ if(octRegistered){toast('すでに登録済みです');return;}
+ rateMaster.push({from:'2026-10-01',rates:{'ビール':155,'発泡酒① 麦芽50%以上':155,'発泡酒② 麦芽25〜50%':155,'発泡酒③ 麦芽25%以下':134.25}});
+ octRegistered=true;
+ const tb=document.querySelector('#page-master table tbody');
+ ['ビール','発泡酒① 麦芽50%以上','発泡酒② 麦芽25〜50%'].forEach(c=>{
+  const tr=document.createElement('tr');
+  tr.innerHTML='<td class="num">2026/10/01</td><td>'+c+'</td><td class="right num">155.00</td><td><span class="badge-new">登録済</span></td>';
+  tb.appendChild(tr);
+ });
+ toast('2026年10月の税率を登録しました。10月以降の出荷分から自動で新税率が適用されます');
+ calcTax();
+}
+function confirmMonth(){toast('⚠ 検算エラーのバッチ（#330 SA1）があるため確定できません。台帳から修正してください');}
+
+let tt;
+function toast(m){const e=document.getElementById('toast');e.textContent=m;e.classList.add('show');
+ clearTimeout(tt);tt=setTimeout(()=>e.classList.remove('show'),3600);}
+
+calcTsume();calcTax();
+</script>
+</body>
+</html>
