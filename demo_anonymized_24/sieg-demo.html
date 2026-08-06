@@ -3,9 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>〇〇建設 工事管理システム</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.min.js"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.css">
+<title>Sieg 工事管理システム</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   :root {
@@ -103,14 +101,64 @@
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--navy); color: white; padding: 12px 24px; border-radius: 24px; font-size: 13px; font-weight: 600; transition: transform 0.3s; z-index: 300; white-space: nowrap; }
   .toast.show { transform: translateX(-50%) translateY(0); }
 
-  .gantt .bar { fill: var(--steel) !important; }
-  .gantt .bar-progress { fill: var(--sky) !important; }
+
+  /* ===== 工事予定 表示切替 ===== */
+  .sw-box { background:#fff; border-radius:12px; padding:12px 14px; margin-bottom:12px; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+  .sw-label { font-size:11px; color:var(--muted); margin-bottom:7px; }
+  .sw-btns { display:flex; gap:8px; }
+  .sw { flex:1; padding:12px 8px; border:2px solid var(--border); border-radius:10px; background:#fff; font-size:13px; font-weight:700; color:var(--muted); cursor:pointer; line-height:1.4; }
+  .sw .sw-sub { display:block; font-size:10px; font-weight:400; margin-top:3px; }
+  .sw.on { border-color:var(--sky); background:#eaf4fd; color:var(--steel); }
+  .v-box { display:none; } .v-box.on { display:block; }
+  .month-nav { display:flex; align-items:center; justify-content:space-between; background:#fff; border-radius:12px; padding:12px 14px; margin-bottom:12px; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+  .month-nav .mn-m { font-size:17px; font-weight:700; color:var(--navy); }
+  .month-nav button { border:1.5px solid var(--border); background:#fff; border-radius:8px; padding:7px 12px; font-size:12px; color:var(--steel); font-weight:600; cursor:pointer; }
+  .hint { background:#fff9e6; border:1px solid #e8c766; border-radius:9px; padding:10px 12px; font-size:11.5px; color:#7a5c00; line-height:1.65; margin-bottom:12px; }
+  .sec-t { font-size:14px; font-weight:700; color:var(--navy); margin:16px 0 8px; display:flex; align-items:center; gap:8px; }
+  .sec-t .cnt { font-size:11px; font-weight:400; color:var(--muted); background:#eef2f6; padding:2px 8px; border-radius:10px; }
+  /* A案 */
+  .tl-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .tl { min-width:760px; }
+  .tl-head { display:flex; background:#f0f4f8; border-bottom:1px solid var(--border); }
+  .tl-head .lbl { width:150px; flex-shrink:0; padding:8px 10px; font-size:10.5px; color:var(--muted); font-weight:600; border-right:1px solid var(--border); position:sticky; left:0; background:#f0f4f8; z-index:2; }
+  .tl-head .days { display:flex; flex:1; }
+  .tl-head .d { flex:1; min-width:19px; text-align:center; font-size:10px; padding:8px 0; color:var(--muted); }
+  .tl-head .d.sun { color:#d9534f; } .tl-head .d.sat { color:#4a90d9; }
+  .tl-row { display:flex; border-bottom:1px solid var(--border); min-height:46px; }
+  .tl-row:last-child { border-bottom:none; }
+  .tl-row .lbl { width:150px; flex-shrink:0; padding:7px 10px; border-right:1px solid var(--border); position:sticky; left:0; background:#fff; z-index:2; }
+  .tl-row .nm { font-size:12px; font-weight:600; line-height:1.3; }
+  .tl-row .cl { font-size:10px; color:var(--muted); margin-top:1px; }
+  .tl-row .bars { flex:1; position:relative; display:flex; }
+  .tl-row .cell { flex:1; min-width:19px; border-right:1px solid #f2f5f8; }
+  .tl-row .cell.sun { background:#fdf6f5; } .tl-row .cell.today { background:#fffbe6; }
+  .bar { position:absolute; top:9px; height:26px; border-radius:5px; color:#fff; font-size:10.5px; font-weight:700; display:flex; align-items:center; padding-left:7px; overflow:hidden; white-space:nowrap; }
+  /* B案 */
+  .cal-head { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); background:#f0f4f8; border-bottom:1px solid var(--border); }
+  .cal-head div { text-align:center; font-size:11px; padding:8px 0; color:var(--muted); font-weight:600; }
+  .cal-head div.sun { color:#d9534f; } .cal-head div.sat { color:#4a90d9; }
+  .cal-grid { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); }
+  .cal-cell { border-right:1px solid var(--border); border-bottom:1px solid var(--border); min-height:74px; padding:4px 2px; min-width:0; overflow:hidden; cursor:pointer; }
+  .cal-cell:nth-child(7n) { border-right:none; }
+  .cal-cell.other { background:#fafbfc; }
+  .cal-cell.today { background:#fffbe6; }
+  .cal-date { font-size:11px; font-weight:600; color:#555; margin-bottom:3px; padding-left:2px; }
+  .cal-date.sun { color:#d9534f; } .cal-date.sat { color:#4a90d9; }
+  .ev { font-size:9px; color:#fff; border-radius:3px; padding:2px 4px; margin-bottom:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; line-height:1.35; }
+  .ev-more { font-size:9px; color:var(--muted); padding-left:3px; }
+  .dh { font-size:13px; font-weight:700; color:var(--navy); margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+  .d-item { padding:9px 0; border-bottom:1px solid #f2f5f8; }
+  .d-item:last-child { border-bottom:none; }
+  .d-item .di-nm { font-size:13px; font-weight:600; }
+  .d-item .di-sub { font-size:11px; color:var(--muted); margin-top:2px; }
+  .d-item .di-team { display:inline-block; font-size:10.5px; background:#eef4fa; color:var(--steel); padding:2px 8px; border-radius:9px; margin-top:4px; font-weight:600; }
+  .empty { text-align:center; color:var(--muted); font-size:12px; padding:20px 0; }
 </style>
 </head>
 <body>
 
 <div class="header">
-  <div class="header-logo">⚙ 〇〇建設 工事管理</div>
+  <div class="header-logo">⚙ Sieg 工事管理</div>
   <div class="header-user">鈴木 健二</div>
 </div>
 
@@ -182,15 +230,52 @@
   </div>
 </div>
 
-<!-- ガントページ -->
+<!-- 工事予定ページ -->
 <div class="page" id="page-gantt">
   <div class="gantt-header">
     <div class="gantt-title">工事予定</div>
     <button class="add-btn" onclick="openModal()">＋ 工事を追加</button>
   </div>
-  <div class="gantt-wrap">
-    <div class="gantt-container">
-      <svg id="gantt"></svg>
+
+  <div class="sw-box">
+    <div class="sw-label">表示のしかたを切り替えてください</div>
+    <div class="sw-btns">
+      <button class="sw on" onclick="swView('a',this)">Ａ案　横に見る<span class="sw-sub">工期の重なりが分かる</span></button>
+      <button class="sw" onclick="swView('b',this)">Ｂ案　カレンダー<span class="sw-sub">横スライド不要</span></button>
+    </div>
+  </div>
+
+  <div class="month-nav">
+    <button onclick="return false">◀ 前の月</button>
+    <div class="mn-m">2026年8月</div>
+    <button onclick="return false">次の月 ▶</button>
+  </div>
+
+  <!-- A案 -->
+  <div class="v-box on" id="v-a">
+    <div class="hint">現場ごとに1行。棒が工事期間です。<strong>1ヶ月ぶんを見るには右に指でスライド</strong>してください。</div>
+    <div class="sec-t">長期工事 <span class="cnt">6件</span></div>
+    <div class="card"><div class="tl-scroll"><div class="tl" id="tlLong"></div></div></div>
+    <div class="sec-t">短期工事 <span class="cnt">3件</span></div>
+    <div class="card"><div class="tl-scroll"><div class="tl" id="tlShort"></div></div></div>
+  </div>
+
+  <!-- B案 -->
+  <div class="v-box" id="v-b">
+    <div class="hint">Googleカレンダーと同じ見え方です。<strong>横のスライドは不要</strong>。日付をタップすると、その日の現場と班が下に出ます。</div>
+    <div class="sec-t">長期工事 <span class="cnt">6件</span></div>
+    <div class="card">
+      <div class="cal-head"><div class="sun">日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div class="sat">土</div></div>
+      <div class="cal-grid" id="calLong"></div>
+    </div>
+    <div class="sec-t">短期工事 <span class="cnt">3件</span></div>
+    <div class="card">
+      <div class="cal-head"><div class="sun">日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div class="sat">土</div></div>
+      <div class="cal-grid" id="calShort"></div>
+    </div>
+    <div class="card" style="padding:14px;">
+      <div class="dh" id="detailHead">日付をタップしてください</div>
+      <div id="detailBody"><div class="empty">カレンダーの日付をタップすると、その日に動いている現場が表示されます。</div></div>
     </div>
   </div>
 </div>
@@ -212,7 +297,7 @@
       <select class="form-input" id="m-tanto">
         <option>鈴木 健二</option>
         <option>上田</option>
-        <option>社長</option>
+        <option>村上社長</option>
         <option>＋ 新しい担当者を追加</option>
       </select>
     </div>
@@ -317,24 +402,77 @@ function saveNippo() {
   document.getElementById('nippo-form').style.display = 'none';
 }
 
-// ガント
-let gantt = null;
-let tasks = [
-  { id: '1', name: '岸和田マンション外壁工事', start: '2026-07-01', end: '2026-07-20', progress: 30 },
-  { id: '2', name: '泉大津倉庫 屋根修繕', start: '2026-07-08', end: '2026-07-15', progress: 0 },
-  { id: '3', name: '堺市戸建て リフォーム', start: '2026-07-20', end: '2026-08-10', progress: 0 },
-  { id: '4', name: 'test工事', start: '2026-07-05', end: '2026-07-25', progress: 60 },
+// ===== 工事予定：データ =====
+const YEAR=2026, MONTH=8, DAYS=31, TODAY=6;
+const LONG=[
+ {n:'メディケアゆう 新築工事', c:'芝野建設', s:1, e:31, team:'A班', ppl:4, col:'#0f8a7e'},
+ {n:'兼光産業 既存建物改修工事', c:'猪木工務店', s:1, e:20, team:'B班', ppl:3, col:'#c8551f'},
+ {n:'レイク豊中駅前 原状復旧工事', c:'池原建設', s:4, e:26, team:'木崎工業', ppl:2, col:'#5b4b9e'},
+ {n:'日栄新化 上棟増築工事', c:'北恵', s:8, e:31, team:'A班', ppl:5, col:'#b8860b'},
+ {n:'井上病院 洗面化粧台増設＋605号室改修', c:'サンスペース', s:12, e:29, team:'益田建装', ppl:3, col:'#2d6ea8'},
+ {n:'木津運送 倉庫改修', c:'木津運送', s:18, e:31, team:'C班', ppl:4, col:'#8a2f4a'},
 ];
+const SHORT=[
+ {n:'谷町マンション 補修', c:'前田組', s:3, e:5, team:'ジョイ', ppl:2, col:'#3f7d3f'},
+ {n:'堺市戸建て 内装直し', c:'北恵', s:11, e:13, team:'乾建装', ppl:2, col:'#a03a7a'},
+ {n:'泉大津 事務所改装', c:'猪木工務店', s:24, e:27, team:'TAKECHU', ppl:3, col:'#7a5c2e'},
+];
+function dowOf(d){ return new Date(YEAR, MONTH-1, d).getDay(); }
 
-function initGantt() {
-  if (gantt) return;
-  gantt = new Gantt('#gantt', tasks, {
-    view_mode: 'Week',
-    date_format: 'YYYY-MM-DD',
-    language: 'ja',
-    on_click: (task) => {},
-    on_date_change: (task, start, end) => { showToast('📅 期間を更新しました'); },
+function buildTL(el, list){
+  if(!list.length){ el.innerHTML='<div class="empty" style="padding:24px;">この期間の予定はありません</div>'; return; }
+  let h='<div class="tl-head"><div class="lbl">現場｜班｜人数</div><div class="days">';
+  for(let d=1; d<=DAYS; d++){ const w=dowOf(d); h+='<div class="d '+(w===0?'sun':w===6?'sat':'')+'">'+d+'</div>'; }
+  h+='</div></div>';
+  list.forEach(t=>{
+    h+='<div class="tl-row"><div class="lbl"><div class="nm">'+t.n+'</div><div class="cl">'+t.c+'</div></div><div class="bars">';
+    for(let d=1; d<=DAYS; d++){ const w=dowOf(d); h+='<div class="cell '+(w===0?'sun':'')+' '+(d===TODAY?'today':'')+'"></div>'; }
+    const left=((t.s-1)/DAYS*100).toFixed(3), width=(((t.e-t.s+1)/DAYS)*100).toFixed(3);
+    h+='<div class="bar" style="left:'+left+'%;width:'+width+'%;background:'+t.col+'">'+t.team+' '+t.ppl+'人</div></div></div>';
   });
+  el.innerHTML=h;
+}
+
+function buildCal(el, list, key){
+  const fd=dowOf(1); let h='';
+  for(let i=0;i<fd;i++) h+='<div class="cal-cell other"></div>';
+  for(let d=1; d<=DAYS; d++){
+    const w=dowOf(d), hits=list.filter(t=>d>=t.s&&d<=t.e);
+    h+='<div class="cal-cell '+(d===TODAY?'today':'')+'" onclick="showDetail('+d+',\''+key+'\')">';
+    h+='<div class="cal-date '+(w===0?'sun':w===6?'sat':'')+'">'+d+'</div>';
+    hits.slice(0,2).forEach(t=>{ h+='<div class="ev" style="background:'+t.col+'">'+(t.n.length>5?t.n.slice(0,5):t.n)+'</div>'; });
+    if(hits.length>2) h+='<div class="ev-more">+'+(hits.length-2)+'件</div>';
+    h+='</div>';
+  }
+  const rest=(7-((fd+DAYS)%7))%7;
+  for(let i=0;i<rest;i++) h+='<div class="cal-cell other"></div>';
+  el.innerHTML=h;
+}
+
+function showDetail(d, key){
+  const list = key==='long'?LONG:SHORT;
+  const hits = list.filter(t=>d>=t.s&&d<=t.e);
+  const label = key==='long'?'長期工事':'短期工事';
+  document.getElementById('detailHead').textContent = '8月'+d+'日（'+'日月火水木金土'[dowOf(d)]+'）の '+label;
+  const body=document.getElementById('detailBody');
+  if(!hits.length){ body.innerHTML='<div class="empty">この日に動いている現場はありません</div>'; return; }
+  body.innerHTML = hits.map(t=>'<div class="d-item"><div class="di-nm">'+t.n+'</div><div class="di-sub">'+t.c+'　／　'+t.s+'日〜'+t.e+'日</div><span class="di-team">'+t.team+'　'+t.ppl+'人</span></div>').join('');
+}
+
+function swView(v, btn){
+  document.querySelectorAll('.v-box').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.sw').forEach(x=>x.classList.remove('on'));
+  document.getElementById('v-'+v).classList.add('on');
+  btn.classList.add('on');
+}
+
+let scheduleInit=false;
+function initGantt(){
+  if(scheduleInit) return; scheduleInit=true;
+  buildTL(document.getElementById('tlLong'), LONG);
+  buildTL(document.getElementById('tlShort'), SHORT);
+  buildCal(document.getElementById('calLong'), LONG, 'long');
+  buildCal(document.getElementById('calShort'), SHORT, 'short');
 }
 
 function openModal() {
@@ -350,15 +488,9 @@ function closeModal() {
 
 function addTask() {
   const name = document.getElementById('m-name').value;
-  const start = document.getElementById('m-start').value;
-  const end = document.getElementById('m-end').value;
-  if (!name || !start || !end) { showToast('⚠ 必須項目を入力してください'); return; }
-  tasks.push({ id: String(tasks.length + 1), name, start, end, progress: 0 });
-  gantt = null;
-  document.getElementById('gantt').innerHTML = '';
-  initGantt();
+  if (!name) { showToast('⚠ 現場名を入力してください'); return; }
   closeModal();
-  showToast('✅ 工事を追加しました');
+  showToast('✅ 工事を追加しました（デモのため表示は変わりません）');
 }
 
 // トースト
