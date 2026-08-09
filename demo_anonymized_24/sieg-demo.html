@@ -142,6 +142,8 @@
   .cal-cell:nth-child(7n) { border-right:none; }
   .cal-cell.other { background:#fafbfc; }
   .cal-cell.today { background:#fffbe6; }
+  .cal-cell.sel { background:#e8f2ff; box-shadow:inset 0 0 0 2px var(--sky); }
+  .detail-card { border-top:3px solid var(--sky); }
   .cal-date { font-size:11px; font-weight:600; color:#555; margin-bottom:3px; padding-left:2px; }
   .cal-date.sun { color:#d9534f; } .cal-date.sat { color:#4a90d9; }
   .ev { font-size:9px; color:#fff; border-radius:3px; padding:2px 4px; margin-bottom:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; line-height:1.35; }
@@ -262,20 +264,26 @@
 
   <!-- B案 -->
   <div class="v-box" id="v-b">
-    <div class="hint">Googleカレンダーと同じ見え方です。<strong>横のスライドは不要</strong>。日付をタップすると、その日の現場と班が下に出ます。</div>
+    <div class="hint">Googleカレンダーと同じ見え方です。<strong>横のスライドは不要</strong>。日付をタップすると、そのすぐ下に現場と班が出ます。</div>
+
     <div class="sec-t">長期工事 <span class="cnt">6件</span></div>
     <div class="card">
       <div class="cal-head"><div class="sun">日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div class="sat">土</div></div>
       <div class="cal-grid" id="calLong"></div>
     </div>
+    <div class="card detail-card" style="padding:14px;">
+      <div class="dh" id="detailHead-long">日付をタップしてください</div>
+      <div id="detailBody-long"><div class="empty">上のカレンダーで日付をタップすると、その日に動いている現場が出ます。</div></div>
+    </div>
+
     <div class="sec-t">短期工事 <span class="cnt">3件</span></div>
     <div class="card">
       <div class="cal-head"><div class="sun">日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div class="sat">土</div></div>
       <div class="cal-grid" id="calShort"></div>
     </div>
-    <div class="card" style="padding:14px;">
-      <div class="dh" id="detailHead">日付をタップしてください</div>
-      <div id="detailBody"><div class="empty">カレンダーの日付をタップすると、その日に動いている現場が表示されます。</div></div>
+    <div class="card detail-card" style="padding:14px;">
+      <div class="dh" id="detailHead-short">日付をタップしてください</div>
+      <div id="detailBody-short"><div class="empty">上のカレンダーで日付をタップすると、その日に動いている現場が出ます。</div></div>
     </div>
   </div>
 </div>
@@ -438,7 +446,7 @@ function buildCal(el, list, key){
   for(let i=0;i<fd;i++) h+='<div class="cal-cell other"></div>';
   for(let d=1; d<=DAYS; d++){
     const w=dowOf(d), hits=list.filter(t=>d>=t.s&&d<=t.e);
-    h+='<div class="cal-cell '+(d===TODAY?'today':'')+'" onclick="showDetail('+d+',\''+key+'\')">';
+    h+='<div class="cal-cell '+(d===TODAY?'today':'')+'" onclick="showDetail('+d+',\''+key+'\',this)">';
     h+='<div class="cal-date '+(w===0?'sun':w===6?'sat':'')+'">'+d+'</div>';
     hits.slice(0,2).forEach(t=>{ h+='<div class="ev" style="background:'+t.col+'">'+(t.n.length>5?t.n.slice(0,5):t.n)+'</div>'; });
     if(hits.length>2) h+='<div class="ev-more">+'+(hits.length-2)+'件</div>';
@@ -449,12 +457,14 @@ function buildCal(el, list, key){
   el.innerHTML=h;
 }
 
-function showDetail(d, key){
+function showDetail(d, key, el){
   const list = key==='long'?LONG:SHORT;
   const hits = list.filter(t=>d>=t.s&&d<=t.e);
-  const label = key==='long'?'長期工事':'短期工事';
-  document.getElementById('detailHead').textContent = '8月'+d+'日（'+'日月火水木金土'[dowOf(d)]+'）の '+label;
-  const body=document.getElementById('detailBody');
+  const gridId = key==='long'?'calLong':'calShort';
+  document.querySelectorAll('#'+gridId+' .cal-cell').forEach(x=>x.classList.remove('sel'));
+  if(el) el.classList.add('sel');
+  document.getElementById('detailHead-'+key).textContent = '8月'+d+'日（'+'日月火水木金土'[dowOf(d)]+'）の現場';
+  const body=document.getElementById('detailBody-'+key);
   if(!hits.length){ body.innerHTML='<div class="empty">この日に動いている現場はありません</div>'; return; }
   body.innerHTML = hits.map(t=>'<div class="d-item"><div class="di-nm">'+t.n+'</div><div class="di-sub">'+t.c+'　／　'+t.s+'日〜'+t.e+'日</div><span class="di-team">'+t.team+'　'+t.ppl+'人</span></div>').join('');
 }
