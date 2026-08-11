@@ -6,279 +6,192 @@
 <title>目視検出表 入力 デモ｜株式会社ブックスタンド</title>
 <style>
 :root{
-  --bg:#101316;
-  --panel:#1a1f24;
-  --panel2:#222930;
-  --rule:#313a43;
-  --rule-soft:#262d34;
-  --ink:#e9ecef;
-  --ink-dim:#8b969f;
-  --ink-faint:#5d6771;
-  --amber:#ffb02e;
-  --amber-dim:#8a6520;
-  --orange:#ff6a13;
-  --green:#3fb950;
-  --red:#f0533f;
-  --blue:#4a9eda;
+  --bg:#101316; --panel:#1a1f24; --panel2:#222930;
+  --rule:#313a43; --rule-soft:#262d34;
+  --ink:#e9ecef; --ink-dim:#8b969f; --ink-faint:#5d6771;
+  --amber:#ffb02e; --amber-dim:#8a6520;
+  --orange:#ff6a13; --green:#3fb950; --red:#f0533f;
   --mono:ui-monospace,"SF Mono",Menlo,"Roboto Mono","Courier New",monospace;
   --jp:"Hiragino Kaku Gothic ProN","Yu Gothic Medium","Yu Gothic","Noto Sans JP","Meiryo",sans-serif;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{margin:0;padding:0;}
-body{
-  background:var(--bg);color:var(--ink);font-family:var(--jp);
-  font-size:16px;line-height:1.5;
-  padding-bottom:96px;
-  -webkit-font-smoothing:antialiased;
-}
+body{background:var(--bg);color:var(--ink);font-family:var(--jp);font-size:16px;line-height:1.5;
+  padding-bottom:96px;-webkit-font-smoothing:antialiased;}
 button{font-family:inherit;color:inherit;cursor:pointer;border:none;background:none;}
 input,select{font-family:inherit;font-size:inherit;color:inherit;}
 :focus-visible{outline:3px solid var(--amber);outline-offset:2px;}
 
-/* ── デモ帯 ── */
-.demobar{
-  background:repeating-linear-gradient(45deg,#3a2c10,#3a2c10 12px,#312609 12px,#312609 24px);
-  border-bottom:1px solid var(--amber-dim);
-  padding:7px 14px;font-size:12px;color:var(--amber);
-  display:flex;justify-content:space-between;align-items:center;gap:10px;
-}
+.demobar{background:repeating-linear-gradient(45deg,#3a2c10,#3a2c10 12px,#312609 12px,#312609 24px);
+  border-bottom:1px solid var(--amber-dim);padding:7px 14px;font-size:12px;color:var(--amber);
+  display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
 .demobar b{font-weight:700;}
-.demobar button{
-  border:1px solid var(--amber-dim);border-radius:5px;
-  padding:4px 10px;font-size:12px;color:var(--amber);white-space:nowrap;
-}
+.demobar .acts{display:flex;gap:6px;}
+.demobar button{border:1px solid var(--amber-dim);border-radius:5px;padding:4px 10px;
+  font-size:12px;color:var(--amber);white-space:nowrap;}
 
-/* ── ヘッダ ── */
-header{
-  background:var(--panel);border-bottom:1px solid var(--rule);
-  padding:12px 14px 0;position:sticky;top:0;z-index:30;
-}
-.plate{
-  display:flex;align-items:baseline;gap:10px;margin-bottom:11px;flex-wrap:wrap;
-}
-.plate h1{
-  margin:0;font-size:15px;font-weight:700;letter-spacing:.06em;
-}
-.plate .code{
-  font-family:var(--mono);font-size:11px;color:var(--ink-faint);letter-spacing:.08em;
-}
+header{background:var(--panel);border-bottom:1px solid var(--rule);padding:12px 14px 0;
+  position:sticky;top:0;z-index:30;}
+.plate{display:flex;align-items:baseline;gap:10px;margin-bottom:11px;flex-wrap:wrap;}
+.plate h1{margin:0;font-size:15px;font-weight:700;letter-spacing:.06em;}
+.plate .code{font-family:var(--mono);font-size:11px;color:var(--ink-faint);letter-spacing:.08em;}
 .plate .owner{font-size:10px;color:var(--ink-faint);margin-left:auto;}
-@media(max-width:520px){.plate .owner{margin-left:0;flex-basis:100%;}}
+@media(max-width:560px){.plate .owner{margin-left:0;flex-basis:100%;}}
 .chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:11px;}
-.chip{
-  background:var(--panel2);border:1px solid var(--rule);border-radius:7px;
-  padding:6px 9px;display:flex;align-items:center;gap:7px;min-height:42px;
-}
+.chip{background:var(--panel2);border:1px solid var(--rule);border-radius:7px;
+  padding:6px 9px;display:flex;align-items:center;gap:7px;min-height:42px;}
 .chip label{font-size:10px;color:var(--ink-dim);letter-spacing:.08em;}
-.chip select,.chip input{
-  background:none;border:none;font-size:15px;font-weight:600;padding:0;
-  min-width:0;
-}
+.chip select,.chip input{background:none;border:none;font-size:15px;font-weight:600;padding:0;min-width:0;}
 .chip select{appearance:none;padding-right:14px;
   background-image:linear-gradient(45deg,transparent 50%,var(--ink-dim) 50%),linear-gradient(135deg,var(--ink-dim) 50%,transparent 50%);
-  background-position:right 4px center,right 0px center;
-  background-size:5px 5px,5px 5px;background-repeat:no-repeat;}
+  background-position:right 4px center,right 0 center;background-size:5px 5px,5px 5px;background-repeat:no-repeat;}
 .chip select option{background:var(--panel2);color:var(--ink);}
 .chip input[type=date]{font-family:var(--mono);font-size:14px;}
 
-/* ── タブ ── */
-.tabs{display:flex;gap:0;margin:0 -14px;padding:0 14px;border-top:1px solid var(--rule-soft);}
-.tab{
-  padding:12px 15px;font-size:14px;font-weight:600;color:var(--ink-dim);
-  border-bottom:3px solid transparent;margin-bottom:-1px;
-}
+.tabs{display:flex;margin:0 -14px;padding:0 14px;border-top:1px solid var(--rule-soft);overflow-x:auto;}
+.tab{padding:12px 15px;font-size:14px;font-weight:600;color:var(--ink-dim);
+  border-bottom:3px solid transparent;margin-bottom:-1px;white-space:nowrap;}
 .tab[aria-selected=true]{color:var(--amber);border-bottom-color:var(--amber);}
 
-main{padding:14px;max-width:760px;margin:0 auto;}
-.panel{
-  background:var(--panel);border:1px solid var(--rule);border-radius:11px;
-  padding:14px;margin-bottom:14px;
-}
-.panel > h2{
-  margin:0 0 12px;font-size:11px;font-weight:700;letter-spacing:.14em;
-  color:var(--ink-dim);
-}
+main{padding:14px;max-width:1400px;margin:0 auto;}
+.panel{background:var(--panel);border:1px solid var(--rule);border-radius:11px;padding:14px;margin-bottom:14px;}
+.panel > h2{margin:0 0 12px;font-size:11px;font-weight:700;letter-spacing:.14em;color:var(--ink-dim);}
 
-/* ── タイムゲート ── */
 .gate{display:flex;align-items:stretch;gap:9px;}
-.gate .nav{
-  width:60px;background:var(--panel2);border:1px solid var(--rule);border-radius:9px;
-  font-size:26px;color:var(--ink-dim);display:flex;align-items:center;justify-content:center;
-}
+.gate .nav{width:60px;background:var(--panel2);border:1px solid var(--rule);border-radius:9px;
+  font-size:26px;color:var(--ink-dim);display:flex;align-items:center;justify-content:center;}
 .gate .nav:active{background:var(--rule);}
 .gate .nav[disabled]{opacity:.28;}
-.gate .now{
-  flex:1;background:#0b0e11;border:1px solid var(--rule);border-radius:9px;
-  padding:9px;text-align:center;position:relative;overflow:hidden;
-}
+.gate .now{flex:1;background:#0b0e11;border:1px solid var(--rule);border-radius:9px;
+  padding:9px;text-align:center;position:relative;overflow:hidden;}
 .gate .now .rng{font-size:11px;color:var(--ink-dim);font-family:var(--mono);letter-spacing:.05em;}
-.gate .now .hr{
-  font-family:var(--mono);font-size:44px;font-weight:700;color:var(--amber);
+.gate .now .hr{font-family:var(--mono);font-size:44px;font-weight:700;color:var(--amber);
   line-height:1.06;letter-spacing:.02em;font-variant-numeric:tabular-nums;
-  text-shadow:0 0 22px rgba(255,176,46,.28);
-}
+  text-shadow:0 0 22px rgba(255,176,46,.28);}
 .gate .now .hr small{font-size:17px;margin-left:2px;letter-spacing:0;}
-.gate .now .auto{
-  position:absolute;top:6px;right:8px;font-size:9px;letter-spacing:.1em;
-  color:var(--green);
-}
+.gate .now .auto{position:absolute;top:6px;right:8px;font-size:9px;letter-spacing:.1em;color:var(--green);}
 .gate .now.manual .auto{color:var(--orange);}
 .slots{display:flex;gap:5px;margin-top:10px;overflow-x:auto;padding-bottom:3px;}
-.slot{
-  flex:0 0 auto;min-width:44px;padding:7px 4px;border-radius:7px;
-  background:var(--panel2);border:1px solid var(--rule);
-  font-family:var(--mono);font-size:13px;text-align:center;color:var(--ink-dim);
-  position:relative;
-}
+.slot{flex:0 0 auto;min-width:44px;padding:7px 4px;border-radius:7px;background:var(--panel2);
+  border:1px solid var(--rule);font-family:var(--mono);font-size:13px;text-align:center;
+  color:var(--ink-dim);position:relative;}
 .slot[aria-current=true]{background:var(--amber);color:#191100;border-color:var(--amber);font-weight:700;}
-.slot.done::after{
-  content:"";position:absolute;left:50%;bottom:3px;transform:translateX(-50%);
-  width:5px;height:5px;border-radius:50%;background:var(--green);
-}
+.slot.done::after{content:"";position:absolute;left:50%;bottom:3px;transform:translateX(-50%);
+  width:5px;height:5px;border-radius:50%;background:var(--green);}
 .slot[aria-current=true].done::after{background:#191100;}
 
-/* ── 担当 ── */
-.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;}
-.seg button{
-  padding:15px 4px;border-radius:9px;background:var(--panel2);
-  border:1px solid var(--rule);font-size:17px;font-weight:700;color:var(--ink-dim);
-}
+.seg{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;max-width:440px;}
+.seg button{padding:16px 4px;border-radius:9px;background:var(--panel2);
+  border:1px solid var(--rule);font-size:18px;font-weight:700;color:var(--ink-dim);}
 .seg button[aria-pressed=true]{background:var(--orange);border-color:var(--orange);color:#fff;}
 .seg .sub{display:block;font-size:9px;font-weight:400;letter-spacing:.06em;margin-top:3px;opacity:.75;}
 
-/* ── カウンター（signature） ── */
-.counters{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
-@media(min-width:620px){.counters{grid-template-columns:repeat(3,1fr);}}
-.ctr{
-  background:var(--panel2);border:1px solid var(--rule);border-radius:9px;
-  padding:9px;display:flex;flex-direction:column;gap:8px;
-}
-.ctr .nm{font-size:12px;font-weight:600;letter-spacing:.03em;min-height:2.6em;display:flex;align-items:flex-start;}
-.ctr .nm .spare{
-  font-size:9px;color:var(--orange);border:1px solid var(--orange);border-radius:3px;
-  padding:0 3px;margin-left:5px;letter-spacing:.06em;flex:0 0 auto;
-}
-.window{
-  background:#05070a;border:1px solid #000;border-radius:4px;
-  box-shadow:inset 0 2px 7px rgba(0,0,0,.85);
-  padding:6px 4px;text-align:center;
-}
-.window .val{
-  font-family:var(--mono);font-size:29px;font-weight:700;color:var(--amber);
-  font-variant-numeric:tabular-nums;line-height:1;letter-spacing:.09em;
-}
+/* 8連カウンタ配置：横一列（入りきらなければ折り返す） */
+.counters{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:8px;}
+.ctr{background:var(--panel2);border:1px solid var(--rule);border-radius:9px;
+  padding:8px;display:flex;flex-direction:column;gap:7px;}
+.ctr .nm{font-size:11px;font-weight:600;letter-spacing:.02em;min-height:2.5em;
+  display:flex;align-items:flex-start;line-height:1.25;}
+.ctr .nm .spare{font-size:9px;color:var(--orange);border:1px solid var(--orange);border-radius:3px;
+  padding:0 3px;margin-left:4px;letter-spacing:.06em;flex:0 0 auto;}
+.window{background:#05070a;border:1px solid #000;border-radius:4px;
+  box-shadow:inset 0 2px 7px rgba(0,0,0,.85);padding:0;text-align:center;}
+.window .val{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--amber);
+  font-variant-numeric:tabular-nums;line-height:1;letter-spacing:.06em;
+  width:100%;background:none;border:none;text-align:center;padding:8px 2px;display:block;}
+.window .val:focus{outline:2px solid var(--amber);outline-offset:-2px;border-radius:4px;}
 .window .val.zero{color:#4a3a17;}
-.pm{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
-.pm button{
-  padding:13px 0;border-radius:7px;background:#2b333b;border:1px solid var(--rule);
-  font-size:23px;font-weight:700;line-height:1;
-}
-.pm button:active{background:var(--orange);border-color:var(--orange);color:#fff;}
-.pm button.minus{color:var(--ink-dim);}
+.tapadd{padding:16px 0;border-radius:7px;background:#2b333b;border:1px solid var(--rule);
+  font-size:24px;font-weight:700;line-height:1;}
+.tapadd:active{background:var(--orange);border-color:var(--orange);color:#fff;}
 
-/* ── 小計 ── */
-.subtotal{
-  margin-top:13px;background:#0b0e11;border:1px solid var(--rule);border-radius:9px;
-  padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;
-}
+.subtotal{margin-top:13px;background:#0b0e11;border:1px solid var(--rule);border-radius:9px;
+  padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
 .subtotal .lb{font-size:11px;color:var(--ink-dim);letter-spacing:.13em;}
-.subtotal .vl{
-  font-family:var(--mono);font-size:34px;font-weight:700;color:var(--green);
-  font-variant-numeric:tabular-nums;line-height:1;
-}
+.subtotal .vl{font-family:var(--mono);font-size:34px;font-weight:700;color:var(--green);
+  font-variant-numeric:tabular-nums;line-height:1;}
 .subtotal .vl small{font-size:13px;color:var(--ink-dim);margin-left:4px;font-weight:400;}
 
-/* ── 補助入力 ── */
 .field{margin-top:12px;}
 .field label{display:block;font-size:11px;color:var(--ink-dim);letter-spacing:.09em;margin-bottom:6px;}
 .field input[type=text],.field input[type=number],.field textarea{
   width:100%;background:var(--panel2);border:1px solid var(--rule);border-radius:8px;
-  padding:13px;font-size:16px;
-}
+  padding:13px;font-size:16px;}
 .field textarea{min-height:74px;resize:vertical;line-height:1.55;}
 .hint{font-size:11px;color:var(--ink-faint);margin-top:5px;line-height:1.5;}
 .molds{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
-.molds button{
-  font-family:var(--mono);font-size:13px;padding:8px 11px;border-radius:6px;
-  background:var(--panel2);border:1px solid var(--rule);color:var(--ink-dim);
-}
+.molds button{font-family:var(--mono);font-size:13px;padding:8px 11px;border-radius:6px;
+  background:var(--panel2);border:1px solid var(--rule);color:var(--ink-dim);}
 .molds button:active{background:var(--rule);color:var(--ink);}
 
-/* ── 送信バー ── */
-.submitbar{
-  position:fixed;left:0;right:0;bottom:0;z-index:40;
+.submitbar{position:fixed;left:0;right:0;bottom:0;z-index:40;
   background:linear-gradient(to top,var(--panel) 74%,rgba(26,31,36,0));
-  padding:12px 14px calc(12px + env(safe-area-inset-bottom));
-  border-top:1px solid var(--rule);
-}
-.submitbar .inner{max-width:760px;margin:0 auto;display:flex;gap:10px;align-items:center;}
-.btn-send{
-  flex:1;background:var(--orange);color:#fff;border-radius:10px;
-  padding:19px;font-size:18px;font-weight:700;letter-spacing:.08em;
-}
+  padding:12px 14px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--rule);}
+.submitbar .inner{max-width:1400px;margin:0 auto;display:flex;gap:10px;align-items:center;}
+.btn-send{flex:1;background:var(--orange);color:#fff;border-radius:10px;
+  padding:19px;font-size:18px;font-weight:700;letter-spacing:.08em;}
 .btn-send:active{background:#e05a0a;}
-.btn-send[disabled]{background:var(--rule);color:var(--ink-faint);}
-.btn-ghost{
-  border:1px solid var(--rule);border-radius:10px;padding:19px 15px;
-  font-size:14px;color:var(--ink-dim);background:var(--panel2);
-}
+.btn-ghost{border:1px solid var(--rule);border-radius:10px;padding:19px 15px;
+  font-size:14px;color:var(--ink-dim);background:var(--panel2);}
 
-/* ── トースト ── */
-.toast{
-  position:fixed;left:50%;bottom:104px;transform:translateX(-50%) translateY(14px);
-  background:var(--green);color:#062b0d;font-weight:700;font-size:15px;
-  padding:13px 22px;border-radius:9px;z-index:60;opacity:0;pointer-events:none;
-  transition:opacity .18s,transform .18s;max-width:88vw;text-align:center;
-}
+.toast{position:fixed;left:50%;bottom:104px;transform:translateX(-50%) translateY(14px);
+  background:var(--green);color:#062b0d;font-weight:700;font-size:15px;padding:13px 22px;
+  border-radius:9px;z-index:60;opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;
+  max-width:88vw;text-align:center;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 .toast.warn{background:var(--red);color:#fff;}
 
-/* ── モーダル ── */
-.mask{
-  position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:70;
-  display:flex;align-items:center;justify-content:center;padding:18px;
-}
+.mask{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:70;
+  display:flex;align-items:center;justify-content:center;padding:18px;}
 .mask[hidden]{display:none;}
-.modal{
-  background:var(--panel);border:1px solid var(--rule);border-radius:13px;
-  max-width:440px;width:100%;padding:20px;
-}
+.modal{background:var(--panel);border:1px solid var(--rule);border-radius:13px;
+  max-width:440px;width:100%;padding:20px;}
 .modal h3{margin:0 0 10px;font-size:17px;}
 .modal p{margin:0 0 8px;font-size:14px;color:var(--ink-dim);line-height:1.65;}
 .modal .row{display:flex;gap:10px;margin-top:17px;}
 .modal .row button{flex:1;padding:15px;border-radius:9px;font-size:15px;font-weight:700;}
-.modal .ok{background:var(--orange);color:#fff;}
+.modal .okbtn{background:var(--orange);color:#fff;}
 .modal .cancel{background:var(--panel2);border:1px solid var(--rule);color:var(--ink-dim);}
 
-/* ── 表 ── */
 table{width:100%;border-collapse:collapse;font-size:13px;}
 th,td{padding:9px 7px;text-align:left;border-bottom:1px solid var(--rule-soft);}
 th{font-size:10px;color:var(--ink-dim);letter-spacing:.09em;font-weight:600;}
 td.num{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums;}
 .empty{text-align:center;color:var(--ink-faint);padding:34px 0;font-size:14px;line-height:1.7;}
-.tag{font-family:var(--mono);font-size:11px;background:var(--panel2);border:1px solid var(--rule);border-radius:4px;padding:1px 5px;}
+.tag{font-family:var(--mono);font-size:11px;background:var(--panel2);border:1px solid var(--rule);
+  border-radius:4px;padding:1px 5px;}
 
-/* ── 設定 ── */
-.setrow{
-  display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--rule-soft);
-}
+.mrow{display:grid;grid-template-columns:1fr 130px;gap:10px;align-items:center;
+  padding:9px 0;border-bottom:1px solid var(--rule-soft);}
+.mrow .mnm{font-size:14px;}
+.mrow input.mval{width:100%;background:#05070a;border:1px solid var(--rule);border-radius:7px;
+  padding:12px;font-family:var(--mono);font-size:22px;font-weight:700;color:var(--amber);
+  text-align:right;font-variant-numeric:tabular-nums;}
+.mrow input.mnmedit{background:var(--panel2);border:1px solid var(--rule);border-radius:7px;
+  padding:9px 11px;font-size:14px;width:100%;}
+.mpair{display:grid;grid-template-columns:78px 1fr;gap:8px;align-items:center;}
+.mpair .fixed{font-size:13px;color:var(--ink-dim);}
+
+.setrow{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--rule-soft);}
 .setrow .ord{font-family:var(--mono);font-size:12px;color:var(--ink-faint);width:20px;}
 .setrow .nm2{flex:1;font-size:15px;}
 .sw{width:50px;height:29px;border-radius:15px;background:var(--rule);position:relative;flex:0 0 auto;}
-.sw::after{content:"";position:absolute;top:3px;left:3px;width:23px;height:23px;border-radius:50%;background:var(--ink-faint);transition:.15s;}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:23px;height:23px;border-radius:50%;
+  background:var(--ink-faint);transition:.15s;}
 .sw[aria-checked=true]{background:var(--amber-dim);}
 .sw[aria-checked=true]::after{left:24px;background:var(--amber);}
 
-.q{
-  border-left:3px solid var(--orange);background:rgba(255,106,19,.07);
-  padding:11px 13px;margin:13px 0;border-radius:0 7px 7px 0;
-}
+.q{border-left:3px solid var(--orange);background:rgba(255,106,19,.07);
+  padding:11px 13px;margin:13px 0;border-radius:0 7px 7px 0;}
 .q b{color:var(--orange);font-size:11px;letter-spacing:.1em;display:block;margin-bottom:4px;}
 .q p{margin:0;font-size:13px;color:var(--ink-dim);line-height:1.65;}
-footer{
-  text-align:center;padding:22px 18px 6px;font-size:11px;color:var(--ink-faint);
-  border-top:1px solid var(--rule-soft);margin:6px 14px 0;line-height:1.7;
-}
+.done-note{border-left:3px solid var(--green);background:rgba(63,185,80,.07);
+  padding:11px 13px;margin:13px 0;border-radius:0 7px 7px 0;}
+.done-note b{color:var(--green);font-size:11px;letter-spacing:.1em;display:block;margin-bottom:4px;}
+.done-note p{margin:0;font-size:13px;color:var(--ink-dim);line-height:1.65;}
+
+footer{text-align:center;padding:22px 18px 6px;font-size:11px;color:var(--ink-faint);
+  border-top:1px solid var(--rule-soft);margin:6px 14px 0;line-height:1.7;}
 [hidden]{display:none !important;}
 </style>
 </head>
@@ -286,12 +199,15 @@ footer{
 
 <div class="demobar">
   <span><b>デモ版</b>　実際のデータは保存されません</span>
-  <button id="btnClock">時刻を変える</button>
+  <span class="acts">
+    <button id="btnMode">端末：目視1側</button>
+    <button id="btnClock">時刻を変える</button>
+  </span>
 </div>
 
 <header>
   <div class="plate">
-    <h1>目視検出表</h1>
+    <h1 id="hdTitle">目視検出表</h1>
     <span class="code">QMK-860-015</span>
     <span class="owner">〇〇硝子工業様向け｜株式会社ブックスタンド</span>
   </div>
@@ -309,8 +225,11 @@ footer{
   </div>
 </header>
 
-<!-- ═══ 目視記録 ═══ -->
 <main id="tab-visual">
+  <div class="done-note">
+    <b>いただいたご指摘を反映しました</b>
+    <p>欠点を横一列に並べ、マイナスをなくして「＋」だけにしております。担当は、この端末が受け持つ2つ（目視1と交代）のみを表示します。</p>
+  </div>
 
   <section class="panel">
     <h2>記録する時間</h2>
@@ -329,6 +248,7 @@ footer{
   <section class="panel">
     <h2>担当</h2>
     <div class="seg" id="segRole"></div>
+    <p class="hint" id="roleHint"></p>
   </section>
 
   <section class="panel">
@@ -338,6 +258,7 @@ footer{
       <span class="lb">小　計</span>
       <span class="vl" id="subtotal">0<small>本</small></span>
     </div>
+    <p class="hint">数えるときは「＋」を押してください。押し間違えたときは、数字を押すと直接直せます。</p>
   </section>
 
   <section class="panel">
@@ -346,36 +267,37 @@ footer{
       <label for="fBox">箱詰</label>
       <input type="number" id="fBox" inputmode="numeric" min="0" placeholder="0">
     </div>
-    <div class="field">
+    <div class="field" id="noteWrap">
       <label for="fNote">申し送り（交代廻り）</label>
       <textarea id="fNote" placeholder="例）盲渡肌 #8.2 OK"></textarea>
       <div class="molds" id="molds"></div>
-      <p class="hint">型番は登録済みのものから選べます。手入力もできます。</p>
+      <p class="hint">協力会社様とご相談中とのことでしたので、いったん残しております。不要であれば「設定」で消せます。</p>
     </div>
   </section>
-
 </main>
 
-<!-- ═══ 機械記録 ═══ -->
 <main id="tab-machine" hidden>
-  <div class="q">
-    <b>確認したい点</b>
-    <p>この画面をいつ入力されているかをお聞かせください。交代の間際に1直ぶんまとめてでしょうか、それとも1時間ごとでしょうか。<br>
-    また、全自動検査機（Techno Scan）からデータを取り出せる場合、この画面自体が不要になります。</p>
+  <div class="done-note">
+    <b>いただいたご指摘を反映しました</b>
+    <p>1直に1回の記録とのことでしたので、タップではなく数字を入力する形にしております。全自動検査機は検査数と破棄数のみ。カウンター盤はビリを10項目に増やし、名前の変更と表示・非表示ができるようにいたしました。</p>
   </div>
 
   <section class="panel">
     <h2>全自動検査機（Techno Scan BAM-5721）</h2>
-    <div class="counters" id="mcAuto"></div>
+    <div id="mcAuto"></div>
   </section>
 
   <section class="panel">
     <h2>カウンター盤</h2>
-    <div class="counters" id="mcPanel"></div>
+    <div id="mcPanel"></div>
   </section>
+
+  <div class="q">
+    <b>ご確認ください</b>
+    <p>この画面は目視の記録とは別の端末でお使いいただく想定です。実際には別のURLをご用意し、検査課の端末にはこちらだけが開くようにいたします。</p>
+  </div>
 </main>
 
-<!-- ═══ 送信済み ═══ -->
 <main id="tab-log" hidden>
   <section class="panel">
     <h2>この直で送信された記録</h2>
@@ -383,31 +305,35 @@ footer{
   </section>
 </main>
 
-<!-- ═══ 設定 ═══ -->
 <main id="tab-setting" hidden>
-  <div class="q">
-    <b>確認したい点</b>
-    <p>紙の帳票では、欠点の欄に空白が3列ございました。ここに入る予定の種類がございましたらお知らせください。<br>
-    下のように、あとから増やしたり、使わないものを隠したりできる形にしております。</p>
-  </div>
   <section class="panel">
-    <h2>欠点の種類</h2>
-    <div id="setList"></div>
-    <p class="hint" style="margin-top:12px">スイッチを切ると入力画面から消えます。並び順も変えられます。</p>
+    <h2>この端末の担当</h2>
+    <div class="seg" id="setSide"></div>
+    <p class="hint">目視は常時2名とのことでしたので、端末ごとに受け持ちを決めます。ここで選んだ側の担当だけが入力画面に出ます。</p>
   </section>
+
   <section class="panel">
-    <h2>型番</h2>
-    <div id="setMold"></div>
-    <p class="hint" style="margin-top:12px">登録した型番だけが選べます。打ち間違いが起きません。</p>
+    <h2>欠点の種類（目視）</h2>
+    <div id="setList"></div>
+    <p class="hint" style="margin-top:12px">スイッチを切ると入力画面から消えます。紙の予備欄3列に入るものが決まりましたらお知らせください。</p>
+  </section>
+
+  <section class="panel">
+    <h2>ビリの項目（カウンター盤）</h2>
+    <div id="setBiri"></div>
+    <p class="hint" style="margin-top:12px">名前は機械記録の画面で自由に変えられます。使わない項目はスイッチを切ってください。</p>
+  </section>
+
+  <section class="panel">
+    <h2>そのほか</h2>
+    <div class="setrow">
+      <span class="ord">—</span>
+      <span class="nm2">申し送り欄を使う</span>
+      <button class="sw" id="swNote" role="switch" aria-checked="true"></button>
+    </div>
+    <p class="hint" style="margin-top:12px">不要と決まりましたら、ここを切っていただければ画面から消えます。</p>
   </section>
 </main>
-
-<div class="submitbar" id="bar">
-  <div class="inner">
-    <button class="btn-ghost" id="btnClear">やり直す</button>
-    <button class="btn-send" id="btnSend">送信する</button>
-  </div>
-</div>
 
 <footer>
   © 2026 株式会社ブックスタンド ｜ 本デモはサンプルデータで動作します。実際のシステムでは貴社のスプレッドシートへ記録されます。
@@ -421,299 +347,314 @@ footer{
     <div id="mBody"></div>
     <div class="row">
       <button class="cancel" id="mCancel">やめる</button>
-      <button class="ok" id="mOk">上書きする</button>
+      <button class="okbtn" id="mOk">上書きする</button>
     </div>
   </div>
 </div>
 
+<div class="submitbar" id="bar">
+  <div class="inner">
+    <button class="btn-ghost" id="btnClear">やり直す</button>
+    <button class="btn-send" id="btnSend">送信する</button>
+  </div>
+</div>
+
 <script>
-/* ══════════ 設定 ══════════ */
 const BU = [
-  {id:'1部', hours:[8,9,10,11,12,13,14],      work:'7:00〜14:00'},
-  {id:'2部', hours:[15,16,17,18,19,20,21,22], work:'14:00〜22:00'},
-  {id:'3部', hours:[23,0,1,2,3,4,5,6,7],      work:'22:00〜翌7:00'}
+  {id:'1部', hours:[8,9,10,11,12,13,14]},
+  {id:'2部', hours:[15,16,17,18,19,20,21,22]},
+  {id:'3部', hours:[23,0,1,2,3,4,5,6,7]}
 ];
 const FLOORS = ['1F','2F','3F'];
-const ITEMS  = ['フレグランス200ml 茶','フレグランス300ml','NY-350','NY-330','LT-10','強化ガラス','網入りガラス','熱線吸収ガラス'];
-const ROLES  = [
-  {id:'目1', sub:'レギュラー'},
-  {id:'交',  sub:'休憩交代', k:'交a'},
-  {id:'目2', sub:'レギュラー'},
-  {id:'交',  sub:'休憩交代', k:'交b'}
+const ITEMS  = ['フレグランス200ml 茶','フレグランス300ml','NY-350','NY-330','LT-10','強化ガラス','網入りガラス'];
+
+const SIDES = [
+  {id:'目視1側', roles:[{id:'目1',sub:'レギュラー'},{id:'交',sub:'休憩交代'}]},
+  {id:'目視2側', roles:[{id:'目2',sub:'レギュラー'},{id:'交',sub:'休憩交代'}]}
 ];
+
 let DEFECTS = [
-  {n:'汚れ', on:true}, {n:'アワ', on:true}, {n:'ブツ', on:true},
-  {n:'びり', on:true}, {n:'すじ・しわ・デルド', on:true}, {n:'その他', on:true},
-  {n:'肩の汚れ', on:false, spare:true},
-  {n:'（予備2）', on:false, spare:true},
-  {n:'（予備3）', on:false, spare:true}
+  {n:'汚れ',on:true},{n:'アワ',on:true},{n:'ブツ',on:true},
+  {n:'びり',on:true},{n:'すじ・しわ・デルド',on:true},{n:'その他',on:true},
+  {n:'肩の汚れ',on:false,spare:true},{n:'（予備2）',on:false,spare:true},{n:'（予備3）',on:false,spare:true}
 ];
 const MOLDS = ['#1','#2','#3','#4','#5','#6','#7','#8','#8.2'];
-const MC_AUTO  = ['検査数','排出数','胴異物','胴スジA','胴スジB','底','底コーナー','シフトズレ'];
-const MC_PANEL = ['ビリ1 天シワ','ビリ2 天アワ','ビリ3 外観','ビリ4 底','ビリ5 肉厚','マルチ','天すじ','胴径','天宮','高サ','口内径','検査総数','不良総数'];
 
-/* ══════════ 状態 ══════════ */
-let clockOffset = 0;              // デモ用の時刻ずらし（時間）
-let manualHour  = null;           // 手動で選んだ時間
+const MC_AUTO = ['検査数','破棄数'];
+let BIRI = [
+  {n:'天シワ',on:true},{n:'天アワ',on:true},{n:'外観',on:true},{n:'底',on:true},{n:'肉厚',on:true},
+  {n:'',on:false},{n:'',on:false},{n:'',on:false},{n:'',on:false},{n:'',on:false}
+];
+const MC_FIX = ['マルチ','天すじ','胴径','天宮','高サ','口内径','検査総数','不良総数'];
+
+let side = 0, clockOffset = 0, manualHour = null;
 let cur = {bu:null, hour:null, role:0};
-let vals = {};                    // 欠点の入力値
-let mcVals = {};                  // 機械記録の入力値
-const sent = [];                  // 送信済み
+let vals = {}, mcVals = {}, useNote = true;
+const sent = [];
 
 const $  = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
+const roles = () => SIDES[side].roles;
 
-function now(){
-  const d = new Date();
-  d.setHours(d.getHours() + clockOffset);
-  return d;
-}
-function buOfHour(h){ return BU.find(b => b.hours.includes(h)) || BU[0]; }
-
-/* 記録すべき時間＝前の1時間 */
+function now(){ const d=new Date(); d.setHours(d.getHours()+clockOffset); return d; }
+function buOfHour(h){ return BU.find(b=>b.hours.includes(h)) || BU[0]; }
 function autoHour(){
-  const h = (now().getHours() + 23) % 24;
+  const h=(now().getHours()+23)%24;
   return buOfHour(h).hours.includes(h) ? h : buOfHour(h).hours[0];
 }
-function activeHour(){ return manualHour !== null ? manualHour : autoHour(); }
-
-/* 3部が日をまたいだあと（0〜7時台）は、直が始まった日＝前日を生産年月日とする */
+function activeHour(){ return manualHour!==null ? manualHour : autoHour(); }
 function autoDate(){
-  const d = now(), h = activeHour();
-  if (buOfHour(h).id === '3部' && h <= 7) d.setDate(d.getDate() - 1);
+  const d=now(), h=activeHour();
+  if(buOfHour(h).id==='3部' && h<=7) d.setDate(d.getDate()-1);
   return d.toISOString().slice(0,10);
 }
-const key = (d,b,f,h,r) => [d,b,f,h,r].join('|');
+const key=(d,b,f,h,r)=>[d,b,f,h,r].join('|');
 
-/* ══════════ 描画 ══════════ */
-function fillSelect(el, arr){
-  el.innerHTML = '';
-  arr.forEach(v => { const o=document.createElement('option'); o.value=o.textContent=v; el.appendChild(o); });
-}
+function fillSelect(el,arr){ el.innerHTML='';
+  arr.forEach(v=>{const o=document.createElement('option');o.value=o.textContent=v;el.appendChild(o);}); }
 
 function renderGate(){
-  const h  = activeHour();
-  const bu = buOfHour(h);
-  cur.hour = h; cur.bu = bu.id;
+  const h=activeHour(), bu=buOfHour(h);
+  cur.hour=h; cur.bu=bu.id;
+  $('#fBu').value=bu.id;
+  $('#fDate').value=autoDate();
+  $('#hNow').innerHTML=h+'<small>時台</small>';
+  $('#hRange').textContent=String(h).padStart(2,'0')+':00 — '+String((h+1)%24).padStart(2,'0')+':00';
+  $('#autoBadge').textContent = manualHour===null?'自動':'手動';
+  $('#nowBox').classList.toggle('manual', manualHour!==null);
+  const i=bu.hours.indexOf(h);
+  $('#hPrev').disabled = i<=0;
+  $('#hNext').disabled = i>=bu.hours.length-1;
 
-  $('#fBu').value = bu.id;
-  $('#fDate').value = autoDate();
-
-  $('#hNow').innerHTML = h + '<small>時台</small>';
-  $('#hRange').textContent = String(h).padStart(2,'0') + ':00 — ' + String((h+1)%24).padStart(2,'0') + ':00';
-  $('#autoBadge').textContent = manualHour === null ? '自動' : '手動';
-  $('#nowBox').classList.toggle('manual', manualHour !== null);
-
-  const i = bu.hours.indexOf(h);
-  $('#hPrev').disabled = i <= 0;
-  $('#hNext').disabled = i >= bu.hours.length - 1;
-
-  const box = $('#slots'); box.innerHTML = '';
-  bu.hours.forEach(hh => {
-    const b = document.createElement('button');
-    b.className = 'slot'; b.textContent = hh;
-    b.setAttribute('aria-current', hh === h);
-    const anyDone = ROLES.some((r,ri) =>
-      sent.some(s => s.k === key($('#fDate').value, bu.id, $('#fFloor').value, hh, ri)));
-    if (anyDone) b.classList.add('done');
-    b.onclick = () => { manualHour = hh; renderGate(); renderCounters(); };
+  const box=$('#slots'); box.innerHTML='';
+  bu.hours.forEach(hh=>{
+    const b=document.createElement('button');
+    b.className='slot'; b.textContent=hh;
+    b.setAttribute('aria-current', hh===h);
+    if(roles().some((r,ri)=>sent.some(s=>s.k===key($('#fDate').value,bu.id,$('#fFloor').value,hh,ri))))
+      b.classList.add('done');
+    b.onclick=()=>{ manualHour=hh; renderGate(); renderCounters(); };
     box.appendChild(b);
   });
 }
 
 function renderRoles(){
-  const box = $('#segRole'); box.innerHTML = '';
-  ROLES.forEach((r,i) => {
-    const b = document.createElement('button');
-    b.innerHTML = r.id + '<span class="sub">' + r.sub + '</span>';
-    b.setAttribute('aria-pressed', i === cur.role);
-    b.onclick = () => { cur.role = i; renderRoles(); renderCounters(); };
+  const box=$('#segRole'); box.innerHTML='';
+  roles().forEach((r,i)=>{
+    const b=document.createElement('button');
+    b.innerHTML=r.id+'<span class="sub">'+r.sub+'</span>';
+    b.setAttribute('aria-pressed', i===cur.role);
+    b.onclick=()=>{ cur.role=i; renderRoles(); renderCounters(); };
     box.appendChild(b);
   });
+  $('#roleHint').textContent='この端末は「'+SIDES[side].id+'」を受け持っています。もう一方は別の端末で入力します。';
 }
 
 function counterCard(name, get, set, spare){
-  const c = document.createElement('div'); c.className = 'ctr';
-  const nm = document.createElement('div'); nm.className = 'nm';
-  nm.textContent = name;
-  if (spare){ const s=document.createElement('span'); s.className='spare'; s.textContent='予備'; nm.appendChild(s); }
-  const w = document.createElement('div'); w.className = 'window';
-  const v = document.createElement('div'); v.className = 'val';
-  const paint = () => {
-    const n = get();
-    v.textContent = String(n).padStart(3,'0');
-    v.classList.toggle('zero', n === 0);
-  };
+  const c=document.createElement('div'); c.className='ctr';
+  const nm=document.createElement('div'); nm.className='nm'; nm.textContent=name;
+  if(spare){const s=document.createElement('span');s.className='spare';s.textContent='予備';nm.appendChild(s);}
+  const w=document.createElement('div'); w.className='window';
+  const v=document.createElement('input');
+  v.className='val'; v.type='text'; v.inputMode='numeric'; v.setAttribute('aria-label',name);
+  const paint=()=>{ const n=get();
+    if(document.activeElement!==v) v.value=String(n).padStart(3,'0');
+    v.classList.toggle('zero', n===0); };
+  v.addEventListener('focus',()=>{ v.value=get()?String(get()):''; v.select(); });
+  v.addEventListener('input',()=>{ const n=parseInt(v.value.replace(/[^0-9]/g,''),10);
+    set(isNaN(n)?0:Math.min(n,999)); v.classList.toggle('zero',get()===0); afterChange(); });
+  v.addEventListener('blur',()=>{ paint(); afterChange(); });
   w.appendChild(v);
-  const pm = document.createElement('div'); pm.className = 'pm';
-  const mi = document.createElement('button'); mi.className='minus'; mi.textContent='−';
-  const pl = document.createElement('button'); pl.textContent='＋';
-  mi.onclick = () => { set(Math.max(0, get()-1)); paint(); afterChange(); };
-  pl.onclick = () => { set(get()+1); paint(); afterChange(); };
-  pm.append(mi, pl);
-  c.append(nm, w, pm);
-  paint();
+  const pl=document.createElement('button'); pl.className='tapadd'; pl.type='button'; pl.textContent='＋';
+  pl.onclick=()=>{ v.blur(); set(Math.min(999,get()+1)); paint(); afterChange(); };
+  c.append(nm,w,pl); paint();
   return c;
 }
 
 function renderCounters(){
-  const box = $('#counters'); box.innerHTML = '';
-  vals = vals || {};
-  DEFECTS.filter(d => d.on).forEach(d => {
-    if (vals[d.n] === undefined) vals[d.n] = 0;
-    box.appendChild(counterCard(d.n, () => vals[d.n], x => vals[d.n] = x, d.spare));
+  const box=$('#counters'); box.innerHTML='';
+  DEFECTS.filter(d=>d.on).forEach(d=>{
+    if(vals[d.n]===undefined) vals[d.n]=0;
+    box.appendChild(counterCard(d.n, ()=>vals[d.n], x=>vals[d.n]=x, d.spare));
   });
+  $('#noteWrap').hidden = !useNote;
   afterChange();
 }
-
 function afterChange(){
-  const t = DEFECTS.filter(d=>d.on).reduce((a,d) => a + (vals[d.n]||0), 0);
-  $('#subtotal').innerHTML = t + '<small>本</small>';
+  const t=DEFECTS.filter(d=>d.on).reduce((a,d)=>a+(vals[d.n]||0),0);
+  $('#subtotal').innerHTML=t+'<small>本</small>';
 }
 
+function machineRow(label, editable, idx){
+  const r=document.createElement('div'); r.className='mrow';
+  const left=document.createElement('div');
+  if(editable){
+    const p=document.createElement('div'); p.className='mpair';
+    const fx=document.createElement('span'); fx.className='fixed'; fx.textContent='ビリ'+(idx+1);
+    const ip=document.createElement('input'); ip.className='mnmedit'; ip.type='text';
+    ip.value=BIRI[idx].n; ip.placeholder='名前を入力';
+    ip.addEventListener('input',()=>{ BIRI[idx].n=ip.value; });
+    ip.addEventListener('blur',()=>{ renderSettings(); });
+    p.append(fx,ip); left.appendChild(p);
+  } else {
+    const s=document.createElement('div'); s.className='mnm'; s.textContent=label; left.appendChild(s);
+  }
+  const k = editable ? 'biri'+idx : label;
+  if(mcVals[k]===undefined) mcVals[k]=0;
+  const v=document.createElement('input');
+  v.className='mval'; v.type='text'; v.inputMode='numeric'; v.value=String(mcVals[k]);
+  v.setAttribute('aria-label', editable ? 'ビリ'+(idx+1) : label);
+  v.addEventListener('input',()=>{ const n=parseInt(v.value.replace(/[^0-9]/g,''),10);
+    mcVals[k]=isNaN(n)?0:n; });
+  v.addEventListener('blur',()=>{ v.value=String(mcVals[k]); });
+  r.append(left,v);
+  return r;
+}
 function renderMachine(){
-  const a = $('#mcAuto'); a.innerHTML = '';
-  MC_AUTO.forEach(n => {
-    if (mcVals[n] === undefined) mcVals[n] = 0;
-    a.appendChild(counterCard(n, () => mcVals[n], x => mcVals[n] = x));
-  });
-  const p = $('#mcPanel'); p.innerHTML = '';
-  MC_PANEL.forEach(n => {
-    if (mcVals[n] === undefined) mcVals[n] = 0;
-    p.appendChild(counterCard(n, () => mcVals[n], x => mcVals[n] = x));
-  });
+  const a=$('#mcAuto'); a.innerHTML='';
+  MC_AUTO.forEach(n=>a.appendChild(machineRow(n,false)));
+  const p=$('#mcPanel'); p.innerHTML='';
+  BIRI.forEach((b,i)=>{ if(b.on) p.appendChild(machineRow(null,true,i)); });
+  MC_FIX.forEach(n=>p.appendChild(machineRow(n,false)));
 }
 
 function renderMolds(){
-  const box = $('#molds'); box.innerHTML = '';
-  MOLDS.forEach(m => {
-    const b = document.createElement('button'); b.textContent = m;
-    b.onclick = () => {
-      const t = $('#fNote');
-      t.value = (t.value + (t.value && !t.value.endsWith(' ') ? ' ' : '') + m + ' ');
-      t.focus();
-    };
+  const box=$('#molds'); box.innerHTML='';
+  MOLDS.forEach(m=>{
+    const b=document.createElement('button'); b.textContent=m;
+    b.onclick=()=>{ const t=$('#fNote');
+      t.value=t.value+(t.value&&!t.value.endsWith(' ')?' ':'')+m+' '; t.focus(); };
     box.appendChild(b);
   });
 }
 
+function swRow(label, checked, onToggle, ord, spare){
+  const r=document.createElement('div'); r.className='setrow';
+  const o=document.createElement('span'); o.className='ord'; o.textContent=ord;
+  const n=document.createElement('span'); n.className='nm2'; n.textContent=label;
+  if(spare){const s=document.createElement('span');
+    s.style.cssText='font-size:9px;color:var(--orange);border:1px solid var(--orange);border-radius:3px;padding:0 3px;margin-left:6px;';
+    s.textContent='予備'; n.appendChild(s);}
+  const sw=document.createElement('button'); sw.className='sw'; sw.setAttribute('role','switch');
+  sw.setAttribute('aria-checked',checked); sw.onclick=onToggle;
+  r.append(o,n,sw); return r;
+}
+
 function renderSettings(){
-  const box = $('#setList'); box.innerHTML = '';
-  DEFECTS.forEach((d,i) => {
-    const r = document.createElement('div'); r.className = 'setrow';
-    const o = document.createElement('span'); o.className='ord'; o.textContent = i+1;
-    const n = document.createElement('span'); n.className='nm2'; n.textContent = d.n;
-    if (d.spare){ const s=document.createElement('span'); s.className='spare'; s.style.cssText='font-size:9px;color:var(--orange);border:1px solid var(--orange);border-radius:3px;padding:0 3px;'; s.textContent='予備'; n.appendChild(document.createTextNode(' ')); n.appendChild(s); }
-    const sw = document.createElement('button'); sw.className='sw';
-    sw.setAttribute('aria-checked', d.on); sw.setAttribute('role','switch');
-    sw.onclick = () => { d.on = !d.on; renderSettings(); renderCounters(); };
-    r.append(o,n,sw); box.appendChild(r);
+  const sd=$('#setSide'); sd.innerHTML='';
+  SIDES.forEach((s,i)=>{
+    const b=document.createElement('button');
+    b.innerHTML=s.id+'<span class="sub">'+s.roles.map(r=>r.id).join(' ／ ')+'</span>';
+    b.setAttribute('aria-pressed', i===side);
+    b.onclick=()=>{ side=i; cur.role=0; $('#btnMode').textContent='端末：'+SIDES[side].id;
+      renderRoles(); renderSettings(); renderGate(); };
+    sd.appendChild(b);
   });
-  const mb = $('#setMold'); mb.innerHTML='';
-  const wrap = document.createElement('div'); wrap.className='molds';
-  MOLDS.forEach(m => { const s=document.createElement('button'); s.textContent=m; wrap.appendChild(s); });
-  mb.appendChild(wrap);
+
+  const dl=$('#setList'); dl.innerHTML='';
+  DEFECTS.forEach((d,i)=>dl.appendChild(
+    swRow(d.n, d.on, ()=>{ d.on=!d.on; renderSettings(); renderCounters(); }, i+1, d.spare)));
+
+  const bl=$('#setBiri'); bl.innerHTML='';
+  BIRI.forEach((b,i)=>bl.appendChild(
+    swRow('ビリ'+(i+1)+(b.n?'　'+b.n:'　（名前未設定）'), b.on,
+      ()=>{ b.on=!b.on; renderSettings(); renderMachine(); }, i+1)));
+
+  $('#swNote').setAttribute('aria-checked', useNote);
 }
 
 function renderLog(){
-  const w = $('#logWrap');
-  if (!sent.length){
-    w.innerHTML = '<div class="empty">まだ送信された記録はありません。<br>目視記録から送信すると、ここに並びます。</div>';
+  const w=$('#logWrap');
+  if(!sent.length){
+    w.innerHTML='<div class="empty">まだ送信された記録はありません。<br>目視記録から送信すると、ここに並びます。</div>';
     return;
   }
-  const on = DEFECTS.filter(d=>d.on);
-  let h = '<div style="overflow-x:auto"><table><thead><tr><th>時間</th><th>担当</th>' +
-    on.map(d=>'<th style="text-align:right">'+d.n.slice(0,4)+'</th>').join('') +
+  const on=DEFECTS.filter(d=>d.on);
+  let h='<div style="overflow-x:auto"><table><thead><tr><th>時間</th><th>担当</th>'+
+    on.map(d=>'<th style="text-align:right">'+d.n.slice(0,4)+'</th>').join('')+
     '<th style="text-align:right">小計</th><th>申し送り</th></tr></thead><tbody>';
-  sent.slice().reverse().forEach(s => {
-    h += '<tr><td><span class="tag">'+s.hour+'時</span></td><td>'+s.role+'</td>' +
-      on.map(d=>'<td class="num">'+(s.v[d.n]||0)+'</td>').join('') +
-      '<td class="num" style="color:var(--green);font-weight:700">'+s.sum+'</td>' +
+  sent.slice().reverse().forEach(s=>{
+    h+='<tr><td><span class="tag">'+s.hour+'時</span></td><td>'+s.role+'</td>'+
+      on.map(d=>'<td class="num">'+(s.v[d.n]||0)+'</td>').join('')+
+      '<td class="num" style="color:var(--green);font-weight:700">'+s.sum+'</td>'+
       '<td style="font-size:12px;color:var(--ink-dim)">'+(s.note||'—')+'</td></tr>';
   });
-  w.innerHTML = h + '</tbody></table></div>';
+  w.innerHTML=h+'</tbody></table></div>';
 }
 
-/* ══════════ 送信 ══════════ */
-function toast(msg, warn){
-  const t = $('#toast'); t.textContent = msg;
-  t.classList.toggle('warn', !!warn); t.classList.add('show');
-  clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('show'), 2600);
+function toast(msg,warn){
+  const t=$('#toast'); t.textContent=msg;
+  t.classList.toggle('warn',!!warn); t.classList.add('show');
+  clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2600);
 }
-
 function doSend(overwrite){
-  const k = key($('#fDate').value, cur.bu, $('#fFloor').value, cur.hour, cur.role);
-  const rec = {
-    k, hour: cur.hour, role: ROLES[cur.role].id + (ROLES[cur.role].k ? '' : ''),
-    v: {...vals},
-    sum: DEFECTS.filter(d=>d.on).reduce((a,d)=>a+(vals[d.n]||0),0),
-    note: $('#fNote').value.trim(), box: $('#fBox').value
-  };
-  const i = sent.findIndex(s => s.k === k);
-  if (i >= 0 && overwrite) sent[i] = rec;
-  else sent.push(rec);
-
-  DEFECTS.forEach(d => vals[d.n] = 0);
-  $('#fNote').value = ''; $('#fBox').value = '';
-  manualHour = null;
+  const k=key($('#fDate').value,cur.bu,$('#fFloor').value,cur.hour,cur.role);
+  const rec={ k, hour:cur.hour, role:roles()[cur.role].id, v:{...vals},
+    sum:DEFECTS.filter(d=>d.on).reduce((a,d)=>a+(vals[d.n]||0),0),
+    note:$('#fNote').value.trim(), box:$('#fBox').value };
+  const i=sent.findIndex(s=>s.k===k);
+  if(i>=0&&overwrite) sent[i]=rec; else sent.push(rec);
+  DEFECTS.forEach(d=>vals[d.n]=0);
+  $('#fNote').value=''; $('#fBox').value='';
+  manualHour=null;
   renderGate(); renderCounters(); renderLog();
-  toast(rec.hour + '時台 ' + rec.role + '　送信しました');
+  toast(rec.hour+'時台 '+rec.role+'　送信しました');
 }
-
-$('#btnSend').onclick = () => {
-  const k = key($('#fDate').value, cur.bu, $('#fFloor').value, cur.hour, cur.role);
-  const dup = sent.find(s => s.k === k);
-  if (dup){
-    $('#mTitle').textContent = 'すでに送信されています';
-    $('#mBody').innerHTML =
-      '<p>' + cur.hour + '時台の「' + ROLES[cur.role].id + '」は、すでに ' + dup.sum + '本 で送信済みです。</p>' +
-      '<p>今回の内容（' + DEFECTS.filter(d=>d.on).reduce((a,d)=>a+(vals[d.n]||0),0) + '本）で上書きしますか。</p>';
-    $('#mask').hidden = false;
-    return;
+$('#btnSend').onclick=()=>{
+  const k=key($('#fDate').value,cur.bu,$('#fFloor').value,cur.hour,cur.role);
+  const dup=sent.find(s=>s.k===k);
+  if(dup){
+    $('#mTitle').textContent='すでに送信されています';
+    $('#mBody').innerHTML='<p>'+cur.hour+'時台の「'+roles()[cur.role].id+'」は、すでに '+dup.sum+'本 で送信済みです。</p>'+
+      '<p>今回の内容（'+DEFECTS.filter(d=>d.on).reduce((a,d)=>a+(vals[d.n]||0),0)+'本）で上書きしますか。</p>';
+    $('#mask').hidden=false; return;
   }
   doSend(false);
 };
-$('#mOk').onclick     = () => { $('#mask').hidden = true; doSend(true); };
-$('#mCancel').onclick = () => { $('#mask').hidden = true; };
-
-$('#btnClear').onclick = () => {
-  DEFECTS.forEach(d => vals[d.n] = 0);
+$('#mOk').onclick=()=>{ $('#mask').hidden=true; doSend(true); };
+$('#mCancel').onclick=()=>{ $('#mask').hidden=true; };
+$('#btnClear').onclick=()=>{
+  DEFECTS.forEach(d=>vals[d.n]=0);
   $('#fNote').value=''; $('#fBox').value='';
   renderCounters(); toast('入力を消しました');
 };
 
-/* ══════════ 操作 ══════════ */
-$('#hPrev').onclick = () => { const b=buOfHour(activeHour()); manualHour=b.hours[b.hours.indexOf(activeHour())-1]; renderGate(); renderCounters(); };
-$('#hNext').onclick = () => { const b=buOfHour(activeHour()); manualHour=b.hours[b.hours.indexOf(activeHour())+1]; renderGate(); renderCounters(); };
-
-$('#btnClock').onclick = () => {
-  clockOffset = (clockOffset + 4) % 24;
-  manualHour = null;
+$('#hPrev').onclick=()=>{const b=buOfHour(activeHour());
+  manualHour=b.hours[b.hours.indexOf(activeHour())-1]; renderGate(); renderCounters();};
+$('#hNext').onclick=()=>{const b=buOfHour(activeHour());
+  manualHour=b.hours[b.hours.indexOf(activeHour())+1]; renderGate(); renderCounters();};
+$('#btnClock').onclick=()=>{
+  clockOffset=(clockOffset+4)%24; manualHour=null;
   renderGate(); renderCounters();
-  const d = now();
-  toast('いまが ' + d.getHours() + '時 だとして表示しています');
+  toast('いまが '+now().getHours()+'時 だとして表示しています');
 };
+$('#btnMode').onclick=()=>{
+  side=(side+1)%SIDES.length; cur.role=0;
+  $('#btnMode').textContent='端末：'+SIDES[side].id;
+  renderRoles(); renderSettings(); renderGate();
+  toast('この端末を「'+SIDES[side].id+'」にしました');
+};
+$('#swNote').onclick=()=>{ useNote=!useNote; renderSettings(); renderCounters(); };
 
-$$('.tab').forEach(t => {
-  t.onclick = () => {
-    $$('.tab').forEach(x => x.setAttribute('aria-selected', x === t));
-    ['visual','machine','log','setting'].forEach(n => $('#tab-'+n).hidden = (n !== t.dataset.tab));
-    $('#bar').hidden = (t.dataset.tab !== 'visual');
-    if (t.dataset.tab === 'log') renderLog();
+$$('.tab').forEach(t=>{
+  t.onclick=()=>{
+    $$('.tab').forEach(x=>x.setAttribute('aria-selected', x===t));
+    ['visual','machine','log','setting'].forEach(n=>$('#tab-'+n).hidden=(n!==t.dataset.tab));
+    $('#bar').hidden=(t.dataset.tab!=='visual');
+    $('#hdTitle').textContent = t.dataset.tab==='machine' ? '機械記録' : '目視検出表';
+    if(t.dataset.tab==='log') renderLog();
   };
 });
-
-$('#fFloor').onchange = () => { renderGate(); };
-$('#fBu').onchange = () => {
-  manualHour = BU.find(b => b.id === $('#fBu').value).hours[0];
+$('#fFloor').onchange=()=>renderGate();
+$('#fBu').onchange=()=>{
+  manualHour=BU.find(b=>b.id===$('#fBu').value).hours[0];
   renderGate(); renderCounters();
 };
 
-/* ══════════ 起動 ══════════ */
-fillSelect($('#fBu'),   BU.map(b=>b.id));
+fillSelect($('#fBu'),BU.map(b=>b.id));
 fillSelect($('#fFloor'),FLOORS);
-fillSelect($('#fItem'), ITEMS);
-$('#fFloor').value = '3F';
+fillSelect($('#fItem'),ITEMS);
+$('#fFloor').value='3F';
 renderGate(); renderRoles(); renderCounters(); renderMachine(); renderMolds(); renderSettings(); renderLog();
 </script>
 </body>
