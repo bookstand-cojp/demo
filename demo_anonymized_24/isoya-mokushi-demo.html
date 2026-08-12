@@ -570,15 +570,49 @@ function renderLog(){
     return;
   }
   const on=DEFECTS.filter(d=>d.on);
-  let h='<div style="overflow-x:auto"><table><thead><tr><th>時間</th><th>担当</th>'+
+  let h='<div style="overflow-x:auto"><table><thead><tr><th>時間</th><th>担当</th><th>品名</th>'+
     on.map(d=>'<th style="text-align:right">'+d.n.slice(0,4)+'</th>').join('')+
     '<th style="text-align:right">小計</th><th>申し送り</th></tr></thead><tbody>';
-  sent.slice().reverse().forEach(s=>{
+
+  /* 品種が変わったところに区切りを入れる（段取り替えが見えるように） */
+  const asc=sent.slice();
+  let prevItem=null;
+  asc.forEach(s=>{
+    if(prevItem!==null && s.item!==prevItem){
+      h+='<tr><td colspan="'+(on.length+5)+'" style="background:rgba(255,106,19,.12);'+
+        'color:var(--orange);font-size:11px;letter-spacing:.08em;padding:6px 7px">'+
+        '── 段取り替え　'+prevItem+' → '+s.item+' ──</td></tr>';
+    }
     h+='<tr><td><span class="tag">'+s.hour+'時</span></td><td>'+s.role+'</td>'+
+      '<td style="font-size:12px">'+(s.item||'—')+'</td>'+
       on.map(d=>'<td class="num">'+(s.v[d.n]||0)+'</td>').join('')+
       '<td class="num" style="color:var(--green);font-weight:700">'+s.sum+'</td>'+
       '<td style="font-size:12px;color:var(--ink-dim)">'+(s.note||'—')+'</td></tr>';
+    prevItem=s.item;
   });
+
+  /* 品種ごとの合計 */
+  const byItem={};
+  sent.forEach(s=>{
+    if(!byItem[s.item]) byItem[s.item]={sum:0,v:{}};
+    byItem[s.item].sum+=s.sum;
+    on.forEach(d=>byItem[s.item].v[d.n]=(byItem[s.item].v[d.n]||0)+(s.v[d.n]||0));
+  });
+  Object.keys(byItem).forEach(it=>{
+    const g=byItem[it];
+    h+='<tr style="background:rgba(63,185,80,.07)"><td colspan="3" style="font-size:12px;font-weight:700">'+
+      it+'　小計</td>'+
+      on.map(d=>'<td class="num" style="font-weight:700">'+g.v[d.n]+'</td>').join('')+
+      '<td class="num" style="color:var(--green);font-weight:700">'+g.sum+'</td><td></td></tr>';
+  });
+
+  /* 直の合計 */
+  const total=sent.reduce((a,s)=>a+s.sum,0);
+  const tv={}; on.forEach(d=>tv[d.n]=sent.reduce((a,s)=>a+(s.v[d.n]||0),0));
+  h+='<tr style="background:#0b0e11"><td colspan="3" style="font-weight:700">この直の合計</td>'+
+    on.map(d=>'<td class="num" style="font-weight:700;color:var(--amber)">'+tv[d.n]+'</td>').join('')+
+    '<td class="num" style="color:var(--amber);font-weight:700;font-size:15px">'+total+'</td><td></td></tr>';
+
   w.innerHTML=h+'</tbody></table></div>';
 }
 
@@ -589,7 +623,8 @@ function toast(msg,warn){
 }
 function doSend(overwrite){
   const k=key($('#fDate').value,cur.bu,$('#fFloor').value,cur.hour,cur.role);
-  const rec={ k, hour:cur.hour, role:roles()[cur.role].id, v:{...vals},
+  const rec={ k, hour:cur.hour, role:roles()[cur.role].id,
+    item:$('#fItem').value, v:{...vals},
     sum:DEFECTS.filter(d=>d.on).reduce((a,d)=>a+(vals[d.n]||0),0),
     note:$('#fNote').value.trim(), box:$('#fBox').value };
   const i=sent.findIndex(s=>s.k===k);
