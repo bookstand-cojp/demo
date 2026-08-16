@@ -143,6 +143,8 @@ tr:hover td{background:#FCF8EF}
     <button data-page="ledger">バッチ台帳</button>
     <button data-page="tax">月次酒税計算</button>
     <button data-page="haiki">廃棄・亡失</button>
+    <button data-page="zaiko">在庫</button>
+    <button data-page="chohyo">帳票・会計</button>
     <button data-page="master">マスタ・設定</button>
   </nav>
 </header>
@@ -403,6 +405,80 @@ tr:hover td{background:#FCF8EF}
   </div>
 </section>
 
+<!-- ══════ 在庫 ══════ -->
+<section class="page" id="page-zaiko">
+  <div class="page-title"><h2>在庫</h2><span class="role-tag role-admin">しきい値を下回ると自動で通知</span></div>
+
+  <div class="kpi-strip">
+    <div class="kpi"><div class="kpi-label">15Lケグ 在庫</div><div class="kpi-val num">128<small> 本</small></div></div>
+    <div class="kpi"><div class="kpi-label">330ml瓶 在庫</div><div class="kpi-val num">2,140<small> 本</small></div></div>
+    <div class="kpi kpi-alert"><div class="kpi-label">要発注</div><div class="kpi-val num">1<small> 品目</small></div></div>
+  </div>
+
+  <div class="card">
+    <h3>容器別の在庫状況</h3>
+    <div style="overflow-x:auto">
+    <table>
+      <thead><tr><th>容器</th><th class="right">現在庫</th><th class="right">しきい値</th><th class="right">直近30日の消費</th><th class="right">残り日数（目安）</th><th class="center">状態</th></tr></thead>
+      <tbody>
+        <tr class="tr-alert"><td><b>15Lケグ</b></td><td class="right num">128</td><td class="right num">140</td><td class="right num">96 本</td><td class="right num">40 日</td><td class="center"><span class="check-ng">✗ 要発注</span></td></tr>
+        <tr><td><b>10Lケグ</b></td><td class="right num">42</td><td class="right num">30</td><td class="right num">14 本</td><td class="right num">90 日</td><td class="center"><span class="check-ok">✓ 十分</span></td></tr>
+        <tr><td><b>330ml瓶</b></td><td class="right num">2,140</td><td class="right num">1,200</td><td class="right num">2,860 本</td><td class="right num">22 日</td><td class="center"><span class="check-ok">✓ 十分</span></td></tr>
+        <tr><td><b>一升瓶</b></td><td class="right num">86</td><td class="right num">40</td><td class="right num">18 本</td><td class="right num">143 日</td><td class="center"><span class="check-ok">✓ 十分</span></td></tr>
+      </tbody>
+    </table></div>
+    <div class="notice notice-alert"><b>15Lケグが しきい値140本を下回りました。</b>設定されたメールアドレスへ通知済みです（本日 9:12）。同じ品目について、しきい値を下回っている間は1日1回までの通知に留めます。</div>
+  </div>
+
+  <div class="card">
+    <h3>現在の運用からの変更点</h3>
+    <table>
+      <thead><tr><th>項目</th><th>現在（GASでの通知）</th><th>このシステム</th></tr></thead>
+      <tbody>
+        <tr><td>在庫数の把握</td><td>スプレッドシートの数式</td><td class="check-ok">容器詰め・出荷の記録から自動算出</td></tr>
+        <tr><td>しきい値</td><td>140本（固定）</td><td class="check-ok">容器ごとにマスタで設定</td></tr>
+        <tr><td>通知先</td><td>固定</td><td class="check-ok">複数のアドレスを登録可能</td></tr>
+        <tr><td>通知の内容</td><td>在庫数のみ</td><td class="check-ok">残り日数の目安まで表示</td></tr>
+        <tr><td>画面での確認</td><td>なし</td><td class="check-ok">いつでも一覧で確認できる</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════ 帳票・会計 ══════ -->
+<section class="page" id="page-chohyo">
+  <div class="page-title"><h2>帳票・会計</h2><span class="role-tag role-admin">税務調査への備えと、税理士への受け渡し</span></div>
+
+  <div class="card">
+    <h3>法定帳簿のPDF出力　<span style="font-size:11px;background:#FBEFEC;color:var(--alert);padding:2px 10px;border-radius:20px">税務調査で紙の提示を求められたとき</span></h3>
+    <div class="grid g3">
+      <div><label>帳票</label>
+        <select><option selected>容器別受払簿（ケグ）</option><option>仕込帳</option><option>発酵・貯酒帳</option><option>容器詰帳</option><option>廃棄・亡失記録</option><option>月次酒税計算書</option><option>バッチ台帳</option></select></div>
+      <div><label>対象期間（開始）</label><input type="date" value="2026-08-01"></div>
+      <div><label>対象期間（終了）</label><input type="date" value="2026-08-31"></div>
+    </div>
+    <div style="margin-top:16px"><button class="btn btn-primary" onclick="toast('PDFを出力し、ドライブに保存しました（デモ）')">A4のPDFで出力する</button></div>
+    <div class="notice"><b>いつでも印刷できる状態にしておきます。</b>ヘッダーに製造場名・帳票名・対象期間・出力日、各ページに通し番号を入れたA4形式で出力します。出力したPDFはドライブに保存されるため、7年間の保存義務にもそのまま対応できます。</div>
+  </div>
+
+  <div class="card">
+    <h3>会計への受け渡し　<span style="font-size:11px;background:#F5E8D2;color:var(--amber-deep);padding:2px 10px;border-radius:20px">オプション機能</span></h3>
+    <p style="font-size:13.5px;color:var(--ink-soft);margin-bottom:14px">酒税の帳簿とは別系統ですが、月次の酒税額は会計にも計上される数字です。税理士の先生へお渡しする形のまま出力できます。</p>
+    <div style="overflow-x:auto">
+    <table>
+      <thead><tr><th>出力するもの</th><th>内容</th><th class="center">形式</th></tr></thead>
+      <tbody>
+        <tr><td>月次酒税額の集計</td><td>課税区分別の税額・減税額・納税額</td><td class="center">PDF / CSV</td></tr>
+        <tr><td>仕訳データ</td><td>未払酒税の計上・納付の仕訳</td><td class="center">CSV</td></tr>
+        <tr><td>納付予定</td><td>翌月末の納付期限と金額</td><td class="center">PDF</td></tr>
+        <tr><td>税理士向け資料</td><td>月次集計と申告書の写しをまとめたもの</td><td class="center">PDF</td></tr>
+      </tbody>
+    </table></div>
+    <div style="margin-top:16px"><button class="btn btn-primary" onclick="toast('8月分の会計連携データを出力しました（デモ）')">8月分を出力する</button></div>
+    <div class="notice"><b>今の会計体制は変わりません。</b>TKCを入れ替える必要も、税理士の先生との関係を変える必要もありません。出力の形式は、現在お渡しされている形にあわせて調整します。他の会計ソフト（弥生・freee・マネーフォワード等）にも、取込形式にあわせた出力を追加できる設計です。</div>
+  </div>
+</section>
+
 <!-- ══════ マスタ・設定 ══════ -->
 <section class="page" id="page-master">
   <div class="page-title"><h2>マスタ・設定</h2><span class="role-tag role-admin">ここを変えるだけで全計算に反映</span></div>
@@ -445,13 +521,13 @@ tr:hover td{background:#FCF8EF}
     <h3>容器マスタ</h3>
     <div style="overflow-x:auto">
     <table>
-      <thead><tr><th>容器名</th><th class="right">容量(ml)</th><th>状態</th></tr></thead>
+      <thead><tr><th>容器名</th><th class="right">容量(ml)</th><th class="right">在庫アラート</th><th>状態</th></tr></thead>
       <tbody>
-        <tr><td>15Lケグ</td><td class="right num">15,000</td><td><span class="badge-new">使用中</span></td></tr>
-        <tr><td>10Lケグ</td><td class="right num">10,000</td><td><span class="badge-new">使用中</span></td></tr>
-        <tr><td>330ml瓶</td><td class="right num">330</td><td><span class="badge-new">使用中</span></td></tr>
-        <tr><td>一升瓶</td><td class="right num">1,800</td><td><span class="badge-new">使用中</span></td></tr>
-        <tr><td>1500mlペット</td><td class="right num">1,500</td><td><span class="badge-old">停止中</span></td></tr>
+        <tr><td>15Lケグ</td><td class="right num">15,000</td><td class="right"><input class="adj-input num" value="140"></td><td><span class="badge-new">使用中</span></td></tr>
+        <tr><td>10Lケグ</td><td class="right num">10,000</td><td class="right"><input class="adj-input num" value="30"></td><td><span class="badge-new">使用中</span></td></tr>
+        <tr><td>330ml瓶</td><td class="right num">330</td><td class="right"><input class="adj-input num" value="1200"></td><td><span class="badge-new">使用中</span></td></tr>
+        <tr><td>一升瓶</td><td class="right num">1,800</td><td class="right"><input class="adj-input num" value="40"></td><td><span class="badge-new">使用中</span></td></tr>
+        <tr><td>1500mlペット</td><td class="right num">1,500</td><td class="right">—</td><td><span class="badge-old">停止中</span></td></tr>
       </tbody>
     </table></div>
     <div style="margin-top:14px"><button class="btn btn-ghost btn-sm" onclick="toast('容器を追加できます（デモ）')">＋ 容器を追加する</button></div>
@@ -465,6 +541,8 @@ tr:hover td{background:#FCF8EF}
     <div class="setting-row"><div class="setting-label"><b>酒税の申告期限</b><small>対象月の翌月末まで</small></div><input class="setting-val num" value="翌月末"><span></span></div>
     <div class="setting-row"><div class="setting-label"><b>廃棄の申告期限</b><small>実施した当月末まで</small></div><input class="setting-val num" value="当月末"><span></span></div>
     <div class="setting-row"><div class="setting-label"><b>欠減・亡失の申告期限</b><small>実施月の翌月末まで</small></div><input class="setting-val num" value="翌月末"><span></span></div>
+    <div class="setting-row"><div class="setting-label"><b>在庫アラートの通知先</b><small>複数登録できます（カンマ区切り）</small></div><input class="setting-val" style="width:280px" value="info@miroc-beer.com"><span></span></div>
+    <div class="setting-row"><div class="setting-label"><b>帳票PDFの保存先</b><small>Googleドライブのフォルダ</small></div><input class="setting-val" style="width:280px" value="酒税帳簿／2026年度"><span></span></div>
     <div style="margin-top:16px"><button class="btn btn-primary" onclick="toast('設定を保存しました（デモ）')">設定を保存する</button></div>
   </div>
 </section>
