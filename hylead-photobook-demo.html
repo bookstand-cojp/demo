@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>工事写真帳の作成（デモ）</title>
+<style>
+:root{
+  --navy:#16324F; --navy-d:#0E2238; --paper:#F5F7F9; --line:#DDE4EA;
+  --ink:#1C2B36; --sub:#6B7A88; --amber:#F5A623;
+  --p-before:#E88F5C; --p-during:#D4A04E; --p-after:#4A7A4A; --p-mat:#7B8FA1;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{
+  font-family:'Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP',system-ui,sans-serif;
+  background:var(--paper);color:var(--ink);font-size:15px;line-height:1.6;
+  overscroll-behavior-y:contain;
+}
+header{background:var(--navy);color:#fff;padding:12px 16px;position:sticky;top:0;z-index:50}
+header h1{font-size:16px;font-weight:700}
+header .sub{font-size:11.5px;opacity:.75;margin-top:1px}
+header .badge{position:absolute;right:14px;top:14px;background:rgba(255,255,255,.16);padding:3px 10px;border-radius:20px;font-size:11px}
+main{max-width:760px;margin:0 auto;padding:14px 12px 90px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+.card h2{font-size:14.5px;color:var(--navy);margin-bottom:2px}
+.card .hint{font-size:12px;color:var(--sub);margin-bottom:11px}
+
+/* 作業箇所タブ */
+.spot-scroll{display:flex;gap:7px;overflow-x:auto;padding:2px 0 6px;-webkit-overflow-scrolling:touch}
+.spot-scroll::-webkit-scrollbar{display:none}
+.spot{flex:0 0 auto;padding:9px 14px;border:1.5px solid var(--line);border-radius:22px;background:#fff;
+  font-size:13.5px;font-weight:700;color:var(--sub);cursor:pointer;font-family:inherit;white-space:nowrap;
+  transition:all .18s}
+.spot.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.spot .n{font-size:11px;opacity:.7;margin-left:5px}
+
+/* 区分の並び順 */
+.phase-order{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+.po{display:flex;align-items:center;gap:2px;border:1.5px solid var(--line);border-radius:9px;background:#fff;padding:3px 4px 3px 9px}
+.po .lb{font-size:12.5px;font-weight:700}
+.po button{width:26px;height:26px;border:none;background:none;font-size:14px;color:var(--sub);cursor:pointer;
+  border-radius:6px;font-family:inherit}
+.po button:active{background:var(--paper)}
+
+/* 写真カード */
+.list{margin-top:4px}
+.pc{
+  display:flex;gap:10px;background:#fff;border:1px solid var(--line);border-radius:11px;
+  padding:9px;margin-bottom:9px;position:relative;
+  transition:transform .22s cubic-bezier(.2,.8,.3,1), box-shadow .18s, opacity .18s;
+  touch-action:pan-y;
+}
+.pc.lift{
+  box-shadow:0 12px 28px rgba(16,50,79,.28);
+  transform:scale(1.03);
+  z-index:30;position:relative;opacity:.97;
+  transition:box-shadow .18s, transform .18s;
+}
+.pc.settle{transition:transform .28s cubic-bezier(.2,1.2,.3,1), box-shadow .2s}
+.ph{position:relative;width:132px;flex:0 0 132px;height:104px;border-radius:8px;overflow:hidden;
+  background:linear-gradient(135deg,#C9D6E0,#A8BCCB);display:flex;align-items:center;justify-content:center}
+.ph .lbl{font-size:11px;color:#42586A;font-weight:700;text-align:center;line-height:1.5}
+.badge{position:absolute;left:6px;top:6px;color:#fff;font-size:11px;font-weight:800;
+  padding:3px 9px;border-radius:14px;cursor:pointer;user-select:none;
+  box-shadow:0 1px 4px rgba(0,0,0,.25);transition:transform .12s}
+.badge:active{transform:scale(.9)}
+.no{position:absolute;right:6px;bottom:6px;background:rgba(14,34,56,.82);color:#fff;
+  font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:10px}
+.grip{position:absolute;right:6px;top:6px;width:30px;height:30px;border-radius:8px;
+  background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;
+  cursor:grab;touch-action:none;box-shadow:0 1px 4px rgba(0,0,0,.18)}
+.grip svg{width:15px;height:15px;fill:#5A6B78}
+.meta{flex:1;display:flex;flex-direction:column;gap:5px;min-width:0}
+.meta input{width:100%;border:1px solid var(--line);border-radius:6px;padding:6px 8px;
+  font-size:12.5px;font-family:'Hiragino Mincho ProN',serif;background:#FCFCFD}
+.meta input:focus{outline:none;border-color:var(--amber);background:#fff}
+.meta .cap{font-size:10px;color:var(--sub);margin-bottom:-3px}
+
+/* 下部バー */
+.bar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);
+  padding:10px 14px calc(10px + env(safe-area-inset-bottom));display:flex;gap:9px;z-index:40}
+.btn{flex:1;border:none;border-radius:10px;padding:13px 0;font-size:14.5px;font-weight:700;
+  cursor:pointer;font-family:inherit}
+.btn-x{background:#EAF1F7;color:var(--navy)}
+.btn-p{background:var(--amber);color:var(--navy-d)}
+.toast{position:fixed;bottom:82px;left:50%;transform:translateX(-50%) translateY(70px);
+  background:var(--navy);color:#fff;padding:11px 20px;border-radius:26px;font-size:13.5px;
+  font-weight:600;transition:transform .28s cubic-bezier(.2,1.1,.3,1);z-index:60;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.note{font-size:11.5px;color:var(--sub);text-align:center;margin-top:8px;line-height:1.7}
+
+/* プレビュー */
+.pv{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px;margin-top:4px}
+.pv-t{text-align:center;font-family:'Hiragino Mincho ProN',serif;font-size:17px;letter-spacing:.4em;
+  text-indent:.4em;margin-bottom:14px}
+.pv-g{display:grid;grid-template-columns:1fr 88px;gap:6px;border:1px solid #999;padding:6px;margin-bottom:6px}
+.pv-i{height:66px;background:linear-gradient(135deg,#C9D6E0,#A8BCCB);border-radius:2px;
+  display:flex;align-items:center;justify-content:center;font-size:10px;color:#42586A}
+.pv-m{display:flex;flex-direction:column;gap:3px;font-family:'Hiragino Mincho ProN',serif;font-size:9.5px}
+.pv-m div{border:1px solid #bbb;padding:2px 4px;background:#fff;min-height:15px}
+@media(max-width:420px){
+  .ph{width:112px;flex:0 0 112px;height:92px}
+  .meta input{font-size:12px;padding:5px 7px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>工事写真帳の作成</h1>
+  <div class="sub">山仁産業株式会社　製品倉庫エアコン・有圧扇増設工事</div>
+  <span class="badge">デモ</span>
+</header>
+
+<main>
+
+  <div class="card">
+    <h2>作業箇所を選ぶ</h2>
+    <p class="hint">箇所ごとに写真を並べます。全部を一度に触る必要はありません</p>
+    <div class="spot-scroll" id="spots"></div>
+
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line)">
+      <div style="font-size:12.5px;font-weight:700;margin-bottom:2px">区分の並び順</div>
+      <div style="font-size:11.5px;color:var(--sub);margin-bottom:7px">この順番で台帳に並びます。次回も引き継がれます</div>
+      <div class="phase-order" id="porder"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 id="spotTitle">写真の並び替え</h2>
+    <p class="hint">右上のつまみを長押しして動かすと並べ替えられます。左上の区分をタップで切り替わります</p>
+    <div class="list" id="list"></div>
+    <div class="note">メタ欄は自動で入りますが、そのまま打ち替えられます</div>
+  </div>
+
+  <div class="card">
+    <h2>できあがりイメージ</h2>
+    <p class="hint">現在お使いのExcel様式（表紙＋アルバム4シート・72枚）で出力されます</p>
+    <div class="pv" id="pv"></div>
+  </div>
+
+</main>
+
+<div class="bar">
+  <button class="btn btn-x" onclick="toast('並び順を保存しました')">並び順を保存</button>
+  <button class="btn btn-p" onclick="toast('Excelの工事写真帳を作成しました')">工事写真帳を作る</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===== データ ===== */
+const PHASES = {
+  before:{lb:'前', full:'施工前', c:'var(--p-before)'},
+  during:{lb:'中', full:'施工中', c:'var(--p-during)'},
+  after: {lb:'後', full:'施工後', c:'var(--p-after)'},
+  mat:   {lb:'材', full:'使用材料', c:'var(--p-mat)'},
+};
+let phaseOrder = ['mat','before','during','after'];
+
+const SITE = '山仁産業株式会社';
+const WORK = '製品倉庫エアコン・有圧扇増設工事';
+
+let spots = [
+  { id:'s1', label:'製品倉庫 冷媒管接続', photos:[
+    {id:'p1', phase:'mat',    date:'2026-05-25', memo:'VVF2.0-2C'},
+    {id:'p2', phase:'before', date:'2026-05-25', memo:'配管前 状況'},
+    {id:'p3', phase:'during', date:'2026-05-26', memo:'冷媒管接続溶接'},
+    {id:'p4', phase:'during', date:'2026-05-26', memo:'保温施工'},
+    {id:'p5', phase:'after',  date:'2026-05-27', memo:'接続完了'},
+  ]},
+  { id:'s2', label:'製品倉庫 換気扇取付', photos:[
+    {id:'p6', phase:'mat',    date:'2026-05-25', memo:'換気扇用ケーブル VVF1.6-2C'},
+    {id:'p7', phase:'before', date:'2026-05-26', memo:'開口部 施工前'},
+    {id:'p8', phase:'during', date:'2026-05-26', memo:'有圧扇 据付'},
+    {id:'p9', phase:'after',  date:'2026-05-27', memo:'取付完了'},
+  ]},
+  { id:'s3', label:'2階事務所 分電盤', photos:[
+    {id:'p10', phase:'mat',    date:'2026-05-26', memo:'分電盤 主幹60A 12回路'},
+    {id:'p11', phase:'during', date:'2026-05-27', memo:'盤内結線'},
+    {id:'p12', phase:'after',  date:'2026-05-27', memo:'結線完了'},
+  ]},
+];
+let cur = 's1';
+
+/* ===== 共通 ===== */
+const $ = id => document.getElementById(id);
+function toast(m){
+  const t=$('toast'); t.textContent=m; t.classList.add('show');
+  clearTimeout(t._x); t._x=setTimeout(()=>t.classList.remove('show'), 2200);
+}
+function buzz(ms){ if(navigator.vibrate) navigator.vibrate(ms); }
+const curSpot = () => spots.find(s=>s.id===cur);
+
+/* 区分の順番でソート */
+function sorted(photos){
+  return [...photos].sort((a,b)=>{
+    const d = phaseOrder.indexOf(a.phase) - phaseOrder.indexOf(b.phase);
+    if(d!==0) return d;
+    return photos.indexOf(a) - photos.indexOf(b);
+  });
+}
+
+/* ===== 作業箇所タブ ===== */
+function renderSpots(){
+  $('spots').innerHTML = spots.map(s=>
+    `<button class="spot ${s.id===cur?'on':''}" onclick="pickSpot('${s.id}')">${s.label}<span class="n">${s.photos.length}</span></button>`
+  ).join('');
+}
+function pickSpot(id){ cur=id; buzz(8); renderSpots(); renderList(); renderPv(); }
+
+/* ===== 区分の並び順 ===== */
+function renderOrder(){
+  $('porder').innerHTML = phaseOrder.map((p,i)=>`
+    <div class="po">
+      <span class="lb" style="color:${PHASES[p].c}">${PHASES[p].full}</span>
+      <button onclick="movePhase(${i},-1)" ${i===0?'style="opacity:.25"':''}>‹</button>
+      <button onclick="movePhase(${i},1)" ${i===phaseOrder.length-1?'style="opacity:.25"':''}>›</button>
+    </div>`).join('');
+}
+function movePhase(i,d){
+  const j=i+d; if(j<0||j>=phaseOrder.length) return;
+  [phaseOrder[i],phaseOrder[j]]=[phaseOrder[j],phaseOrder[i]];
+  buzz(8); renderOrder(); renderList(); renderPv();
+}
+
+/* ===== 写真カード ===== */
+function renderList(){
+  const sp = curSpot();
+  $('spotTitle').textContent = sp.label + ' の写真';
+  const arr = sorted(sp.photos);
+  $('list').innerHTML = arr.map((p,i)=>{
+    const ph = PHASES[p.phase];
+    return `<div class="pc" data-id="${p.id}">
+      <div class="ph">
+        <span class="lbl">写真${i+1}<br><span style="font-size:9.5px;opacity:.75">${ph.full}</span></span>
+        <span class="badge" style="background:${ph.c}" onclick="cyclePhase('${p.id}',event)">${ph.lb}</span>
+        <span class="no">#${i+1}</span>
+        <span class="grip" data-grip="${p.id}">
+          <svg viewBox="0 0 20 20"><circle cx="7" cy="5" r="1.6"/><circle cx="13" cy="5" r="1.6"/><circle cx="7" cy="10" r="1.6"/><circle cx="13" cy="10" r="1.6"/><circle cx="7" cy="15" r="1.6"/><circle cx="13" cy="15" r="1.6"/></svg>
+        </span>
+      </div>
+      <div class="meta">
+        <div><div class="cap">現場名</div><input value="${SITE}" onchange="mset('${p.id}','site',this.value)"></div>
+        <div><div class="cap">作業区分</div><input value="${p.memo}" onchange="mset('${p.id}','memo',this.value)"></div>
+        <div><div class="cap">撮影年月日</div><input value="${jp(p.date)}" onchange="mset('${p.id}','date',this.value)"></div>
+      </div>
+    </div>`;
+  }).join('');
+  bindDrag();
+}
+function jp(d){
+  if(!d||!d.includes('-')) return d;
+  const [y,m,dd]=d.split('-'); return `令和${+y-2018}年${+m}月${+dd}日`;
+}
+function mset(id,k,v){
+  for(const s of spots){ const p=s.photos.find(x=>x.id===id); if(p){ p[k]=v; break; } }
+  renderPv(); toast('入力を保存しました');
+}
+function cyclePhase(id,e){
+  e.stopPropagation();
+  const sp=curSpot(); const p=sp.photos.find(x=>x.id===id);
+  const i=phaseOrder.indexOf(p.phase);
+  p.phase = phaseOrder[(i+1)%phaseOrder.length];
+  buzz(12); renderList(); renderPv();
+}
+
+/* ===== ドラッグ（マウス＋タッチ） ===== */
+function bindDrag(){
+  document.querySelectorAll('[data-grip]').forEach(g=>{
+    g.addEventListener('pointerdown', onDown, {passive:false});
+  });
+}
+let drag = null;
+
+function onDown(e){
+  e.preventDefault();
+  const card = e.target.closest('.pc');
+  if(!card) return;
+  const list = $('list');
+  const cards = [...list.querySelectorAll('.pc')];
+  const rects = cards.map(c=>c.getBoundingClientRect());
+  const idx = cards.indexOf(card);
+
+  drag = {card, cards, rects, idx, startY:e.clientY, cur:idx, moved:0};
+  card.classList.add('lift');
+  card.classList.remove('settle');
+  buzz(14);
+
+  window.addEventListener('pointermove', onMove, {passive:false});
+  window.addEventListener('pointerup', onUp, {passive:false});
+  window.addEventListener('pointercancel', onUp, {passive:false});
+}
+
+function onMove(e){
+  if(!drag) return;
+  e.preventDefault();
+  const dy = e.clientY - drag.startY;
+  drag.moved = Math.abs(dy);
+  drag.card.style.transform = `translateY(${dy}px) scale(1.03)`;
+
+  // どこに割り込むか
+  const h = drag.rects[0].height + 9;
+  let move = Math.round(dy / h);
+  let next = Math.max(0, Math.min(drag.cards.length-1, drag.idx + move));
+
+  if(next !== drag.cur){
+    drag.cur = next;
+    buzz(6);
+    // 他のカードをずらす
+    drag.cards.forEach((c,i)=>{
+      if(c===drag.card) return;
+      let shift = 0;
+      if(drag.idx < next && i > drag.idx && i <= next) shift = -h;
+      if(drag.idx > next && i < drag.idx && i >= next) shift = h;
+      c.style.transform = `translateY(${shift}px)`;
+    });
+  }
+}
+
+function onUp(){
+  if(!drag) return;
+  window.removeEventListener('pointermove', onMove);
+  window.removeEventListener('pointerup', onUp);
+  window.removeEventListener('pointercancel', onUp);
+
+  const {card, cards, idx, cur:to} = drag;
+  card.classList.remove('lift');
+  card.classList.add('settle');
+  cards.forEach(c=>{ c.style.transform=''; });
+
+  if(idx !== to && drag.moved > 6){
+    // データを並べ替え（表示順の配列を作り直す）
+    const sp = curSpot();
+    const arr = sorted(sp.photos);
+    const [m] = arr.splice(idx,1);
+    arr.splice(to,0,m);
+    // 同じ区分内の順序として保存し直す
+    sp.photos = arr;
+    buzz(18);
+    renderList(); renderPv();
+  }
+  drag = null;
+}
+
+/* ===== できあがりプレビュー ===== */
+function renderPv(){
+  const sp = curSpot();
+  const arr = sorted(sp.photos).slice(0,3);
+  $('pv').innerHTML = `
+    <div class="pv-t">工 事 写 真 帳</div>
+    ${arr.map((p,i)=>`
+      <div class="pv-g">
+        <div class="pv-i">写真${i+1}（${PHASES[p.phase].full}）</div>
+        <div class="pv-m">
+          <div>${SITE}</div>
+          <div>${sp.label}</div>
+          <div style="background:#F2F5F0">${PHASES[p.phase].full}</div>
+          <div>${jp(p.date)}</div>
+        </div>
+      </div>`).join('')}
+    <div style="font-size:10.5px;color:var(--sub);text-align:center;margin-top:8px">
+      ほか ${Math.max(0, sp.photos.length-3)} 枚がこの後に続きます
+    </div>`;
+}
+
+/* ===== 起動 ===== */
+renderSpots(); renderOrder(); renderList(); renderPv();
+</script>
+</body>
+</html>
